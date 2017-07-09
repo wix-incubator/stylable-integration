@@ -6,6 +6,6 @@ module.exports = function(source) {
   const options = loaderUtils.getOptions(this);
   this.addDependency('stylable');  
   return `
-    module.exports = require('stylable').Stylesheet.fromCSS(${JSON.stringify(source)});
+    module.exports = require('stylable/react').Stylesheet.fromCSS(${JSON.stringify(source)});
   `;
 };
