@@ -87,11 +87,13 @@ describe('stylable-loader', function () {
 	it('should  resolve relative paths', function (done) {
 
 		const entry = path.join(__dirname, './fixtures/import-relative.sb.css');
-		const importPath = path.join(__dirname, './fixtures/my/path');
+		const importPath1 = path.join(__dirname, './fixtures/my/path');
+		const importPath2 = path.join(__dirname, '../my/path');
 
 		testStyleEntry(entry, function (sheet) {
-			expect(sheet.imports[0].from).to.eql(importPath);
-			expect(sheet.imports[1].from).to.eql('@thing');
+			expect(sheet.imports[0].from).to.eql(importPath1);
+			expect(sheet.imports[1].from).to.eql(importPath2);
+			expect(sheet.imports[2].from).to.eql('@thing');
 			done(null);
 		});
 

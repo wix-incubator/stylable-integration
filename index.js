@@ -9,7 +9,7 @@ const defaults = {
 };
 
 // const importRegExp = /:import\(["']?(.*?)["']?\)/gm;
-const relativeImportRegExp = /:import\(["']?(\.\/)(.*?)["']?\)/gm;
+const relativeImportRegExp = /:import\(["']?(\.\.?\/)(.*?)["']?\)/gm;
 
 function resolveImports(source, context) {
   return source.replace(relativeImportRegExp, (match, rel, thing) => {

@@ -2,6 +2,10 @@
     -sb-default: name;
 }
 
+:import("../../my/path"){
+    -sb-default: name;
+}
+
 :import("@thing"){
     -sb-default: name;
 }
