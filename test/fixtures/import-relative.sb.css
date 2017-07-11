@@ -1,0 +1,11 @@
+:import("./my/path"){
+    -sb-default: name;
+}
+
+:import("@thing"){
+    -sb-default: name;
+}
+
+.class {
+    color: red;
+}
