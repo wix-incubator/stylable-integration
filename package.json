@@ -17,7 +17,7 @@
     "murmurhash": "0.0.2"
   },
   "peerDependencies": {
-    "stylable": ">=0.0.10"
+    "stylable": ">=0.0.11"
   },
   "devDependencies": {
     "chai": "^4.0.2",

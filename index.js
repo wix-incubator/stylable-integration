@@ -34,7 +34,7 @@ module.exports = function (source) {
   return `
     Object.defineProperty(exports, "__esModule", { value: true });   
     var Stylesheet = require('stylable/react').Stylesheet;
-    var sheet = new Stylesheet(${JSON.stringify(sheet.cssDefinition)}, ${JSON.stringify(namespace)}, ${JSON.stringify(resourcePath)});
+    var sheet = new Stylesheet(${JSON.stringify(stylable.objectifyCSS(resolved))}, ${JSON.stringify(namespace)}, ${JSON.stringify(resourcePath)});
     module.exports = sheet;
     module.exports.default = sheet;
   `;
