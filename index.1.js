@@ -1,7 +1,6 @@
+var stylable = require('stylable'); //peer
+
 var path = require('path');
-var fs = require('fs');
-var loaderUtils = require('loader-utils');
-var stylable = require('stylable');
 var murmurhash = require('murmurhash');
 
 /* must be flat */
@@ -80,6 +79,10 @@ function transformStylableCSS(source, resourcePath, context, resolver, options) 
   return { sheet, code };
 
 }
+
+
+var fs = require('fs');
+var loaderUtils = require('loader-utils');
 
 module.exports = function (source) {
   const options = Object.assign({}, defaults, loaderUtils.getOptions(this));
