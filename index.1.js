@@ -1,5 +1,5 @@
 var stylable = require('stylable'); //peer
-
+var deindent = require('deindent');
 var path = require('path');
 var murmurhash = require('murmurhash');
 
@@ -29,7 +29,7 @@ function createStylesheetWithNamespace(source, path, options) {
   const atNS = cssObject['@namespace'];
   const ns = Array.isArray(atNS) ? atNS[atNS.length - 1] : atNS;
   const namespace = (ns || options.namespacelessPrefix) + murmurhash.v3(path);
-  return new stylable.Stylesheet(cssObject, namespace);
+  return new stylable.Stylesheet(cssObject, namespace, source);
 }
 
 function createImportString(importDef, path) {
@@ -42,38 +42,27 @@ function createImportString(importDef, path) {
 
 function transformStylableCSS(source, resourcePath, context, resolver, options) {
 
-
   const { resolved, importMapping } = resolveImports(source, context);
   const sheet = createStylesheetWithNamespace(resolved, resourcePath, options);
   const namespace = sheet.namespace;
 
   const gen = new stylable.Generator({ resolver: resolver });
+
   gen.addEntry(sheet, false);
+
   const css = gen.buffer;
 
   const imports = sheet.imports.map((importDef) => {
     return createImportString(importDef, importMapping[importDef.from]);
   });
 
-  const code = `
+  const code = deindent`    
     ${imports.join('\n')}
-    var sheet = ${JSON.stringify(sheet.classes)}; 
-    var style = document.head.querySelector("#${namespace}") || document.createElement('style');
-    style.id = ${JSON.stringify(namespace)};
-    style.textContent = ${JSON.stringify(css.join('\n'))} 
-    document.head.appendChild(style);
-    module.exports = {
-      _kind: "Stylesheet", 
-      get(n){return sheet[n]}, 
-      cssStates(stateMapping){
-        return stateMapping ? Object.keys(stateMapping).reduce(function(states, key) {
-            if (stateMapping[key]) { states["data-" + ${JSON.stringify(namespace.toLowerCase())} + "-" + key.toLowerCase() ] = true; }
-            return states;
-        }, {}) : {};
-        return {}
-      }
-    };
-    module.exports.classes = sheet;
+    module.exports = require(${path.join(__dirname, 'smallsheet.js')})(
+        ${JSON.stringify(namespace)}, 
+        ${JSON.stringify(sheet.classes)},
+        ${JSON.stringify(css.join('\n'))}
+    );
   `;
 
   return { sheet, code };
@@ -81,12 +70,14 @@ function transformStylableCSS(source, resourcePath, context, resolver, options) 
 }
 
 
+
+
 var fs = require('fs');
 var loaderUtils = require('loader-utils');
 
 module.exports = function (source) {
   const options = Object.assign({}, defaults, loaderUtils.getOptions(this));
-  
+
   const resolver = new stylable.Resolver({});
   resolver.resolveModule = function (path) {
     return createStylesheetWithNamespace(fs.readFileSync(path), path, options);
