@@ -10,7 +10,11 @@ export default function (this: any, source: string) {
 
   const resolver = new Resolver({});
   resolver.resolveModule = function (path: string) {
-    return createStylesheetWithNamespace(readFileSync(path, 'utf8'), path, options);
+    if(path.match(/\.css$/)){
+      return createStylesheetWithNamespace(readFileSync(path, 'utf8'), path, options);
+    } else {
+      return require(path);
+    }
   }
 
   const { sheet, code } = transformStylableCSS(this, source, this.resourcePath, this.context, resolver, options);

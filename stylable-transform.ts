@@ -65,9 +65,10 @@ export function transformStylableCSS(xt: any, source: string, resourcePath: stri
     // return createImportString(importDef, importMapping[importDef.from]);
   });
 
- const code: string = deindent`    
+  const code: string = deindent`    
     ${imports.join('\n')}
     exports = module.exports = require(${JSON.stringify(require.resolve("./smallsheet.js"))}).default(
+        ${JSON.stringify(sheet.root)}, 
         ${JSON.stringify(namespace)}, 
         ${JSON.stringify(sheet.classes)},
         ${JSON.stringify(css.join('\n'))}

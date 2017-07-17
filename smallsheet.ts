@@ -3,7 +3,7 @@ export interface SmallSheet {}
 
 export interface StateMap { [key: string]: boolean }
 
-export default function (namespace: string, classes: { $stylesheet?: SmallSheet }, css: string) {
+export default function (root:string, namespace: string, classes: { $stylesheet?: SmallSheet }, css: string) {
     
     if(typeof document !== 'undefined'){
         var style = document.head.querySelector("#" + namespace) || document.createElement('style');
@@ -14,6 +14,7 @@ export default function (namespace: string, classes: { $stylesheet?: SmallSheet 
 
     classes.$stylesheet = {
         namespace: namespace,
+        root: root,
         get(localName: string) {
             return (classes as { [key: string]: string })[localName];
         },
