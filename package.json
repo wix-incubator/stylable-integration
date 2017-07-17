@@ -4,7 +4,9 @@
   "description": "Loader for stylable css",
   "main": "./dist/index.js",
   "scripts": {
-    "test": "ts-mocha test/**/*.spec.*"
+    "build": "tsc",
+    "test": "ts-mocha test/**/*.spec.*",
+    "prepublish": "npm run build"
   },
   "keywords": [
     "stylable",
@@ -18,7 +20,7 @@
     "murmurhash": "0.0.2"
   },
   "peerDependencies": {
-    "stylable": ">=0.0.11"
+    "stylable": ">=1.0.1"
   },
   "devDependencies": {
     "@types/chai": "^4.0.1",
@@ -32,5 +34,9 @@
     "ts-mocha": "^1.0.3",
     "typescript": "^2.4.1",
     "webpack": "^3.1.0"
-  }
+  },
+  "files": [
+    "dist",
+    ""
+  ]
 }
