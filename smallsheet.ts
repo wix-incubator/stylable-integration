@@ -1,9 +1,7 @@
 
-interface SmallSheet {
+export interface SmallSheet {}
 
-}
-
-interface StateMap { [key: string]: boolean }
+export interface StateMap { [key: string]: boolean }
 
 export default function (namespace: string, classes: { $stylesheet?: SmallSheet }, css: string) {
     
