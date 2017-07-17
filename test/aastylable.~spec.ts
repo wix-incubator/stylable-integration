@@ -7,7 +7,7 @@ var _eval = require('node-eval');
 var MemoryFileSystem = require("memory-fs");
 var murmurhash = require('murmurhash')
 
-function testStyleEntry(entry, test, options = {}) {
+function testStyleEntry2(entry, test, options = {}) {
 	var memfs = new MemoryFileSystem();
 	webpack({
 		entry: entry,
@@ -39,14 +39,14 @@ describe('stylable-loader', function () {
 
 	it('source path', function (done) {
 		const entry = path.join(__dirname, './fixtures/test-main.sb.css');
-		testStyleEntry(entry, function (sheet, bundle) {
+		testStyleEntry2(entry, function (sheet, bundle) {
 			expect(sheet.source).to.eql(entry);
 			done(null);
 		});
 	});
 
 	it('export default stylesheet with classes', function (done) {
-		testStyleEntry(path.join(__dirname, './fixtures/test-main.sb.css'), function (sheet) {
+		testStyleEntry2(path.join(__dirname, './fixtures/test-main.sb.css'), function (sheet) {
 			expect(sheet.classes).to.contain({ class: 'class' });
 			done(null);
 		});
@@ -55,7 +55,7 @@ describe('stylable-loader', function () {
 	it('add hash of from path entry', function (done) {
 		const entry = path.join(__dirname, './fixtures/test-main.sb.css');
 		const hash = murmurhash.v3(entry);
-		testStyleEntry(entry, function (sheet) {
+		testStyleEntry2(entry, function (sheet) {
 			expect(sheet.namespace).to.eql('s' + hash);
 			done(null);
 		});
@@ -64,7 +64,7 @@ describe('stylable-loader', function () {
 	it('prefix namespace to the path hash', function (done) {
 		const entry = path.join(__dirname, './fixtures/test-main-namespace.sb.css');
 		const hash = murmurhash.v3(entry);
-		testStyleEntry(entry, function (sheet) {
+		testStyleEntry2(entry, function (sheet) {
 			expect(sheet.namespace).to.eql('Test' + hash);
 			done(null);
 		});
@@ -75,7 +75,7 @@ describe('stylable-loader', function () {
 		const prefix = "Prefix";
 		const entry = path.join(__dirname, './fixtures/test-main.sb.css');
 		const hash = murmurhash.v3(entry);
-		testStyleEntry(entry, function (sheet) {
+		testStyleEntry2(entry, function (sheet) {
 			expect(sheet.namespace).to.eql(prefix + hash);
 			done(null);
 		}, {
@@ -90,7 +90,7 @@ describe('stylable-loader', function () {
 		const importPath1 = path.join(__dirname, './fixtures/my/path');
 		const importPath2 = path.join(__dirname, '../my/path');
 
-		testStyleEntry(entry, function (sheet) {
+		testStyleEntry2(entry, function (sheet) {
 			expect(sheet.imports[0].from).to.eql(importPath1);
 			expect(sheet.imports[1].from).to.eql(importPath2);
 			expect(sheet.imports[2].from).to.eql('@thing');

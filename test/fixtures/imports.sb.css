@@ -1,0 +1,7 @@
+:import("./test-main.sb.css"){
+    -sb-default: name;
+}
+
+.class {
+    color: red;
+}
