@@ -15,7 +15,7 @@ describe('loader', function () {
 
             :import("./style.sb.css"){}
         
-        `, '', '', resolver, { namespacelessPrefix: 's' })
+        `, '', '', resolver, transform.defaults)
 
         expect(res.code).to.equal(``)
 

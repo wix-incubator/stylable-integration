@@ -17,7 +17,7 @@ export default function (this: any, source: string) {
     }
   }
 
-  const { sheet, code } = transformStylableCSS(this, source, this.resourcePath, this.context, resolver, options);
+  const { sheet, code } = transformStylableCSS(source, this.resourcePath, this.context, resolver, options);
 
   this.addDependency('stylable');
   sheet.imports.forEach((importDef: any) => {

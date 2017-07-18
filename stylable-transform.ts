@@ -8,7 +8,8 @@ var loaderUtils = require('loader-utils');
 
 /* must be flat */
 export const defaults = {
-  namespacelessPrefix: 's'
+  defaultPrefix: 's',
+  standalone: true
 };
 
 // const importRegExp = /:import\(["']?(.*?)["']?\)/gm;
@@ -31,7 +32,7 @@ export function createStylesheetWithNamespace(source: string, path: string, opti
   const cssObject = objectifyCSS(source);
   const atNS = cssObject['@namespace'];
   const ns = Array.isArray(atNS) ? atNS[atNS.length - 1] : atNS;
-  const namespace = (ns || options.namespacelessPrefix) + murmurhash.v3(path);
+  const namespace = (ns || options.defaultPrefix) + murmurhash.v3(path);
   return new Stylesheet(cssObject, namespace, source);
 }
 
@@ -48,7 +49,7 @@ export function justImport(importDef: any, path: string) {
   return `require("${path}");`;
 }
 
-export function transformStylableCSS(xt: any, source: string, resourcePath: string, context: string, resolver: Resolver, options: typeof defaults) {
+export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, options: typeof defaults) {
 
   const { resolved, importMapping } = resolveImports(source, context);
   const sheet = createStylesheetWithNamespace(resolved, resourcePath, options);
@@ -65,15 +66,35 @@ export function transformStylableCSS(xt: any, source: string, resourcePath: stri
     // return createImportString(importDef, importMapping[importDef.from]);
   });
 
-  const code: string = deindent`    
-    ${imports.join('\n')}
-    exports = module.exports = require(${JSON.stringify(require.resolve("./smallsheet.js"))}).default(
-        ${JSON.stringify(sheet.root)}, 
-        ${JSON.stringify(namespace)}, 
-        ${JSON.stringify(sheet.classes)},
-        ${JSON.stringify(css.join('\n'))}
-    );
-  `;
+  let code: string
+  if (options.standalone) {
+
+    code = deindent`    
+      ${imports.join('\n')}
+      exports = module.exports = require(${JSON.stringify(require.resolve("./smallsheet.js"))}).default(
+          ${JSON.stringify(sheet.root)}, 
+          ${JSON.stringify(namespace)}, 
+          ${JSON.stringify(sheet.classes)},
+          ${JSON.stringify(css.join('\n'))},
+          module.id
+      );
+    `;
+
+  } else {
+    code = deindent`    
+      ${imports.join('\n')}
+      var css = ${JSON.stringify(css.join('\n'))};
+      exports = module.exports = [[module.id, css, ""]];
+      exports.locals = require(${JSON.stringify(require.resolve("./smallsheet.js"))}).default(
+          ${JSON.stringify(sheet.root)}, 
+          ${JSON.stringify(namespace)}, 
+          ${JSON.stringify(sheet.classes)},
+          null,
+          module.id
+      );
+    `;
+  }
+
   return { sheet, code };
 
 }

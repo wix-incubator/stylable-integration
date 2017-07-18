@@ -3,10 +3,11 @@ export interface SmallSheet {}
 
 export interface StateMap { [key: string]: boolean }
 
-export default function (root:string, namespace: string, classes: { $stylesheet?: SmallSheet }, css: string) {
+export default function (root:string, namespace: string, classes: { $stylesheet?: SmallSheet }, css: string, moduleId: string) {
     
-    if(typeof document !== 'undefined'){
+    if(css && typeof document !== 'undefined'){
         var style = document.head.querySelector("#" + namespace) || document.createElement('style');
+        style.setAttribute('data-module-id', moduleId);
         style.id = namespace;
         style.textContent = css;
         document.head.appendChild(style);
