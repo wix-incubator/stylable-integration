@@ -12,18 +12,24 @@ export const defaults = {
   standalone: true
 };
 
-// const importRegExp = /:import\(["']?(.*?)["']?\)/gm;
-const relativeImportRegExp = /:import\(["']?(\.\/)(.*?)["']?\)/gm;
+//TODO: remove this regexps!!!!
+const relativeImportRegExp1 = /:import\(["']?(\.\/)(.*?)["']?\)/gm;
+const relativeImportRegExp2 = /-sb-from\s*:\s*["'](\.\.?\/)(.*?)["']/gm;
 
 export function resolveImports(source: string, context: string) {
   const importMapping: { [key: string]: string } = {};
-  const resolved = source.replace(relativeImportRegExp, (match, rel, thing) => {
+  const resolved = source
+    .replace(relativeImportRegExp1, replace)
+    .replace(relativeImportRegExp2, replace);
+
+
+  function replace(match: string, rel: string, thing: string) {
     const relativePath = rel + thing;
     const fullPath = path.resolve(context, relativePath);
     importMapping[relativePath] = fullPath;
     importMapping[fullPath] = relativePath;
     return match.replace(relativePath, fullPath);
-  });
+  }
 
   return { resolved, importMapping };
 }
@@ -71,7 +77,7 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
 
     code = deindent`    
       ${imports.join('\n')}
-      exports = module.exports = require(${JSON.stringify(require.resolve("./smallsheet.js"))}).default(
+      exports = module.exports = require(${JSON.stringify(getSmallsheetPath())}).default(
           ${JSON.stringify(sheet.root)}, 
           ${JSON.stringify(namespace)}, 
           ${JSON.stringify(sheet.classes)},
@@ -85,7 +91,7 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
       ${imports.join('\n')}
       var css = ${JSON.stringify(css.join('\n'))};
       exports = module.exports = [[module.id, css, ""]];
-      exports.locals = require(${JSON.stringify(require.resolve("./smallsheet.js"))}).default(
+      exports.locals = require(${JSON.stringify(getSmallsheetPath())}).default(
           ${JSON.stringify(sheet.root)}, 
           ${JSON.stringify(namespace)}, 
           ${JSON.stringify(sheet.classes)},
@@ -99,6 +105,14 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
 
 }
 
+function getSmallsheetPath() {
+  let smallsheetPath = "./smallsheet.js";
+  try {
+    return require.resolve(smallsheetPath)
+  } catch (e) {
+    return path.join(__dirname, smallsheetPath)
+  }
+}
 
 function escapepath(path: string) {
   return path.replace(/\\/gm, '\\').replace(/"/gm, '\"')
