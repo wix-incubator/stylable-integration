@@ -1,2 +1,2 @@
-export * from './smallsheet';
+export * from './runtime';
 export * from './stylable-transform';

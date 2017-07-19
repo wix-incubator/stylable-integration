@@ -1,6 +1,5 @@
 import { Stylesheet, Generator, objectifyCSS, Resolver } from 'stylable'; //peer
 import path = require('path');
-import loaderUtils = require('loader-utils');
 const deindent = require('deindent');
 const murmurhash = require('murmurhash');
 
@@ -75,7 +74,7 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
 
         code = deindent`
       ${imports.join('\n')}
-      exports = module.exports = require('stylable-integration/smallsheet').createRuntime(
+      exports = module.exports = require("${path.join(__dirname, "runtime").replace(/\\/gm, "\\\\")}").create(
           ${JSON.stringify(sheet.root)},
           ${JSON.stringify(namespace)},
           ${JSON.stringify(sheet.classes)},
@@ -89,7 +88,7 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
       ${imports.join('\n')}
       var css = ${JSON.stringify(css.join('\n'))};
       exports = module.exports = [[module.id, css, ""]];
-      exports.locals = require('stylable-integration/smallsheet').createRuntime(
+      exports.locals = require("${path.join(__dirname, "runtime").replace(/\\/gm, "\\\\")}").create(
           ${JSON.stringify(sheet.root)},
           ${JSON.stringify(namespace)},
           ${JSON.stringify(sheet.classes)},

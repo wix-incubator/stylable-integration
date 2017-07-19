@@ -4,7 +4,7 @@ import { Resolver } from 'stylable'; //peer
 import { transformStylableCSS, createStylesheetWithNamespace, defaults } from './stylable-transform';
 import loaderUtils = require('loader-utils');
 
-export function webpackLoader(this: any, source: string) {
+export function loader(this: any, source: string) {
     const options = { ...defaults, ...loaderUtils.getOptions(this) };
 
     const resolver = new Resolver({});

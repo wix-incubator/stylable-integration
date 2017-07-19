@@ -6,7 +6,7 @@
   "types": "./dist/src/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "ts-mocha test/**/*.spec.*",
+    "test": "tsc && ts-mocha test/**/*.spec.*",
     "prepublish": "npm run build"
   },
   "keywords": [
