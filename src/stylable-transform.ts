@@ -73,29 +73,30 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
     if (options.standalone) {
 
         code = deindent`
-      ${imports.join('\n')}
-      exports = module.exports = require("${path.join(__dirname, "runtime").replace(/\\/gm, "\\\\")}").create(
-          ${JSON.stringify(sheet.root)},
-          ${JSON.stringify(namespace)},
-          ${JSON.stringify(sheet.classes)},
-          ${JSON.stringify(css.join('\n'))},
-          module.id
-      );
-    `;
+            ${imports.join('\n')}
+            Object.defineProperty(exports, "__esModule", { value: true });
+            module.exports.default = require("${path.join(__dirname, "runtime").replace(/\\/gm, "\\\\")}").create(
+                ${JSON.stringify(sheet.root)},
+                ${JSON.stringify(namespace)},
+                ${JSON.stringify(sheet.classes)},
+                ${JSON.stringify(css.join('\n'))},
+                module.id
+            );
+        `;
 
     } else {
         code = deindent`
-      ${imports.join('\n')}
-      var css = ${JSON.stringify(css.join('\n'))};
-      exports = module.exports = [[module.id, css, ""]];
-      exports.locals = require("${path.join(__dirname, "runtime").replace(/\\/gm, "\\\\")}").create(
-          ${JSON.stringify(sheet.root)},
-          ${JSON.stringify(namespace)},
-          ${JSON.stringify(sheet.classes)},
-          null,
-          module.id
-      );
-    `;
+            ${imports.join('\n')}
+            var css = ${JSON.stringify(css.join('\n'))};
+            exports = module.exports = [[module.id, css, ""]];
+            exports.locals = require("${path.join(__dirname, "runtime").replace(/\\/gm, "\\\\")}").create(
+                ${JSON.stringify(sheet.root)},
+                ${JSON.stringify(namespace)},
+                ${JSON.stringify(sheet.classes)},
+                null,
+                module.id
+            );
+        `;
     }
 
     return { sheet, code };
