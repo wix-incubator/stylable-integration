@@ -1,8 +1,9 @@
 {
-  "name": "stylable-loader",
-  "version": "1.0.2",
-  "description": "Loader for stylable css",
-  "main": "./dist/index.js",
+  "name": "stylable-integration",
+  "version": "1.0.0",
+  "description": "Integration utils for stylable",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "scripts": {
     "build": "tsc",
     "test": "ts-mocha test/**/*.spec.*",
@@ -16,14 +17,16 @@
   "license": "MIT",
   "dependencies": {
     "deindent": "^0.1.0",
-    "loader-utils": "1.1.0",
-    "murmurhash": "0.0.2"
+    "loader-utils": "^1.1.0",
+    "murmurhash": "^0.0.2"
   },
   "peerDependencies": {
     "stylable": ">=1.0.1"
   },
   "devDependencies": {
     "@types/chai": "^4.0.1",
+    "@types/loader-utils": "^1.1.0",
+    "@types/memory-fs": "^0.3.0",
     "@types/mocha": "^2.2.41",
     "@types/node": "^8.0.13",
     "@types/webpack": "^3.0.4",
@@ -31,12 +34,16 @@
     "memory-fs": "^0.4.1",
     "mocha": "^3.4.2",
     "node-eval": "^1.1.0",
+    "stylable": "^1.0.2",
     "ts-mocha": "^1.0.3",
     "typescript": "^2.4.1",
     "webpack": "^3.1.0"
   },
   "files": [
-    "dist",
-    ""
+    "dist/src",
+    "src",
+    "webpack.js",
+    "smallsheet.js",
+    "tsconfig.json"
   ]
 }

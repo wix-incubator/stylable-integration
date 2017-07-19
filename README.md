@@ -1,3 +1,5 @@
-# Stylable Loader
+# Stylable Integration
 
-A webpack loader for stylable css
+Contains:
+- A webpack loader for stylable css (stylable-integration/webpack)
+- CLI to build for publishing

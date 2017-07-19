@@ -1,16 +1,16 @@
-var fs = require('fs');
-var path = require('path');
-var expect = require('chai').expect;
-var webpack = require('webpack');
-var EnvPlugin = require('webpack/lib/web/WebEnvironmentPlugin');
-var _eval = require('node-eval');
-var MemoryFileSystem = require("memory-fs");
-var murmurhash = require('murmurhash')
+import fs = require('fs');
+import path = require('path');
+import { expect } from 'chai';
+import webpack = require('webpack');
+import MemoryFileSystem = require('memory-fs');
+const EnvPlugin = require('webpack/lib/web/WebEnvironmentPlugin');
+const _eval = require('node-eval');
+const murmurhash = require('murmurhash');
 
-type TestFunction = (evaluated: any, bundle: string, stats?: any)=>void
+type TestFunction = (evaluated: any, bundle: string, stats?: any) => void
 
 function testStyleEntry(entry: string, test: TestFunction, options = {}) {
-	var memfs = new MemoryFileSystem();
+	const memfs = new MemoryFileSystem();
 	webpack({
 		entry: entry,
 		output: {
@@ -19,12 +19,12 @@ function testStyleEntry(entry: string, test: TestFunction, options = {}) {
 		},
 		plugins: [
 			new EnvPlugin(fs, memfs)
-		],
+        ],
 		module: {
 			rules: [
 				{
 					test: /\.css$/,
-					loader: path.join(__dirname, '../dist/index'),
+					loader: path.join(__dirname, '../webpack'),
 					options: Object.assign({}, options)
 				}
 			]
@@ -32,17 +32,15 @@ function testStyleEntry(entry: string, test: TestFunction, options = {}) {
 	}, function (err: Error, stats: any) {
 		if (err) { throw err; }
 		const bundle = memfs.readFileSync('/bundle.js', 'utf8');
-		console.log(bundle)
+		// console.log(bundle)
 		test(_eval(bundle), bundle, stats);
 	});
 }
 
 describe('stylable-loader', function () {
-
-
 	it('source path', function (done) {
 		const entry = path.join(__dirname, './fixtures/imports.sb.css');
-		testStyleEntry(entry, function (sheet:TestFunction, bundle: string) {
+		testStyleEntry(entry, function (sheet: TestFunction, bundle: string) {
 			expect(typeof sheet).to.eql('object');
 			done(null);
 		});
