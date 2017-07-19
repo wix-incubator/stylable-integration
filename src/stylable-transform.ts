@@ -31,11 +31,11 @@ export function resolveImports(source: string, context: string) {
     return { resolved, importMapping };
 }
 
-export function createStylesheetWithNamespace(source: string, path: string, options: typeof defaults) {
+export function createStylesheetWithNamespace(source: string, path: string, prefix: string) {
     const cssObject = objectifyCSS(source);
     const atNS = cssObject['@namespace'];
     const ns = Array.isArray(atNS) ? atNS[atNS.length - 1] : atNS;
-    const namespace = (ns || options.defaultPrefix) + murmurhash.v3(path);
+    const namespace = (ns || prefix) + murmurhash.v3(path);
     return new Stylesheet(cssObject, namespace, source);
 }
 
@@ -55,7 +55,7 @@ export function justImport(path: string) {
 export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, options: typeof defaults) {
 
     const { resolved, importMapping } = resolveImports(source, context);
-    const sheet = createStylesheetWithNamespace(resolved, resourcePath, options);
+    const sheet = createStylesheetWithNamespace(resolved, resourcePath, options.defaultPrefix);
 
     const gen = new Generator({ resolver });
     gen.addEntry(sheet, false);
