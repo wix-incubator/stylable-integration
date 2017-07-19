@@ -1,11 +1,8 @@
-
-export interface SmallSheet {}
-
+export interface SmallSheet { }
 export interface StateMap { [key: string]: boolean }
 
-export default function (root:string, namespace: string, classes: { $stylesheet?: SmallSheet }, css: string, moduleId: string) {
-    
-    if(css && typeof document !== 'undefined'){
+export function create(root: string, namespace: string, classes: { $stylesheet?: SmallSheet }, css: string, moduleId: string) {
+    if (css && typeof document !== 'undefined') {
         var style = document.head.querySelector("#" + namespace) || document.createElement('style');
         style.setAttribute('data-module-id', moduleId);
         style.id = namespace;
