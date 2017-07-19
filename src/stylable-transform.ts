@@ -48,7 +48,7 @@ export function createImportString(importDef: any, path: string) {
 }
 
 
-export function justImport(importDef: any, path: string) {
+export function justImport(path: string) {
     return `require("${path}");`;
 }
 
@@ -56,30 +56,30 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
 
     const { resolved, importMapping } = resolveImports(source, context);
     const sheet = createStylesheetWithNamespace(resolved, resourcePath, options);
-    const namespace = sheet.namespace;
 
-    const gen = new Generator({ resolver: resolver });
-
+    const gen = new Generator({ resolver });
     gen.addEntry(sheet, false);
 
-    const css = gen.buffer;
-
     const imports = sheet.imports.map((importDef: any) => {
-        return justImport(null, importMapping[importDef.from]);
-        // return createImportString(importDef, importMapping[importDef.from]);
+        return justImport(importMapping[importDef.from]);
     });
 
+    const root = JSON.stringify(sheet.root);
+    const namespace = JSON.stringify(sheet.namespace);
+    const classes = JSON.stringify(sheet.classes);
+    const css = JSON.stringify(gen.buffer.join('\n'));
+    const runtimePath = path.join(__dirname, "runtime").replace(/\\/gm, "\\\\");
+    
     let code: string
     if (options.standalone) {
-
         code = deindent`
             ${imports.join('\n')}
             Object.defineProperty(exports, "__esModule", { value: true });
-            module.exports.default = require("${path.join(__dirname, "runtime").replace(/\\/gm, "\\\\")}").create(
-                ${JSON.stringify(sheet.root)},
-                ${JSON.stringify(namespace)},
-                ${JSON.stringify(sheet.classes)},
-                ${JSON.stringify(css.join('\n'))},
+            module.exports.default = require("${runtimePath}").create(
+                ${root},
+                ${namespace},
+                ${sheet.classes},
+                ${css},
                 module.id
             );
         `;
@@ -87,12 +87,11 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
     } else {
         code = deindent`
             ${imports.join('\n')}
-            var css = ${JSON.stringify(css.join('\n'))};
-            exports = module.exports = [[module.id, css, ""]];
-            exports.locals = require("${path.join(__dirname, "runtime").replace(/\\/gm, "\\\\")}").create(
-                ${JSON.stringify(sheet.root)},
-                ${JSON.stringify(namespace)},
-                ${JSON.stringify(sheet.classes)},
+            module.exports = [[module.id, ${css}, ""]];
+            module.exports.default = module.exports.locals = require("${runtimePath}").create(
+                ${root},
+                ${namespace},
+                ${sheet.classes},
                 null,
                 module.id
             );
