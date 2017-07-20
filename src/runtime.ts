@@ -4,7 +4,7 @@ export interface StateMap { [key: string]: boolean }
 export function create(root: string, namespace: string, classes: { $stylesheet?: SmallSheet }, css: string, moduleId: string) {
     var style = null;
     if (css && typeof document !== 'undefined') {
-        style = document.head.querySelector("#" + namespace) || document.createElement('style');
+        style = document.getElementById(moduleId) || document.createElement('style');
         style.setAttribute('data-module-id', moduleId);
         style.id = namespace;
         style.textContent = css;
@@ -14,7 +14,6 @@ export function create(root: string, namespace: string, classes: { $stylesheet?:
     classes.$stylesheet = {
         namespace: namespace,
         root: root,
-        styleElement: style,
         get(localName: string) {
             return (classes as { [key: string]: string })[localName];
         },
