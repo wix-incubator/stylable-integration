@@ -1,0 +1,7 @@
+:import {
+    -sb-from: "./vars.sb.css";
+    -sb-named: M2;
+}
+.root{
+    color: value(M2);
+}

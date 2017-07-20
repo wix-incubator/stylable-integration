@@ -64,7 +64,7 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
 
     const root = JSON.stringify(sheet.root);
     const namespace = JSON.stringify(sheet.namespace);
-    const classes = JSON.stringify(sheet.classes);
+    const classes = JSON.stringify(Object.assign({}, sheet.vars, sheet.classes));
     const css = JSON.stringify(gen.buffer.join('\n'));
     const runtimePath = path.join(__dirname, "runtime").replace(/\\/gm, "\\\\");
     

@@ -1,0 +1,8 @@
+:vars {
+    M1: #333;
+    M2: value(M1);
+}
+
+.root{
+    color: value(M2);
+}
