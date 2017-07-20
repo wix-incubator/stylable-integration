@@ -1,1 +1,1 @@
-module.exports = require('./dist/src/require-hook')({});
+module.exports = require('./dist/src/require-hook').attachHook({});
