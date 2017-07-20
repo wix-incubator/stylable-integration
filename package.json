@@ -43,7 +43,7 @@
     "dist/src",
     "src",
     "webpack.js",
-    "smallsheet.js",
+    "require.js",
     "tsconfig.json"
   ]
 }
