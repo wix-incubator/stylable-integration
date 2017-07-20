@@ -12,10 +12,11 @@ export interface Options {
 export function attachHook({ extension, afterCompile }: Options) {
     extension = extension || '.css';
     const existingHook = require.extensions[extension];
+    const options = { defaultPrefix: 's', standalone: true };
+    const resolver = new FSResolver(options.defaultPrefix);
     require.extensions[extension] = function cssModulesHook(m: any, filename: string) {
-        const options = { defaultPrefix: 's', standalone: true };
         const source = readFileSync(filename, 'utf8');
-        const { code, sheet } = transformStylableCSS(source, filename, relative('.', dirname(filename)), new FSResolver(options.defaultPrefix), options);
+        const { code, sheet } = transformStylableCSS(source, filename, relative('.', dirname(filename)), resolver, options);
         return m._compile(afterCompile ? afterCompile(code, filename) : code, filename);
     };
 };
