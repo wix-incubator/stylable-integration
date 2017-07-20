@@ -10,6 +10,7 @@ export interface Options {
 }
 
 export function attachHook({ extension, afterCompile }: Options) {
+    extension = extension || '.css';
     const existingHook = require.extensions[extension];
     require.extensions[extension] = function cssModulesHook(m: any, filename: string) {
         const options = { defaultPrefix: 's', standalone: true };
