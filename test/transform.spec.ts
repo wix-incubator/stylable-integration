@@ -16,7 +16,17 @@ describe('loader', function () {
 
         `, '', 'f:/', resolver, transform.defaults)
 
-        expect(res.code).to.equal(``)
+        expect(res.code.replace(/\s*/gm, '')).to.equal(`
+            require("./style.sb.css");
+            Object.defineProperty(exports, "__esModule", { value: true });
+            module.exports.default = require("C:\\\\Projects\\\\stylable-integration\\\\src\\\\runtime").create(
+                "root",
+                "s0",
+                {"root":"s0💠root"},
+                "",
+                module.id
+            );
+        `.replace(/\s*/gm, ''))
 
 
     })
@@ -36,7 +46,17 @@ describe('loader', function () {
 
         `, '', 'f:/', resolver, transform.defaults)
 
-        expect(res.code).to.equal(``)
+        expect(res.code.replace(/\s*/gm, '')).to.equal(`
+            require("./style.sb.css");
+            Object.defineProperty(exports, "__esModule", { value: true });
+            module.exports.default = require("C:\\\\Projects\\\\stylable-integration\\\\src\\\\runtime").create(
+                "root",
+                "s0",
+                {"root":"s0💠root"},
+                "",
+                module.id
+            );
+        `.replace(/\s*/gm, ''))
 
 
     })

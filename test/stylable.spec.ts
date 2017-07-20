@@ -40,11 +40,10 @@ function testStyleEntry(entry: string, test: TestFunction, options = {}) {
 describe('stylable-loader', function () {
 	it('source path', function (done) {
 		const entry = path.join(__dirname, './fixtures/imports.sb.css');
-		testStyleEntry(entry, function (sheet: TestFunction, bundle: string) {
-			expect(typeof sheet).to.eql('object');
+		testStyleEntry(entry, function (sheet, bundle) {
+			expect(typeof sheet.default.$stylesheet).to.eql('object');
+			expect(typeof sheet.default.class).to.eql('string');
 			done(null);
 		});
 	});
-
-
 });

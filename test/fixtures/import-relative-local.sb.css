@@ -1,0 +1,13 @@
+:import{
+    -sb-from: "./local.sb.css"; 
+    -sb-default: name;
+}
+
+.class {
+    -sb-type: name;
+    color: red;
+}
+
+.class:mystate{
+    color: green;
+}

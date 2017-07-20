@@ -1,4 +1,4 @@
-import { Stylesheet, Generator, objectifyCSS, Resolver } from 'stylable'; //peer
+import { Stylesheet, Generator, objectifyCSS, Resolver } from 'stylable';
 import path = require('path');
 const deindent = require('deindent');
 const murmurhash = require('murmurhash');
@@ -35,7 +35,7 @@ export function createStylesheetWithNamespace(source: string, path: string, pref
     const cssObject = objectifyCSS(source);
     const atNS = cssObject['@namespace'];
     const ns = Array.isArray(atNS) ? atNS[atNS.length - 1] : atNS;
-    const namespace = (ns || prefix) + murmurhash.v3(path);
+    const namespace = (ns || prefix) + murmurhash.v3(path).toString(36);
     return new Stylesheet(cssObject, namespace, source);
 }
 
@@ -47,13 +47,11 @@ export function createImportString(importDef: any, path: string) {
     return imports.join('\n');
 }
 
-
 export function justImport(path: string) {
     return `require("${path}");`;
 }
 
-export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, options: typeof defaults) {
-
+export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, options: typeof defaults = defaults) {
     const { resolved, importMapping } = resolveImports(source, context);
     const sheet = createStylesheetWithNamespace(resolved, resourcePath, options.defaultPrefix);
 
@@ -78,7 +76,7 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
             module.exports.default = require("${runtimePath}").create(
                 ${root},
                 ${namespace},
-                ${sheet.classes},
+                ${classes},
                 ${css},
                 module.id
             );
@@ -91,7 +89,7 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
             module.exports.default = module.exports.locals = require("${runtimePath}").create(
                 ${root},
                 ${namespace},
-                ${sheet.classes},
+                ${classes},
                 null,
                 module.id
             );
