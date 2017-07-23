@@ -1,0 +1,12 @@
+:import {
+    -sb-from: './level2.sb.css';
+    -sb-default: style;
+}
+
+.class {
+    -sb-type: style;
+}
+
+.class:state {
+    color: red;
+}

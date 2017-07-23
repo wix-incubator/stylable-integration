@@ -36,7 +36,7 @@ export function createStylesheetWithNamespace(source: string, path: string, pref
     const atNS = cssObject['@namespace'];
     const ns = Array.isArray(atNS) ? atNS[atNS.length - 1] : atNS;
     const namespace = (ns || prefix) + murmurhash.v3(path).toString(36);
-    return new Stylesheet(cssObject, namespace, source);
+    return new Stylesheet(cssObject, namespace, path);
 }
 
 export function createImportString(importDef: any, path: string) {
@@ -52,6 +52,7 @@ export function justImport(path: string) {
 }
 
 export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, options: typeof defaults = defaults) {
+
     const { resolved, importMapping } = resolveImports(source, context);
     const sheet = createStylesheetWithNamespace(resolved, resourcePath, options.defaultPrefix);
 

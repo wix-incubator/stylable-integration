@@ -1,0 +1,8 @@
+:import {
+    -sb-from: './level3.sb.css';
+    -sb-default: style;
+}
+
+.root {
+    -sb-type: style;
+}

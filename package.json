@@ -4,6 +4,9 @@
   "description": "Integration utils for stylable",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
+  "bin": {
+    "stc": "./dist/src/build.js"
+  },
   "scripts": {
     "build": "tsc",
     "test": "tsc && ts-mocha test/**/*.spec.*",
@@ -18,7 +21,9 @@
   "dependencies": {
     "deindent": "^0.1.0",
     "loader-utils": "^1.1.0",
-    "murmurhash": "^0.0.2"
+    "minimist": "^1.2.0",
+    "murmurhash": "^0.0.2",
+    "node-fs-extra": "^0.8.2"
   },
   "peerDependencies": {
     "stylable": ">=1.0.1"
