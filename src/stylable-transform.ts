@@ -11,7 +11,7 @@ export const defaults = {
 
 //TODO: remove this regexps!!!!
 const relativeImportRegExp1 = /:import\(["']?(\.\/)(.*?)["']?\)/gm;
-const relativeImportRegExp2 = /-sb-from\s*:\s*["'](\.\.?\/)(.*?)["']/gm;
+const relativeImportRegExp2 = /-st-from\s*:\s*["'](\.\.?\/)(.*?)["']/gm;
 
 export function resolveImports(source: string, context: string) {
     const importMapping: { [key: string]: string } = {};

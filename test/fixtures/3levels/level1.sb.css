@@ -1,10 +1,10 @@
 :import {
-    -sb-from: './level2.sb.css';
-    -sb-default: style;
+    -st-from: './level2.sb.css';
+    -st-default: style;
 }
 
 .class {
-    -sb-type: style;
+    -st-type: style;
 }
 
 .class:state {

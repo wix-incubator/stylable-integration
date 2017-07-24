@@ -41,7 +41,7 @@ describe('loader', function () {
         const res = transform.transformStylableCSS(`
 
             :import {
-                -sb-from: "./style.sb.css";
+                -st-from: "./style.sb.css";
             }
 
         `, '', 'f:/', resolver, transform.defaults)

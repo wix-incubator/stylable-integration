@@ -1,13 +1,13 @@
 :import("./my/path"){
-    -sb-default: name;
+    -st-default: name;
 }
 
 :import("../../my/path"){
-    -sb-default: name;
+    -st-default: name;
 }
 
 :import("@thing"){
-    -sb-default: name;
+    -st-default: name;
 }
 
 .class {

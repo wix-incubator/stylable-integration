@@ -1,10 +1,10 @@
 :import{
-    -sb-from: "./local.sb.css"; 
-    -sb-default: name;
+    -st-from: "./local.sb.css"; 
+    -st-default: name;
 }
 
 .class {
-    -sb-type: name;
+    -st-type: name;
     color: red;
 }
 
