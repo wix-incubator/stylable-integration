@@ -11,8 +11,12 @@ const argv = require('yargs')
     .describe('outDir', 'output directory')
     .default('outDir', './', 'same as file path')
     
+    .option('srcDir')
+    .describe('srcDir', 'source directory in working directory')
+    .default('srcDir', '.', 'same as working directory')
+    
     .option('cwd')
-    .describe('cwd', 'working dir')
+    .describe('cwd', 'working directory')
     .default('cwd', process.cwd(), 'process.cwd()')
     
     .option('match')
@@ -24,9 +28,10 @@ const argv = require('yargs')
     .argv;
 
 const outDir = argv.outDir;
+const srcDir = argv.srcDir;
 const cwd = argv.cwd;
 const match = argv.match;
-
+const fullSrcDir = join(cwd, srcDir);
 const resolver = new FSResolver('s');
 
 glob(match, {}, function (er: Error, files: string[]) {
@@ -35,7 +40,7 @@ glob(match, {}, function (er: Error, files: string[]) {
         const fullpath = join(cwd, file);
         const content = fs.readFileSync(fullpath, 'utf8');
         const { code } = transformStylableCSS(content, fullpath, dirname(fullpath), resolver);
-        const outPath = join(cwd, outDir, file + '.js');
+        const outPath = join(cwd, outDir, fullpath.replace(fullSrcDir, '') + '.js');
         fs.outputFileSync(outPath, code);
     });
 
