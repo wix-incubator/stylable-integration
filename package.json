@@ -27,7 +27,7 @@
     "yargs": "^8.0.2"
   },
   "peerDependencies": {
-    "stylable": ">=2.0.1"
+    "stylable": ">=2.0.4"
   },
   "devDependencies": {
     "@types/chai": "^4.0.1",
