@@ -19,7 +19,7 @@ describe('loader', function () {
         expect(res.code.replace(/\s*/gm, '')).to.equal(`
             require("./style.sb.css");
             Object.defineProperty(exports, "__esModule", { value: true });
-            module.exports.default = require("C:\\\\Projects\\\\stylable-integration\\\\src\\\\runtime").create(
+            module.exports.default = require("stylable/runtime").create(
                 "root",
                 "s0",
                 {"root":"s0💠root"},
@@ -49,7 +49,7 @@ describe('loader', function () {
         expect(res.code.replace(/\s*/gm, '')).to.equal(`
             require("./style.sb.css");
             Object.defineProperty(exports, "__esModule", { value: true });
-            module.exports.default = require("C:\\\\Projects\\\\stylable-integration\\\\src\\\\runtime").create(
+            module.exports.default = require("stylable/runtime").create(
                 "root",
                 "s0",
                 {"root":"s0💠root"},

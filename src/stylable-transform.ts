@@ -67,7 +67,8 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
     const namespace = JSON.stringify(sheet.namespace);
     const classes = JSON.stringify(Object.assign({}, sheet.vars, sheet.classes));
     const css = JSON.stringify(gen.buffer.join('\n'));
-    const runtimePath = path.join(__dirname, "runtime").replace(/\\/gm, "\\\\");
+    // const runtimePath = path.join(__dirname, "runtime").replace(/\\/gm, "\\\\");
+    const runtimePath = 'stylable/runtime';
     
     let code: string
     if (options.standalone) {
