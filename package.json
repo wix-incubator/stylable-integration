@@ -1,6 +1,6 @@
 {
   "name": "stylable-integration",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "Integration utils for stylable",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
