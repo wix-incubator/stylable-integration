@@ -4,7 +4,7 @@
 }
 
 .class {
-    -st-type: name;
+    -st-extends: name;
     color: red;
 }
 

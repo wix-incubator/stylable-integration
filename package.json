@@ -26,7 +26,7 @@
     "node-fs-extra": "^0.8.2"
   },
   "peerDependencies": {
-    "stylable": ">=2.0.0"
+    "stylable": ">=2.0.1"
   },
   "devDependencies": {
     "@types/chai": "^4.0.1",

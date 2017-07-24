@@ -4,5 +4,5 @@
 }
 
 .root {
-    -st-type: style;
+    -st-extends: style;
 }
