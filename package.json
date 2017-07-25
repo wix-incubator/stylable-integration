@@ -21,6 +21,7 @@
   "dependencies": {
     "deindent": "^0.1.0",
     "fs-extra": "^4.0.0",
+    "htap": "^1.0.2",
     "loader-utils": "^1.1.0",
     "murmurhash": "^0.0.2",
     "node-fs-extra": "^0.8.2",
