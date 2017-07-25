@@ -73,8 +73,8 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
     let code: string
     if (options.standalone) {
         code = deindent`
-            ${imports.join('\n')}
             Object.defineProperty(exports, "__esModule", { value: true });
+            ${imports.join('\n')}
             module.exports.default = require("${runtimePath}").create(
                 ${root},
                 ${namespace},
@@ -86,6 +86,7 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
 
     } else {
         code = deindent`
+            Object.defineProperty(exports, "__esModule", { value: true });
             ${imports.join('\n')}
             module.exports = [[module.id, ${css}, ""]];
             module.exports.default = module.exports.locals = require("${runtimePath}").create(
