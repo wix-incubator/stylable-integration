@@ -7,13 +7,12 @@ import webpack = require('webpack');
 
 let firstRun:boolean = true;
 
-const used : any[] = [];
+let used : any[] = [];
 
 
 export function loader(this:webpack.loader.LoaderContext, source: string) {
     const options = { ...defaults, ...loaderUtils.getOptions(this) };
-    console.log('loading')
-    const resolver = new FSResolver(options.defaultPrefix);
+    const resolver = (options as any).resolver || new FSResolver(options.defaultPrefix);
 
     const { sheet, code } = transformStylableCSS(
         source,
@@ -28,23 +27,23 @@ export function loader(this:webpack.loader.LoaderContext, source: string) {
     // sheet.imports.forEach((importDef: any) => {
     //     this.addDependency(importDef.from);
     // });
-    // if(firstRun){
-    //     firstRun = false;
-    //     this._compiler.plugin('emit',(comp,...args)=>{
-    //         console.log('emitting');
-    //     })
-    // }
 
     return code;
 };
 
 
 export class Plugin{
-    apply(compiler:webpack.Compiler){
+    constructor(private resolver:Resolver = new FSResolver(defaults.defaultPrefix)){
+    };
+    apply = (compiler:webpack.Compiler)=>{
+        const that = this;
+        compiler.plugin('before-run',(compilation,callback)=>{
+            used = [];
+            callback();
+        });
         compiler.plugin('emit',(compilation,callback)=>{
             const options = { ...defaults };
-            const resolver = new FSResolver(options.defaultPrefix);
-            const gen = new Generator({resolver});
+            const gen = new Generator({resolver:that.resolver});
             used.forEach((s:Stylesheet)=>{
                  gen.addEntry(s, false);
             })

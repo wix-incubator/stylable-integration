@@ -31,7 +31,7 @@ export function resolveImports(source: string, context: string) {
     return { resolved, importMapping };
 }
 
-export function createStylesheetWithNamespace(source: string, path: string, prefix: string) {
+export function createStylesheetWithNamespace(source: string, path: string, prefix: string='s') {
     const cssObject = objectifyCSS(source);
     const atNS = cssObject['@namespace'];
     const ns = Array.isArray(atNS) ? atNS[atNS.length - 1] : atNS;
@@ -69,7 +69,7 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
     const css = JSON.stringify(gen.buffer.join('\n'));
     // const runtimePath = path.join(__dirname, "runtime").replace(/\\/gm, "\\\\");
     const runtimePath = 'stylable/runtime';
-    
+
     let code: string
     if (options.standalone) {
         code = deindent`
