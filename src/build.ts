@@ -24,9 +24,9 @@ const argv = require('yargs')
     .describe('match', 'glob pattern to match stylable css files')
     .default('match', '**/*.st.css', '.st.css files')
 
-    .option('log')
-    .describe('log', 'should log to console')
-    .default('log', true, 'silent')
+    .option('verbose')
+    .describe('verbose', 'should log to console')
+    .default('verbose', false, 'silent')
 
     .alias('h', 'help')
     .help()
