@@ -17,8 +17,8 @@ describe('loader', function () {
         `, '', 'f:/', resolver, transform.defaults)
 
         expect(res.code.replace(/\s*/gm, '')).to.equal(`
-            require("./style.sb.css");
             Object.defineProperty(exports, "__esModule", { value: true });
+            require("./style.sb.css");
             module.exports.default = require("stylable/runtime").create(
                 "root",
                 "s0",
@@ -47,8 +47,8 @@ describe('loader', function () {
         `, '', 'f:/', resolver, transform.defaults)
 
         expect(res.code.replace(/\s*/gm, '')).to.equal(`
-            require("./style.sb.css");
             Object.defineProperty(exports, "__esModule", { value: true });
+            require("./style.sb.css");
             module.exports.default = require("stylable/runtime").create(
                 "root",
                 "s0",

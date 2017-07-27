@@ -19,7 +19,7 @@ function testStyleEntry(entry: string, test: TestFunction, options = {}) {
 		},
 		plugins: [
 			new EnvPlugin(fs, memfs)
-        ],
+		],
 		module: {
 			rules: [
 				{
@@ -46,7 +46,7 @@ describe('stylable-loader', function () {
 			done(null);
 		});
 	});
-	
+
 
 	// it('export default stylesheet with classes', function (done) {
 	// 	testStyleEntry(path.join(__dirname, './fixtures/test-main.sb.css'), function (sheet) {
@@ -103,14 +103,14 @@ describe('stylable-loader', function () {
 	// });
 
 
-	
+
 
 	it('should state from inner dependency', function (done) {
 
 		const entry = path.join(__dirname, './fixtures/3levels/level1.sb.css');
-		
+
 		testStyleEntry(entry, function (sheet, bundle) {
-			expect(bundle).to.match(/[data-secihr9-state]/);
+			expect(bundle).to.match(new RegExp("[data-" + sheet.namespace + "-state]"));
 			done(null);
 		});
 
