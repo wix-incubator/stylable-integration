@@ -31,7 +31,8 @@ export function resolveImports(source: string, context: string) {
     return { resolved, importMapping };
 }
 
-export function createStylesheetWithNamespace(source: string, path: string, prefix: string='s') {
+
+export function createStylesheetWithNamespace(source: string, path: string, prefix: string = defaults.defaultPrefix) {
     const cssObject = objectifyCSS(source);
     const atNS = cssObject['@namespace'];
     const ns = Array.isArray(atNS) ? atNS[atNS.length - 1] : atNS;
