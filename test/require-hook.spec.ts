@@ -9,17 +9,17 @@ describe('require-hook', function () {
 
         const res = require('./fixtures/test-main.sb.css');
 
-        expect(res.default.class).to.equal('s1pi5dhd💠class')
+        expect(res.default.class).to.equal(res.default.$stylesheet.namespace + '💠class')
 
     });
 
     it('load stylable css with require and dependencies', function () {
-
+        let resCss;
         attachHook({
             extension: '.css',
             afterCompile: (code, filename) => {
                 if (filename.match('import-relative-local.sb.css')) {
-                    expect(code).to.match(/\[data-s1u4nk48-mystate\]/)
+                    resCss = code;
                 }
                 return code;
             }
@@ -27,8 +27,8 @@ describe('require-hook', function () {
 
         const res = require('./fixtures/import-relative-local.sb.css');
 
-        expect(res.default.class).to.equal('s12yk899💠class')
-
+        expect(res.default.class).to.equal(res.default.$stylesheet.namespace+'💠class')
+        expect(resCss).to.match(new RegExp(`[data-${res.default.$stylesheet.namespace}-mystate]`));
     });
 
 
@@ -49,7 +49,7 @@ describe('require-hook', function () {
         expect(called).to.equal(true);
     });
 
-    
+
     it('load stylable css with imported vars', function () {
         var called = false;
         attachHook({

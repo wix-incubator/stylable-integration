@@ -18,7 +18,6 @@ describe('loader', function () {
 
         expect(res.code.replace(/\s*/gm, '')).to.equal(`
             Object.defineProperty(exports, "__esModule", { value: true });
-            require("./style.sb.css");
             module.exports.default = require("stylable/runtime").create(
                 "root",
                 "s0",
@@ -48,7 +47,6 @@ describe('loader', function () {
 
         expect(res.code.replace(/\s*/gm, '')).to.equal(`
             Object.defineProperty(exports, "__esModule", { value: true });
-            require("./style.sb.css");
             module.exports.default = require("stylable/runtime").create(
                 "root",
                 "s0",

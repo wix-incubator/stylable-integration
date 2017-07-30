@@ -70,12 +70,11 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
     const css = JSON.stringify(gen.buffer.join('\n'));
     // const runtimePath = path.join(__dirname, "runtime").replace(/\\/gm, "\\\\");
     const runtimePath = 'stylable/runtime';
-
+    // ${imports.join('\n')}
     let code: string
     if (options.standalone) {
         code = deindent`
             Object.defineProperty(exports, "__esModule", { value: true });
-            ${imports.join('\n')}
             module.exports.default = require("${runtimePath}").create(
                 ${root},
                 ${namespace},

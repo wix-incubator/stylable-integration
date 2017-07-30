@@ -37,14 +37,11 @@ export class Plugin{
     };
     apply = (compiler:webpack.Compiler)=>{
         const that = this;
-        compiler.plugin('before-run',(compilation,callback)=>{
-            used = [];
-            callback();
-        });
+
         compiler.plugin('emit',(compilation,callback)=>{
             const options = { ...defaults };
             const gen = new Generator({resolver:that.resolver});
-            used.forEach((s:Stylesheet)=>{
+            used.reverse().forEach((s:Stylesheet)=>{
                  gen.addEntry(s, false);
             })
             const resultCssBundle = gen.buffer.join('\n');
@@ -56,6 +53,7 @@ export class Plugin{
                     return resultCssBundle.length;
                 }
             }
+            used = [];
             callback();
         });
     }

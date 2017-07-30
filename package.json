@@ -7,7 +7,6 @@
   "bin": {
     "stc": "./dist/src/build.js"
   },
-
   "scripts": {
     "build": "tsc && cp test/fixtures/ dist/test/fixtures -r",
     "webpack": "webpack",
@@ -29,7 +28,7 @@
     "murmurhash": "^0.0.2",
     "node-fs-extra": "^0.8.2",
     "postcss": "^6.0.8",
-    "stylable": "2.0.4",
+    "stylable": "3.0.0",
     "yargs": "^8.0.2"
   },
   "peerDependencies": {
@@ -42,7 +41,6 @@
     "@types/mocha": "^2.2.41",
     "@types/node": "^8.0.13",
     "@types/webpack": "^3.0.4",
-    "webpack": "3.4.1",
     "chai": "^4.0.2",
     "concurrently": "~3.5.0",
     "memory-fs": "^0.4.1",
@@ -50,7 +48,8 @@
     "mocha-loader": "~1.1.1",
     "node-eval": "^1.1.0",
     "ts-mocha": "^1.0.3",
-    "typescript": "^2.4.1"
+    "typescript": "^2.4.1",
+    "webpack": "3.4.1"
   },
   "files": [
     "dist/src",
