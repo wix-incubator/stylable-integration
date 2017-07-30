@@ -1,34 +1,46 @@
 import { Stylesheet, Generator, objectifyCSS, Resolver } from 'stylable';
 import path = require('path');
+import { htap } from "htap";
 const deindent = require('deindent');
 const murmurhash = require('murmurhash');
 
 /* must be flat */
 export const defaults = {
     defaultPrefix: 's',
-    standalone: true
+    standalone: true,
+    assetsDir:'my-assets',
+    assetsUri:'//my-assets'
 };
 
+let currentOptions:typeof defaults;
 //TODO: remove this regexps!!!!
 const relativeImportRegExp1 = /:import\(["']?(\.\/)(.*?)["']?\)/gm;
 const relativeImportRegExp2 = /-st-from\s*:\s*["'](\.\.?\/)(.*?)["']/gm;
+const relativeImportAsset = /url\(s*(\.[^\)]+s*)\)/gm;
 
 export function resolveImports(source: string, context: string) {
     const importMapping: { [key: string]: string } = {};
+    const assetMapping: { [key: string]: string } = {}
     const resolved = source
         .replace(relativeImportRegExp1, replace)
-        .replace(relativeImportRegExp2, replace);
+        .replace(relativeImportRegExp2, replace)
+        .replace(relativeImportAsset,replaceAsset);
 
 
     function replace(match: string, rel: string, thing: string) {
         const relativePath = rel + thing;
-        const fullPath = path.resolve(context, relativePath);
+        const fullPath = path.resolve(htap(context, relativePath));
         importMapping[relativePath] = fullPath;
         importMapping[fullPath] = relativePath;
         return match.replace(relativePath, fullPath);
     }
-
-    return { resolved, importMapping };
+    function replaceAsset(match: string, rel: string) {
+        const distPath = path.resolve(htap(currentOptions.assetsDir, rel));
+        const originPath = path.resolve(htap(context, rel));
+        assetMapping[originPath] = distPath;
+        return match.replace(rel, path.posix.resolve(currentOptions.assetsUri,rel));
+    }
+    return { resolved, importMapping ,assetMapping};
 }
 
 
@@ -54,7 +66,8 @@ export function justImport(path: string) {
 
 export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, options: typeof defaults = defaults) {
 
-    const { resolved, importMapping } = resolveImports(source, context);
+    currentOptions = options;
+    const { resolved, importMapping, assetMapping } = resolveImports(source, context);
     const sheet = createStylesheetWithNamespace(resolved, resourcePath, options.defaultPrefix);
 
     const gen = new Generator({ resolver });
@@ -99,6 +112,6 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
         `;
     }
 
-    return { sheet, code };
+    return { sheet, code, assetMapping };
 
 }

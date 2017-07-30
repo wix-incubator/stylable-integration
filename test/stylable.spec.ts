@@ -9,46 +9,33 @@ const _eval = require('node-eval');
 const murmurhash = require('murmurhash');
 import {Plugin} from '../src/webpack-loader'
 type TestFunction = (evaluated: any, css: string, memfs: MemoryFileSystem) => void
-
+import {fsLike,FSResolver} from '../src/fs-resolver';
 
 import { dirname } from 'path';
 import { Resolver } from 'stylable'; //peer
-import { createStylesheetWithNamespace, resolveImports } from '../src/stylable-transform';
+import { createStylesheetWithNamespace,defaults } from '../src/stylable-transform';
 const nsSeparator = '💠';
-
-
-
-export class MFsResolver extends Resolver {
-    constructor(private prefix: string, private mFs:MemoryFileSystem) {
-        super({});
-    }
-    resolveModule(path: string) {
-        path = path.replace("c:\\",'/')
-        var resolved;
-        if (path.match(/\.css$/)) {
-            resolved = createStylesheetWithNamespace(
-                resolveImports(this.mFs.readFileSync(path, 'utf8'), dirname(path)).resolved,
-                path,
-                this.prefix
-            );
-        } else {
-            resolved = require(path);
-        }
-
-        return resolved;
-    }
+const userConfig = {
+    outDir:'dist',
+    assets:'assets',
+    assetsUri:'/serve-assets'
 }
 
+const folderPath:string = process.cwd();
+const contentPath:string = path.join(folderPath,'sources');
+const distPath:string = path.join(folderPath,userConfig.outDir);
+const assetsPath:string = path.join(distPath,userConfig.assets);
 
-function testJsEntry(entry: string,files:{[key:string]:string}, test: TestFunction, options = {}) {
+function testJsEntry(entry: string,files:{[key:string]:string}, test: TestFunction, options:typeof defaults = {...defaults,assetsDir:assetsPath,assetsUri:userConfig.assetsUri}) {
     const memfs = new MemoryFileSystem();
+    memfs.mkdirpSync(contentPath);
     Object.keys(files).forEach((filename)=>{
-        memfs.writeFileSync('/'+filename,files[filename]);
+        memfs.writeFileSync(path.join(contentPath,filename),files[filename]);
     })
 
 
-    memfs.mkdirpSync('/node_modules/stylable/runtime');
-    memfs.writeFileSync('/node_modules/stylable/runtime/index.js',`
+    memfs.mkdirpSync(path.join(folderPath,'node_modules/stylable/runtime'));
+    memfs.writeFileSync(path.join(folderPath,'node_modules/stylable/runtime/index.js'),`
         module.exports.create = function(rootClass,namespace,namespaceMap,targetCss){
             return {
                 rootClass,
@@ -58,25 +45,26 @@ function testJsEntry(entry: string,files:{[key:string]:string}, test: TestFuncti
             }
         }
     `);
-    // memfs.mkdirpSync(process.cwd());
-    memfs.writeFileSync('/package.json',`
-        {}
+    memfs.writeFileSync(path.join(folderPath,'/package.json'),`
+        {
+            "name":"hello"
+        }
     `);
-    const resolver = new MFsResolver('s',memfs);
+    const resolver = new FSResolver('s',memfs as any);
 	const compiler = webpack({
-        entry: '/'+entry,
+        entry: path.join(contentPath,entry),
 		output: {
-			path:'/dist',
+			path:distPath,
 			filename: 'bundle.js'
 		},
 		plugins: [
-            new Plugin(resolver)
+            new Plugin(resolver,{...defaults,...options})
         ],
 		module: {
 			rules: [
 				{
 					test: /\.css$/,
-					loader: path.join(process.cwd(), '/webpack'),
+					loader: path.join(process.cwd(), 'webpack'),
                     options: Object.assign({resolver}, options)
 
 
@@ -96,8 +84,8 @@ function testJsEntry(entry: string,files:{[key:string]:string}, test: TestFuncti
 
     compiler.run( function (err: Error, stats: any) {
         if (err) { throw err; }
-		const bundle = memfs.readFileSync('/dist/bundle.js', 'utf8');
-        const bundleCss = memfs.readFileSync('/dist/bundle.css', 'utf8');
+		const bundle = memfs.readFileSync(path.join(distPath,'bundle.js'), 'utf8');
+        const bundleCss = memfs.readFileSync(path.join(distPath,'bundle.css'), 'utf8');
 
 		test(_eval(bundle),bundleCss, memfs);
     })
@@ -340,9 +328,8 @@ describe('plugin', function(){
         }
         testJsEntry('main.js',files,(bundle,css,memfs)=>{
             expect(css).to.not.include( 'url(./asset.svg)');
-            expect(css).to.include( 'url(./dist/assets/asset.svg)');
-            expect(memfs.data.dist.assets['asset.svg']).to.eql(files['asset.svg'])
-            debugger;
+            expect(css).to.include( `url(${userConfig.assetsUri}/asset.svg)`);
+            expect(memfs.readFileSync(assetsPath+'\\asset.svg','utf8')).to.eql(files['asset.svg'])
 
             done();
         });

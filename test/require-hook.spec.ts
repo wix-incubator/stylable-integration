@@ -1,11 +1,15 @@
 import { expect } from 'chai';
 import { attachHook } from "../src/require-hook";
 
+const defaults = {
+    assetsDir:'',
+    assetsUri:''
+}
 describe('require-hook', function () {
 
     it('load stylable css with require', function () {
 
-        attachHook({ extension: '.css' });
+        attachHook({ extension: '.css' ,...defaults});
 
         const res = require('./fixtures/test-main.sb.css');
 
@@ -23,6 +27,7 @@ describe('require-hook', function () {
                 }
                 return code;
             }
+            ,...defaults
         });
 
         const res = require('./fixtures/import-relative-local.sb.css');
@@ -42,7 +47,8 @@ describe('require-hook', function () {
                     expect(code).to.match(/color\s*:\s*#333/)
                 }
                 return code;
-            }
+            },
+            ...defaults
         });
 
         const res = require('./fixtures/vars.sb.css');
@@ -61,6 +67,7 @@ describe('require-hook', function () {
                 }
                 return code;
             }
+            ,...defaults
         });
 
         const res = require('./fixtures/imported-vars.sb.css');
