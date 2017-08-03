@@ -9,16 +9,16 @@ const _eval = require('node-eval');
 const murmurhash = require('murmurhash');
 import {Plugin} from '../src/webpack-loader'
 type TestFunction = (evaluated: any, css: string, memfs: MemoryFileSystem) => void
+type TestMultiEntries = (evaluated: any[], csss: string[], memfs: MemoryFileSystem) => void
 import {fsLike,FSResolver} from '../src/fs-resolver';
-
 import { dirname } from 'path';
 import { Resolver } from 'stylable'; //peer
-import { createStylesheetWithNamespace,defaults } from '../src/stylable-transform';
+import {StylableIntegrationDefaults,StylableIntegrationOptions} from '../src/options';
 const nsSeparator = '💠';
 const userConfig = {
     outDir:'dist',
     assets:'assets',
-    assetsUri:'/serve-assets'
+    assetsServerUri:'/serve-assets'
 }
 
 const folderPath:string = process.cwd();
@@ -26,7 +26,8 @@ const contentPath:string = path.join(folderPath,'sources');
 const distPath:string = path.join(folderPath,userConfig.outDir);
 const assetsPath:string = path.join(distPath,userConfig.assets);
 
-function testJsEntry(entry: string,files:{[key:string]:string}, test: TestFunction, options:typeof defaults = {...defaults,assetsDir:assetsPath,assetsUri:userConfig.assetsUri}) {
+
+function getMemFs(files:{[key:string]:string}):MemoryFileSystem{
     const memfs = new MemoryFileSystem();
     memfs.mkdirpSync(contentPath);
     Object.keys(files).forEach((filename)=>{
@@ -50,6 +51,60 @@ function testJsEntry(entry: string,files:{[key:string]:string}, test: TestFuncti
             "name":"hello"
         }
     `);
+    return memfs;
+}
+
+function registerMemFs(compiler:any,memfs:MemoryFileSystem){
+    compiler.inputFileSystem = memfs;
+    compiler.resolvers.normal.fileSystem = memfs;
+    compiler.resolvers.context.fileSystem = memfs;
+    compiler.outputFileSystem = memfs;
+}
+
+function testJsEntries(entries:string[],files:{[key:string]:string},test: TestMultiEntries,options:Partial<StylableIntegrationOptions> = StylableIntegrationDefaults){
+    const memfs = getMemFs(files);
+    const resolver = new FSResolver('s',memfs as any);
+    let entriesRes : {[key:string]:string} = {};
+	const compiler = webpack({
+        entry: entries.reduce((accum,entry)=>{
+            accum[entry] = path.join(contentPath,entry+'.js')
+            return accum;
+        },entriesRes),
+		output: {
+			path:distPath,
+			filename: '[name].js'
+		},
+		plugins: [
+            new Plugin(resolver,{...Object.assign(StylableIntegrationDefaults,options)})
+        ],
+		module: {
+			rules: [
+				{
+					test: /\.css$/,
+					loader: path.join(process.cwd(), 'webpack'),
+                    options: Object.assign({resolver,filename: '[name].css'})
+				}
+			]
+		}
+    });
+
+    registerMemFs(compiler,memfs);
+
+    compiler.run( function (err: Error, stats: any) {
+        if (err) { throw err; }
+		const evaledBundles = entries.map((entry)=>_eval(memfs.readFileSync(path.join(distPath,entry+'.js'), 'utf8')));
+		const bundlesCss = entries.map((entry)=>memfs.readFileSync(path.join(distPath,entry+'.css'), 'utf8'));
+
+		test(evaledBundles,bundlesCss, memfs);
+    })
+}
+
+
+
+
+
+function testJsEntry(entry: string,files:{[key:string]:string}, test: TestFunction, options:StylableIntegrationOptions = {...StylableIntegrationDefaults,assetsDir:assetsPath,assetsServerUri:userConfig.assetsServerUri}) {
+    const memfs = getMemFs(files);
     const resolver = new FSResolver('s',memfs as any);
 	const compiler = webpack({
         entry: path.join(contentPath,entry),
@@ -58,7 +113,7 @@ function testJsEntry(entry: string,files:{[key:string]:string}, test: TestFuncti
 			filename: 'bundle.js'
 		},
 		plugins: [
-            new Plugin(resolver,{...defaults,...options})
+            new Plugin(resolver,{...StylableIntegrationDefaults,...options})
         ],
 		module: {
 			rules: [
@@ -66,21 +121,12 @@ function testJsEntry(entry: string,files:{[key:string]:string}, test: TestFuncti
 					test: /\.css$/,
 					loader: path.join(process.cwd(), 'webpack'),
                     options: Object.assign({resolver}, options)
-
-
-
 				}
 			]
 		}
     });
 
-
-
-    (compiler as any).inputFileSystem = memfs;
-    (compiler as any).resolvers.normal.fileSystem = memfs;
-    (compiler as any).resolvers.context.fileSystem = memfs;
-    (compiler as any).outputFileSystem = memfs;
-
+    registerMemFs(compiler,memfs);
 
     compiler.run( function (err: Error, stats: any) {
         if (err) { throw err; }
@@ -220,6 +266,92 @@ describe('plugin', function(){
             done();
         });
     });
+    it('should work with multiple webpack entries',function(done){
+        const files = {
+            'home.js':jsThatImports(['home.css']),
+            'home.css':`
+                .gaga{
+                    background:green;
+                }
+
+            `,
+            'about.js':jsThatImports(['about.css']),
+            'about.css':`
+                .baga{
+                    background:red;
+                }
+
+            `
+        }
+        const entries = ['home','about'];
+        testJsEntries(entries,files,(bundles,csss,memfs)=>{
+            const homeCssAst = postcss.parse(csss[0]);
+            const homeCssModule = bundles[0].home.default;
+            const aboutCssAst = postcss.parse(csss[1]);
+            const aboutCssModule = bundles[1].about.default;
+            hasNoCls(csss[1],
+                testRule(homeCssModule,homeCssAst,'.gaga','background','green')
+            );
+            hasNoCls(csss[0],
+                testRule(aboutCssModule,aboutCssAst,'.baga','background','red'))
+            done();
+        });
+    });
+
+    it('should add script for appending to html',function(done){
+        const files = {
+            'home.js':jsThatImports(['home.css']),
+            'home.css':`
+                .gaga{
+                    background:green;
+                }
+
+            `,
+            'about.js':jsThatImports(['about.css']),
+            'about.css':`
+                .baga{
+                    background:red;
+                }
+
+            `
+        }
+        const entries = ['home','about'];
+        testJsEntries(entries,files,(bundles,csss,memfs)=>{
+            const homeCssAst = postcss.parse(csss[0]);
+            const homeCssModule = bundles[0].home.default;
+            const aboutCssAst = postcss.parse(csss[1]);
+            const aboutCssModule = bundles[1].about.default;
+            hasNoCls(csss[1],
+                testRule(homeCssModule,homeCssAst,'.gaga','background','green')
+            );
+            hasNoCls(csss[0],
+                testRule(aboutCssModule,aboutCssAst,'.baga','background','red'))
+            done();
+        },{injectBundleCss:true});
+    });
+
+    it('should work with multiple webpack entries importing same css',function(done){
+        const files = {
+            'home.js':jsThatImports(['general.css']),
+            'general.css':`
+                .gaga{
+                    background:green;
+                }
+
+            `,
+            'about.js':jsThatImports(['general.css'])
+        }
+        const entries = ['home','about'];
+        testJsEntries(entries,files,(bundles,csss,memfs)=>{
+            const homeCssAst = postcss.parse(csss[0]);
+            const homeCssModule = bundles[0].general.default;
+            const aboutCssAst = postcss.parse(csss[1]);
+            const aboutCssModule = bundles[1].general.default;
+            testRule(homeCssModule,homeCssAst,'.gaga','background','green');
+            testRule(aboutCssModule,aboutCssAst,'.gaga','background','green');
+            done();
+        });
+    });
     it('should not keep output css across multiple runs',function(done){
         const files = {
             'main.js':jsThatImports(['main.css']),
@@ -317,7 +449,16 @@ describe('plugin', function(){
             'main.js':jsThatImports(['main.css']),
             'main.css':`
                 .gaga{
+                    background:url( ./asset.svg);
+                }
+                .baga{
                     background:url(./asset.svg);
+                }
+                .daga{
+                    background:url("./asset.svg");
+                }
+                .daga{
+                    background:url("./asset.svg");
                 }
             `,
             'asset.svg':`
@@ -327,13 +468,14 @@ describe('plugin', function(){
             `
         }
         testJsEntry('main.js',files,(bundle,css,memfs)=>{
-            expect(css).to.not.include( 'url(./asset.svg)');
-            expect(css).to.include( `url(${userConfig.assetsUri}/asset.svg)`);
+            expect(css).to.not.include( './asset.svg');
+            expect(css.split(`url("${userConfig.assetsServerUri}/asset.svg")`).length,'converted url count').to.equal(5);
             expect(memfs.readFileSync(assetsPath+'\\asset.svg','utf8')).to.eql(files['asset.svg'])
 
             done();
         });
     });
+
     xit('should not generate css for files imported only through css',function(done){
         const files = {
             'main.js':jsThatImports(['main.css']),

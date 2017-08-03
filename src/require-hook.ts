@@ -3,18 +3,18 @@ import { relative, dirname } from "path";
 
 import { transformStylableCSS } from "./stylable-transform";
 import { FSResolver } from "./fs-resolver";
+import {StylableIntegrationOptions} from './options';
 
-export interface Options {
+
+export interface Options extends StylableIntegrationOptions {
     extension: string;
-    assetsDir:string;
-    assetsUri:string;
     afterCompile?: (code: string, filename: string) => string;
 }
 
-export function attachHook({ extension, afterCompile ,assetsDir,assetsUri}: Options) {
+export function attachHook({ extension, afterCompile ,assetsDir, assetsServerUri}: Options) {
     extension = extension || '.css';
     const existingHook = require.extensions[extension];
-    const options = { defaultPrefix: 's', standalone: true ,assetsDir,assetsUri};
+    const options = { defaultPrefix: 's', injectFileCss: true ,assetsDir,assetsServerUri,injectBundleCss:false};
     const resolver = new FSResolver(options.defaultPrefix);
     require.extensions[extension] = function cssModulesHook(m: any, filename: string) {
         const source = readFileSync(filename, 'utf8');

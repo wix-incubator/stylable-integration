@@ -37,8 +37,15 @@ export class FSResolver extends Resolver {
         })
     }
     readFileAsync(path:string):Promise<Buffer | undefined>{
-        return new Promise((resolve)=>{
-            this.fsToUse.readFile(path,(err,data)=>{resolve(data)})
+        return new Promise<Buffer>((resolve,reject)=>{
+            this.fsToUse.readFile(path,(err,data)=>{
+                if(data){
+                    resolve(data)
+                }else{
+                    reject(err);
+                }
+            });
+
         })
     }
 }
