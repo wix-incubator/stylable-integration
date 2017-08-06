@@ -28,10 +28,12 @@ export function resolveImports(source: string, context: string, projectRoot:stri
         return match.replace(relativePath, fullPath);
     }
     function replaceAsset(match: string, rel: string) {
-        const distPath = path.resolve(htap(currentOptions.assetsDir,context, rel));
         const originPath = path.resolve(htap(context, rel));
+        const relativePath = path.relative(projectRoot,originPath);
+        const distPath = path.resolve(htap(currentOptions.assetsDir,relativePath));
         assetMapping[originPath] = distPath;
-        return 'url("'+path.posix.join(currentOptions.assetsServerUri,rel)+'")'
+        const changedSlashes = relativePath.replace(/\\/g,'/')
+        return 'url("'+path.posix.join(currentOptions.assetsServerUri,changedSlashes)+'")'
         // return match.replace(rel, path.posix.resolve(currentOptions.assetsUri,rel));
     }
     return { resolved, importMapping ,assetMapping};

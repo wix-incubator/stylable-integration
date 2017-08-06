@@ -102,7 +102,7 @@ export class Plugin{
                 })
                 .then((content)=>{
 
-                    compilation.assets['gaga'] = {
+                    compilation.assets[projectAssetsMap[assetOriginalPath]] = {
                         source: function(){
                             return content
                         },

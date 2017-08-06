@@ -18,7 +18,7 @@ const nsSeparator = '💠';
 const userConfig = {
     outDir:'dist',
     assets:'assets',
-    assetsServerUri:'/serve-assets'
+    assetsServerUri:'serve-assets'
 }
 
 const folderPath:string = process.cwd();
@@ -469,7 +469,7 @@ describe('plugin', function(){
             done();
         });
     });
-    it.only('should move imported assets to dist/assets ',function(done){
+    it('should move imported assets to dist/assets ',function(done){
         const files = {
             'main.js':jsThatImports(['main.css']),
             'main.css':`
@@ -494,8 +494,8 @@ describe('plugin', function(){
         }
         testJsEntry('main.js',files,(bundle,css,memfs)=>{
             expect(css).to.not.include( './asset.svg');
-            expect(css.split(`url("${userConfig.assetsServerUri}/asset.svg")`).length,'converted url count').to.equal(5);
-            expect(memfs.readFileSync(assetsPath+'\\asset.svg','utf8')).to.eql(files['asset.svg'])
+            expect(css.split(`url("${userConfig.assetsServerUri}/sources/asset.svg")`).length,'converted url count').to.equal(5);
+            expect(memfs.readFileSync(assetsPath+'\\sources\\asset.svg','utf8')).to.eql(files['asset.svg'])
 
             done();
         });
