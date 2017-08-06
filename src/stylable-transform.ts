@@ -11,7 +11,7 @@ const relativeImportRegExp1 = /:import\(["']?(\.\/)(.*?)["']?\)/gm;
 const relativeImportRegExp2 = /-st-from\s*:\s*["'](\.\.?\/)(.*?)["']/gm;
 const relativeImportAsset = /url\s*\(\s*["']?(.*?)["']?\s*\)/gm;
 
-export function resolveImports(source: string, context: string) {
+export function resolveImports(source: string, context: string, projectRoot:string) {
     const importMapping: { [key: string]: string } = {};
     const assetMapping: { [key: string]: string } = {}
     const resolved = source
@@ -28,7 +28,7 @@ export function resolveImports(source: string, context: string) {
         return match.replace(relativePath, fullPath);
     }
     function replaceAsset(match: string, rel: string) {
-        const distPath = path.resolve(htap(currentOptions.assetsDir, rel));
+        const distPath = path.resolve(htap(currentOptions.assetsDir,context, rel));
         const originPath = path.resolve(htap(context, rel));
         assetMapping[originPath] = distPath;
         return 'url("'+path.posix.join(currentOptions.assetsServerUri,rel)+'")'
@@ -58,13 +58,12 @@ export function justImport(path: string) {
     return `require("${path}");`;
 }
 
-export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, options: StylableIntegrationOptions = StylableIntegrationDefaults) {
-
+export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, projectRoot:string, options: StylableIntegrationOptions = StylableIntegrationDefaults) {
     currentOptions = options;
-    const { resolved, importMapping, assetMapping } = resolveImports(source, context);
+    const { resolved, importMapping, assetMapping } = resolveImports(source, context, projectRoot);
     const sheet = createStylesheetWithNamespace(resolved, resourcePath, options.defaultPrefix);
 
-    const gen = new Generator({ resolver });
+    const gen = new Generator({ resolver, namespaceDivider:options.nsDelimiter });
     gen.addEntry(sheet, false);
 
     const imports = sheet.imports.map((importDef: any) => {
@@ -78,8 +77,8 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
     // const runtimePath = path.join(__dirname, "runtime").replace(/\\/gm, "\\\\");
     const runtimePath = 'stylable/runtime';
     // ${imports.join('\n')}
-    let code: string
-    if (options.injectFileCss) {
+    let code:string = '';
+     if (options.injectFileCss) {
         code = deindent`
             Object.defineProperty(exports, "__esModule", { value: true });
             module.exports.default = require("${runtimePath}").create(
@@ -91,11 +90,34 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
             );
         `;
 
+    }else if(options.injectBundleCss){
+        const cssBundleDevLocation = "http://localhost:8080/bundle.css";
+        const bundleAddition =  `if (typeof document !== 'undefined') {
+            style = document.getElementById('cssBundle');
+            if(!style){
+                style = document.createElement('link');
+                style.id = "cssBundle";
+                style.setAttribute('rel','stylesheet');
+                style.setAttribute('href','${cssBundleDevLocation}');
+                document.head.appendChild(style);
+            }else{
+                style.setAttribute('href','${cssBundleDevLocation}?queryBuster=${Math.random()}');
+            }
+        }`
+        code = deindent`
+            Object.defineProperty(exports, "__esModule", { value: true });
+            ${bundleAddition};
+            module.exports.default = module.exports.locals = require("${runtimePath}").create(
+                ${root},
+                ${namespace},
+                ${classes},
+                null,
+                module.id
+            );
+        `;
     } else {
         code = deindent`
             Object.defineProperty(exports, "__esModule", { value: true });
-            ${imports.join('\n')}
-            module.exports = [[module.id, ${css}, ""]];
             module.exports.default = module.exports.locals = require("${runtimePath}").create(
                 ${root},
                 ${namespace},

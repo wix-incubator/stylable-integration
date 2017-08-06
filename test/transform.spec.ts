@@ -5,6 +5,8 @@ import {StylableIntegrationDefaults,StylableIntegrationOptions} from '../src/opt
 const _eval = require('node-eval');
 const separator:string ='💠';
 
+
+const vanillaOptions =  {assetsDir:'assets',defaultPrefix:'s',assetsServerUri:'//',injectFileCss:false,injectBundleCss:false,nsDelimiter:separator};
 describe('loader', function () {
     it('should transform imports', function () {
 
@@ -16,7 +18,7 @@ describe('loader', function () {
 
             :import("./style.sb.css"){}
 
-        `, '', 'f:/', resolver, StylableIntegrationDefaults)
+        `, '', 'f:/', resolver,'f:/',vanillaOptions)
         const evaledRes = _eval(res.code,process.cwd()+'/src');
         const expectedNs = "s0";
         const sheet = evaledRes.default.$stylesheet;
@@ -37,7 +39,7 @@ describe('loader', function () {
                 -st-from: "./style.sb.css";
             }
 
-        `, '', 'f:/', resolver, StylableIntegrationDefaults)
+        `, '', 'f:/', resolver, 'f:/', StylableIntegrationDefaults)
         const evaledRes = _eval(res.code,process.cwd()+'/src');
 
         const expectedNs = "s0";

@@ -11,7 +11,7 @@ import webpack = require('webpack');
 let firstRun:boolean = true;
 
 let used : StylableSheet[] = [];
-let projectAssetMapping:{[originalPath:string]:string} = {};
+let projectAssetsMap:{[key:string]:string} = {};
 
 
 function createIsUsedComment(ns:string){
@@ -20,17 +20,18 @@ function createIsUsedComment(ns:string){
 
 export function loader(this:webpack.loader.LoaderContext, source: string) {
     const options = { ...StylableIntegrationDefaults, ...loaderUtils.getOptions(this) };
-    const resolver = (options as any).resolver || new FSResolver(options.defaultPrefix);
+    const resolver = (options as any).resolver || new FSResolver(options.defaultPrefix,this.options.context);
     const { sheet, code,assetMapping } = transformStylableCSS(
         source,
         this.resourcePath,
         this.context,
         resolver,
+        this.options.context,
         options
     );
     const codeWithComment = code + createIsUsedComment(sheet.namespace);
 
-    Object.assign(projectAssetMapping,assetMapping);
+    Object.assign(projectAssetsMap, assetMapping);
     used.push(sheet);
     this.addDependency('stylable');
 
@@ -43,23 +44,20 @@ export function loader(this:webpack.loader.LoaderContext, source: string) {
 
 
 export class Plugin{
-    constructor(private resolver:FSResolver = new FSResolver(StylableIntegrationDefaults.defaultPrefix),private options:StylableIntegrationOptions){
+    constructor(private resolver:FSResolver,private options:StylableIntegrationOptions){
     };
     apply = (compiler:webpack.Compiler)=>{
         const that = this;
-
         compiler.plugin('emit',(compilation,callback)=>{
             const entryOptions:string | {[key:string]:string | string[]} | undefined | string[] = compiler.options.entry;
             const entries = typeof entryOptions === 'object' ? entryOptions : {'bundle':entryOptions};
             Object.keys(entries).forEach(entryName=>{
-                console.info('looking for:'+entryName);
-                console.info(compilation.assets)
 
                 const entryContent = compilation.assets[entryName+'.js'].source();
 
                 const options = { ...StylableIntegrationDefaults, ...this.options };
 
-                const gen = new Generator({resolver:that.resolver});
+                const gen = new Generator({resolver:that.resolver, namespaceDivider:options.nsDelimiter});
 
                 used.reverse().forEach((sheet)=>{
                     const idComment = createIsUsedComment(sheet.namespace);
@@ -70,13 +68,14 @@ export class Plugin{
                 const resultCssBundle = gen.buffer.join('\n');
                 compilation.assets[entryName+'.css'] = {
                     source: function(){
-                        return resultCssBundle
+                        return new Buffer(resultCssBundle,"utf-8")
                     },
                     size: function(){
-                        return resultCssBundle.length;
+                        return Buffer.byteLength(resultCssBundle,"utf-8");
                     }
                 }
-                // const bundleAddition = ''// ';\n alert("gaga");'
+                const cssBundleDevLocation = '//'+entryName+'.css'
+
                 // const originalBundle = compilation.assets[entryName+'.js']
                 // compilation.assets[entryName+'.js'] = {
                 //     source: function(){
@@ -91,8 +90,7 @@ export class Plugin{
 
             used = [];
             let stats:Stats;
-            Promise.all(Object.keys(projectAssetMapping).map((assetOriginalPath)=>{
-                const globalPath = projectAssetMapping[assetOriginalPath];
+            Promise.all(Object.keys(projectAssetsMap).map((assetOriginalPath)=>{
                 return this.resolver.statAsync(assetOriginalPath)
                 .then((stat)=>{
                     // We don't write empty directories
@@ -103,7 +101,8 @@ export class Plugin{
                     return this.resolver.readFileAsync(assetOriginalPath)
                 })
                 .then((content)=>{
-                    compilation.assets[globalPath] = {
+
+                    compilation.assets['gaga'] = {
                         source: function(){
                             return content
                         },
@@ -114,7 +113,7 @@ export class Plugin{
                 })
             }))
             .then(()=>{
-                projectAssetMapping = {};
+                projectAssetsMap = {};
                 callback()
             })
 

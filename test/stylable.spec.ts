@@ -105,7 +105,7 @@ function testJsEntries(entries:string[],files:{[key:string]:string},test: TestMu
 
 function testJsEntry(entry: string,files:{[key:string]:string}, test: TestFunction, options:StylableIntegrationOptions = {...StylableIntegrationDefaults,assetsDir:assetsPath,assetsServerUri:userConfig.assetsServerUri}) {
     const memfs = getMemFs(files);
-    const resolver = new FSResolver('s',memfs as any);
+    const resolver = new FSResolver('s',process.cwd(),memfs as any);
 	const compiler = webpack({
         entry: path.join(contentPath,entry),
 		output: {
@@ -132,7 +132,6 @@ function testJsEntry(entry: string,files:{[key:string]:string}, test: TestFuncti
         if (err) { throw err; }
 		const bundle = memfs.readFileSync(path.join(distPath,'bundle.js'), 'utf8');
         const bundleCss = memfs.readFileSync(path.join(distPath,'bundle.css'), 'utf8');
-
 		test(_eval(bundle),bundleCss, memfs);
     })
 }
@@ -317,15 +316,8 @@ describe('plugin', function(){
         }
         const entries = ['home','about'];
         testJsEntries(entries,files,(bundles,csss,memfs)=>{
-            const homeCssAst = postcss.parse(csss[0]);
-            const homeCssModule = bundles[0].home.default;
-            const aboutCssAst = postcss.parse(csss[1]);
-            const aboutCssModule = bundles[1].about.default;
-            hasNoCls(csss[1],
-                testRule(homeCssModule,homeCssAst,'.gaga','background','green')
-            );
-            hasNoCls(csss[0],
-                testRule(aboutCssModule,aboutCssAst,'.baga','background','red'))
+            const homeBundleStr:string = memfs.readFileSync(path.join(distPath,'home.js')).toString();
+            expect(homeBundleStr).to.include('document.createElement');
             done();
         },{injectBundleCss:true});
     });
@@ -444,7 +436,40 @@ describe('plugin', function(){
             done();
         });
     });
-    it('should move imported assets to dist/assets ',function(done){
+    it('should resolve variables',function(done){
+        const files = {
+            'main.js':jsThatImports(['child.js','main.css']),
+            'child.js':jsThatImports(['child.css']),
+            'main.css':`
+                :import{
+                    -st-from:'./child.css';
+                    -st-named:zag;
+                }
+                :vars{
+                    zig:white;
+                }
+                .gaga{
+                    color:value(zag);
+                    background:value(zig);
+                }
+            `,
+            'child.css':`
+                :vars{
+                    zag:red;
+                }
+
+            `
+        }
+        testJsEntry('main.js',files,(bundle,css)=>{
+            const cssAst =  postcss.parse(css);
+            const cssModule = bundle.main.default;
+            const childCssModule = bundle.child.child.default;
+            testRule(cssModule,cssAst,'.gaga','background','white');
+            testRule(cssModule,cssAst,'.gaga','color','red');
+            done();
+        });
+    });
+    it.only('should move imported assets to dist/assets ',function(done){
         const files = {
             'main.js':jsThatImports(['main.css']),
             'main.css':`

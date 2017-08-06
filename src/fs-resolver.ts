@@ -12,14 +12,14 @@ export interface fsLike {
 }
 
 export class FSResolver extends Resolver {
-    constructor(private prefix: string, private fsToUse:fsLike = fs) {
+    constructor(private prefix: string, private projectRoot:string, private fsToUse:fsLike = fs) {
         super({});
     }
     resolveModule(path: string) {
         var resolved;
         if (path.match(/\.css$/)) {
             resolved = createStylesheetWithNamespace(
-                resolveImports(this.fsToUse.readFileSync(path, 'utf8'), dirname(path)).resolved,
+                resolveImports(this.fsToUse.readFileSync(path, 'utf8'), dirname(path),this.projectRoot).resolved,
                 path,
                 this.prefix
             );

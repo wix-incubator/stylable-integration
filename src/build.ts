@@ -40,7 +40,7 @@ const cwd = argv.cwd;
 const match = argv.match;
 const fullSrcDir = join(cwd, srcDir);
 const fullMatch = htap(srcDir, match);
-const resolver = new FSResolver('s');
+const resolver = new FSResolver('s',cwd);
 
 log('[Arguments]',argv);
 
@@ -51,7 +51,7 @@ glob(fullMatch, {}, function (er: Error, files: string[]) {
         const outPath = join(cwd, outDir, fullpath.replace(fullSrcDir, '') + '.js');
         log('[Build]', fullpath + ' --> ' + outPath);
         const content = tryRun(() => fs.readFileSync(fullpath, 'utf8'), 'Read File Error');
-        const { code } = tryRun(() => transformStylableCSS(content, fullpath, dirname(fullpath), resolver), 'Transform Error');
+        const { code } = tryRun(() => transformStylableCSS(content, fullpath, dirname(fullpath), resolver,cwd), 'Transform Error');
         tryRun(() => fs.outputFileSync(outPath, code), 'Write File Error');
     });
 
