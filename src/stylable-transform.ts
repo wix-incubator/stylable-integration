@@ -65,17 +65,24 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
     const { resolved, importMapping, assetMapping } = resolveImports(source, context, projectRoot);
     const sheet = createStylesheetWithNamespace(resolved, resourcePath, options.defaultPrefix);
 
-    const gen = new Generator({ resolver, namespaceDivider:options.nsDelimiter });
-    gen.addEntry(sheet, false);
+
 
     const imports = sheet.imports.map((importDef: any) => {
         return justImport(importMapping[importDef.from]);
     });
 
+    let css:string = '';
+    const gen = new Generator({ resolver, namespaceDivider:options.nsDelimiter });
+    gen.addEntry(sheet, false);
+    if(options.injectFileCss){
+        css = JSON.stringify(gen.buffer.join('\n'))
+    }
+
+
+
     const root = JSON.stringify(sheet.root);
     const namespace = JSON.stringify(sheet.namespace);
     const classes = JSON.stringify(Object.assign({}, sheet.vars, sheet.classes));
-    const css = options.injectFileCss ? JSON.stringify(gen.buffer.join('\n')) : '';
     // const runtimePath = path.join(__dirname, "runtime").replace(/\\/gm, "\\\\");
     const runtimePath = 'stylable/runtime';
     // ${imports.join('\n')}

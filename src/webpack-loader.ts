@@ -44,21 +44,18 @@ export function loader(this:webpack.loader.LoaderContext, source: string) {
 
 
 export class Plugin{
-    constructor(private resolver:FSResolver,private options:StylableIntegrationOptions){
+    constructor(private options:StylableIntegrationOptions,private resolver?:FSResolver){
     };
     apply = (compiler:webpack.Compiler)=>{
-        const that = this;
+
         compiler.plugin('emit',(compilation,callback)=>{
             const entryOptions:string | {[key:string]:string | string[]} | undefined | string[] = compiler.options.entry;
             const entries = typeof entryOptions === 'object' ? entryOptions : {'bundle':entryOptions};
+            const options = { ...StylableIntegrationDefaults, ...this.options };
+            const resolver = this.resolver || new FSResolver(options.defaultPrefix,compilation.options.context);
             Object.keys(entries).forEach(entryName=>{
-
                 const entryContent = compilation.assets[entryName+'.js'].source();
-
-                const options = { ...StylableIntegrationDefaults, ...this.options };
-
-                const gen = new Generator({resolver:that.resolver, namespaceDivider:options.nsDelimiter});
-
+                const gen = new Generator({resolver, namespaceDivider:options.nsDelimiter});
                 used.reverse().forEach((sheet)=>{
                     const idComment = createIsUsedComment(sheet.namespace);
                     if(entryContent.indexOf(idComment)!==-1){
@@ -86,19 +83,19 @@ export class Plugin{
                 //     }
                 // }
 
-            })
+            });
 
             used = [];
             let stats:Stats;
             Promise.all(Object.keys(projectAssetsMap).map((assetOriginalPath)=>{
-                return this.resolver.statAsync(assetOriginalPath)
+                return resolver.statAsync(assetOriginalPath)
                 .then((stat)=>{
                     // We don't write empty directories
                     if (stat.isDirectory()) {
                         return;
                     };
                     stats = stat;
-                    return this.resolver.readFileAsync(assetOriginalPath)
+                    return resolver.readFileAsync(assetOriginalPath)
                 })
                 .then((content)=>{
 
