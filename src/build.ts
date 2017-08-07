@@ -38,14 +38,13 @@ const outDir = argv.outDir;
 const srcDir = argv.srcDir;
 const cwd = argv.cwd;
 const match = argv.match;
-const injectFileCss = argv.injectFileCss;
 const fullSrcDir = join(cwd, srcDir);
 const fullMatch = htap(srcDir, match);
 const resolver = new FSResolver('s',cwd);
 
 log('[Arguments]',argv);
 
-build(match,fs,resolver,outDir,srcDir,cwd,glob,injectFileCss,log);
+build(match,fs,resolver,outDir,srcDir,cwd,glob,log);
 
 function createLogger(prefix: string, shouldLog: boolean) {
     return function log(...messages: string[]) {
