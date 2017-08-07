@@ -35,7 +35,7 @@ describe('require-hook', function () {
     });
 
 
-    xit('load stylable css with vars', function () {
+    it('load stylable css with vars', function () {
         var called = false;
         attachHook({
             extension: '.css',
@@ -54,7 +54,7 @@ describe('require-hook', function () {
     });
 
 
-    xit('load stylable css with imported vars', function () {
+    it('load stylable css with imported vars', function () {
         var called = false;
         attachHook({
             extension: '.css',
