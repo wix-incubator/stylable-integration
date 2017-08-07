@@ -275,7 +275,7 @@ describe('plugin', function(){
             done();
         },userConfig);
     });
-    it('should move imported assets to dist/assets ',function(done){
+    it('should move imported assets to dist/assets svg',function(done){
         const files = {
             'main.js':jsThatImports(['./main.css']),
             'main.css':`
@@ -306,7 +306,25 @@ describe('plugin', function(){
             done();
         },userConfig);
     });
+    it('should move imported assets to dist/assets jpg',function(done){
+        const banana = fs.readFileSync('./test/fixtures/banana.jpg');
+        const files = {
+            'main.js':jsThatImports(['./main.css']),
+            'main.css':`
+                .daga{
+                    background:url("./banana.jpg");
+                }
+            `,
+            'banana.jpg':banana
+        }
+        testJsEntry('main.js',files,(bundle,css,memfs)=>{
+            expect(css).to.not.include( './banana.jpg');
+            expect(css.split(`url("${userConfig.assetsServerUri}/sources/banana.jpg")`).length,'converted url count').to.equal(2);
+            expect(memfs.readFileSync(getAssetPath(userConfig)+'\\sources\\banana.jpg')).to.eql(files['banana.jpg'])
 
+            done();
+        },userConfig);
+    });
     xit('should not generate css for files imported only through css',function(done){
         const files = {
             'main.js':jsThatImports(['./main.css']),

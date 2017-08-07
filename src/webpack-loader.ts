@@ -4,6 +4,7 @@ import { Stylesheet as StylableSheet, Generator, objectifyCSS, Resolver } from '
 import { FSResolver } from "./fs-resolver";
 import { StylableIntegrationDefaults,StylableIntegrationOptions} from './options';
 import loaderUtils = require('loader-utils');
+import { dirname } from 'path';
 import webpack = require('webpack');
 
 // const assetDir:string = '/dist/assets';
@@ -19,6 +20,9 @@ function createIsUsedComment(ns:string){
 }
 
 export function loader(this:webpack.loader.LoaderContext, source: string) {
+    console.log('loader start '+source);
+
+
     const options = { ...StylableIntegrationDefaults, ...loaderUtils.getOptions(this) };
     const resolver = (options as any).resolver || new FSResolver(options.defaultPrefix,this.options.context);
     const { sheet, code,assetMapping } = transformStylableCSS(
@@ -30,7 +34,7 @@ export function loader(this:webpack.loader.LoaderContext, source: string) {
         options
     );
     const codeWithComment = code + createIsUsedComment(sheet.namespace);
-
+    console.log('adding assets',assetMapping)
     Object.assign(projectAssetsMap, assetMapping);
     used.push(sheet);
     this.addDependency('stylable');
@@ -38,10 +42,31 @@ export function loader(this:webpack.loader.LoaderContext, source: string) {
     // sheet.imports.forEach((importDef: any) => {
     //     this.addDependency(importDef.from);
     // });
-
+    console.log('loader end '+source);
     return codeWithComment;
 };
 
+function isArray(a:any): a is Array<any>{
+    return !!a.push
+}
+
+const ensureDir = (dir:string,fs:any) => {
+  // This will create a dir given a path such as './folder/subfolder'
+  const splitPath = dir.split('\\');
+  splitPath.reduce((path, subPath) => {
+    let currentPath;
+    if(subPath != '.'){
+      currentPath = path + '\\' + subPath;
+      if (!fs.existsSync(currentPath)){
+        fs.mkdirSync(currentPath);
+      }
+    }
+    else{
+      currentPath = subPath;
+    }
+    return currentPath
+  }, '')
+}
 
 export class Plugin{
     constructor(private options:StylableIntegrationOptions,private resolver?:FSResolver){
@@ -50,10 +75,20 @@ export class Plugin{
 
         compiler.plugin('emit',(compilation,callback)=>{
             const entryOptions:string | {[key:string]:string | string[]} | undefined | string[] = compiler.options.entry;
-            const entries = typeof entryOptions === 'object' ? entryOptions : {'bundle':entryOptions};
+            let entries:{[key:string]:string | string[]} = typeof entryOptions === 'object' ? entryOptions as any : {'bundle':entryOptions};
+            let simpleEntries:{[key:string]:string} = {};
+            Object.keys(entries).forEach((entryName:string)=>{
+                const entry = entries[entryName];
+                if(isArray(entry)){
+                    simpleEntries[entryName] = entry[entry.length-1];
+                }else{
+                    simpleEntries[entryName] = entry;
+                }
+            })
+            console.log('emiting ',simpleEntries);
             const options = { ...StylableIntegrationDefaults, ...this.options };
             const resolver = this.resolver || new FSResolver(options.defaultPrefix,compilation.options.context);
-            Object.keys(entries).forEach(entryName=>{
+            Object.keys(simpleEntries).forEach(entryName=>{
                 const entryContent = compilation.assets[entryName+'.js'].source();
                 const gen = new Generator({resolver, namespaceDivider:options.nsDelimiter});
                 used.reverse().forEach((sheet)=>{
@@ -84,12 +119,13 @@ export class Plugin{
                 // }
 
             });
-
+            console.log('emiting assets '+projectAssetsMap);
             used = [];
             let stats:Stats;
             Promise.all(Object.keys(projectAssetsMap).map((assetOriginalPath)=>{
                 return resolver.statAsync(assetOriginalPath)
                 .then((stat)=>{
+                    console.log('emiting asset '+assetOriginalPath);
                     // We don't write empty directories
                     if (stat.isDirectory()) {
                         return;
@@ -98,20 +134,28 @@ export class Plugin{
                     return resolver.readFileAsync(assetOriginalPath)
                 })
                 .then((content)=>{
-
-                    compilation.assets[projectAssetsMap[assetOriginalPath]] = {
-                        source: function(){
-                            return content
-                        },
-                        size: function(){
-                            return stats.size;
-                        }
-                    }
+                     console.log('writing asset '+projectAssetsMap[assetOriginalPath]);
+                     const fs = resolver.fsToUse;
+                     const targetPath = projectAssetsMap[assetOriginalPath];
+                     const targetDir = dirname(targetPath).slice(3);
+                     console.log('creating '+targetDir);
+                     ensureDir(targetDir,fs);
+                      console.log('created '+targetDir);
+                     fs.writeFileSync(targetPath,content);
+                    // compilation.assets[projectAssetsMap[assetOriginalPath]] = {
+                    //     source: function(){
+                    //         return content
+                    //     },
+                    //     size: function(){
+                    //         return content!.byteLength;
+                    //     }
+                    // }
                 })
             }))
             .then(()=>{
+                console.log('done ');
                 projectAssetsMap = {};
-                callback()
+                callback();
             })
 
 

@@ -11,10 +11,13 @@ export interface fsLike {
     stat:typeof fs.stat;
     readdir:typeof fs.readdir;
     readlink:typeof fs.readlink;
+    existsSync:typeof fs.existsSync;
+    writeFileSync:typeof fs.writeFileSync;
+    mkdirSync:typeof fs.mkdirSync;
 }
 
 export class FSResolver extends Resolver {
-    constructor(private prefix: string, private projectRoot:string, private fsToUse:fsLike = fs) {
+    constructor(private prefix: string, private projectRoot:string, public fsToUse:fsLike = fs) {
         super({});
     }
     resolveModule(path: string) {
