@@ -139,17 +139,17 @@ export class Plugin{
                      const targetPath = projectAssetsMap[assetOriginalPath];
                      const targetDir = dirname(targetPath).slice(3);
                      console.log('creating '+targetDir);
-                     ensureDir(targetDir,fs);
+                    //  ensureDir(targetDir,fs);
                       console.log('created '+targetDir);
-                     fs.writeFileSync(targetPath,content);
-                    // compilation.assets[projectAssetsMap[assetOriginalPath]] = {
-                    //     source: function(){
-                    //         return content
-                    //     },
-                    //     size: function(){
-                    //         return content!.byteLength;
-                    //     }
-                    // }
+                    //  fs.writeFileSync(targetPath,content);
+                    compilation.assets[targetPath.slice(3)] = {
+                        source: function(){
+                            return content
+                        },
+                        size: function(){
+                            return content!.byteLength;
+                        }
+                    }
                 })
             }))
             .then(()=>{
