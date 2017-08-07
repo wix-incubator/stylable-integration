@@ -10,7 +10,7 @@ import {Plugin} from '../src/webpack-loader'
 import {fsLike,FSResolver} from '../src/fs-resolver';
 import { dirname } from 'path';
 import { Resolver } from 'stylable'; //peer
-import {dotLess,expectRule,expectRuleOrder,findDecl,findRule,getContentPath,getDistPath,getMemFs,getRuleValue,hasNoCls,isDecl,isRule,jsThatImports,nsChunk,nsSeparator,registerMemFs,selectorClsChunk,TestFunction,testJsEntries,testJsEntry,TestMultiEntries,testRule,textComplexRule,UserConfig,getAssetPath} from '../test-kit/index';
+import {dotLess,expectRule,expectRuleOrder,findDecl,findRule,getContentPath,getDistPath,getMemFs,getRuleValue,hasNoCls,isDecl,isRule,jsThatImports,nsChunk,nsSeparator,registerMemFs,selectorClsChunk,TestFunction,testJsEntries,testJsEntry,TestMultiEntries,testRule,testComplexRule,UserConfig,getAssetPath} from '../test-kit/index';
 import {StylableIntegrationDefaults,StylableIntegrationOptions} from '../src/options';
 const userConfig:UserConfig = {
     rootPath:process.cwd(),
@@ -94,6 +94,39 @@ describe('plugin', function(){
             done();
         },userConfig,{injectBundleCss:true});
     });
+
+
+     it('should include css in modules in injectFileCss mode',function(done){
+        const files = {
+            'home.js':jsThatImports(['./home.css']),
+            'home.css':`
+                .gaga{
+                    background:green;
+                }
+
+            `,
+            'about.js':jsThatImports(['./about.css']),
+            'about.css':`
+                .baga{
+                    background:red;
+                }
+
+            `
+        }
+        const entries = ['home','about'];
+        testJsEntries(entries,files,(bundles,csss,memfs)=>{
+            const homeBundle = bundles[0].home.default;
+            const homeBundleTargetAst = postcss.parse(homeBundle.targetCss);
+            testRule(homeBundle,homeBundleTargetAst,'.gaga','background','green');
+
+
+            const aboutBundle = bundles[1].about.default;
+            const aboutBundleTargetAst = postcss.parse(aboutBundle.targetCss);
+            testRule(aboutBundle,aboutBundleTargetAst,'.baga','background','red');
+            done();
+        },userConfig,{injectFileCss:true});
+    });
+
 
     it('should work with multiple webpack entries importing same css',function(done){
         const files = {
@@ -201,8 +234,8 @@ describe('plugin', function(){
             const childCssModule = bundle.child.child.default;
             expectRuleOrder(cssAst,[
                 testRule(childCssModule,cssAst,'.baga','background','green'),
-                textComplexRule(cssAst,[{m:cssModule,cls:'.gaga'},{m:childCssModule,cls:'.root'}],'color','red'),
-                textComplexRule(cssAst,[{m:cssModule,cls:'.gaga'},{m:childCssModule,cls:'.baga'}],'color','blue')
+                testComplexRule(cssAst,[{m:cssModule,cls:'.gaga'},{m:childCssModule,cls:'.root'}],'color','red'),
+                testComplexRule(cssAst,[{m:cssModule,cls:'.gaga'},{m:childCssModule,cls:'.baga'}],'color','blue')
             ]);
 
 
