@@ -310,7 +310,7 @@ describe('plugin', function(){
             done();
         },testConfig);
     });
-    it('should not break on missing asset',function(done){
+    it('should not replace missing asset',function(done){
         const files = {
             'main.js':jsThatImports(['./main.css']),
             'main.css':`
@@ -329,8 +329,7 @@ describe('plugin', function(){
             `
         }
         testJsEntry('main.js',files,(bundle,css,memfs)=>{
-            expect(css).to.not.include( './asset.svg');
-            expect(css.split(`url("${testConfig.assetsServerUri}/sources/asset.svg")`).length,'converted url count').to.equal(5);
+            expect(css.split('./asset.svg')).to.equal(5);
             // expect(memfs.readFileSync(getAssetPath(userConfig)+'\\sources\\asset.svg','utf8')).to.eql(files['asset.svg'])
 
             done();
