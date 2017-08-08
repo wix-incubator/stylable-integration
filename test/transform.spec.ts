@@ -1,14 +1,10 @@
 import { expect } from 'chai';
 import * as transform from '../src/stylable-transform';
 import { Resolver, Stylesheet } from 'stylable';
-import {StylableIntegrationDefaults,StylableIntegrationOptions} from '../src/options';
-const _eval = require('node-eval');
-const separator:string ='💠';
 
-
-const vanillaOptions =  {assetsDir:'assets',defaultPrefix:'s',assetsServerUri:'//',injectFileCss:false,injectBundleCss:false,nsDelimiter:separator};
 describe('loader', function () {
-    it('should transform imports', function () {
+
+    it('should output valid module', function () {
 
         const resolver = new Resolver({
             "f:\\style.sb.css": new Stylesheet({})
@@ -18,16 +14,25 @@ describe('loader', function () {
 
             :import("./style.sb.css"){}
 
-        `, '', 'f:/', resolver,'f:/',vanillaOptions)
-        const evaledRes = _eval(res.code,process.cwd()+'/src');
-        const expectedNs = "s0";
-        const sheet = evaledRes.default.$stylesheet;
-        expect(sheet.namespace).to.equal(expectedNs);
-        expect(sheet.get('root')).to.equal(expectedNs+separator+"root");
-    });
+        `, '', 'f:/', resolver, transform.defaults)
+
+        expect(res.code.replace(/\s*/gm, '')).to.equal(`
+            Object.defineProperty(exports, "__esModule", { value: true });
+            require("./style.sb.css");
+            module.exports.default = require("stylable/runtime").create(
+                "root",
+                "s0",
+                {"root":"s0💠root"},
+                "",
+                module.id
+            );
+        `.replace(/\s*/gm, ''))
 
 
-    it('should transform imports 2', function () {
+    })
+
+
+    it('should output valid module12', function () {
 
         const resolver = new Resolver({
             "f:\\style.sb.css": new Stylesheet({})
@@ -39,15 +44,22 @@ describe('loader', function () {
                 -st-from: "./style.sb.css";
             }
 
-        `, '', 'f:/', resolver, 'f:/', StylableIntegrationDefaults)
-        const evaledRes = _eval(res.code,process.cwd()+'/src');
+        `, '', 'f:/', resolver, transform.defaults)
 
-        const expectedNs = "s0";
-        const sheet = evaledRes.default.$stylesheet;
-        expect(sheet.namespace).to.equal(expectedNs);
-        expect(sheet.get('root')).to.equal(expectedNs+separator+"root");
-    });
+        expect(res.code.replace(/\s*/gm, '')).to.equal(`
+            Object.defineProperty(exports, "__esModule", { value: true });
+            require("./style.sb.css");
+            module.exports.default = require("stylable/runtime").create(
+                "root",
+                "s0",
+                {"root":"s0💠root"},
+                "",
+                module.id
+            );
+        `.replace(/\s*/gm, ''))
 
+
+    })
 
 
 });
