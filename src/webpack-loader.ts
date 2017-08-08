@@ -1,10 +1,11 @@
-import { readFileSync, Stats } from 'fs';
+import { readFileSync } from 'fs';
 import { transformStylableCSS } from './stylable-transform';
 import { Stylesheet as StylableSheet, Generator, objectifyCSS, Resolver } from 'stylable';
 import { FSResolver } from "./fs-resolver";
 import { StylableIntegrationDefaults,StylableIntegrationOptions} from './options';
 import loaderUtils = require('loader-utils');
 import { dirname } from 'path';
+import {ensureAssets} from "./assetor";
 import webpack = require('webpack');
 
 // const assetDir:string = '/dist/assets';
@@ -45,6 +46,8 @@ function isArray(a:any): a is Array<any>{
     return !!a.push
 }
 
+
+
 export class Plugin{
     constructor(private options:StylableIntegrationOptions,private resolver?:FSResolver){
     };
@@ -82,51 +85,12 @@ export class Plugin{
                         return Buffer.byteLength(resultCssBundle,"utf-8");
                     }
                 }
-                const cssBundleDevLocation = '//'+entryName+'.css'
-
-                // const originalBundle = compilation.assets[entryName+'.js']
-                // compilation.assets[entryName+'.js'] = {
-                //     source: function(){
-                //         return originalBundle.source+bundleAddition;
-                //     },
-                //     size: function(){
-                //         return originalBundle.size+bundleAddition.length;
-                //     }
-                // }
 
             });
             used = [];
-            let stats:Stats;
-            Promise.all(Object.keys(projectAssetsMap).map((assetOriginalPath)=>{
-                return resolver.statAsync(assetOriginalPath)
-                .then((stat)=>{
-                    // We don't write empty directories
-                    if (stat.isDirectory()) {
-                        return;
-                    };
-                    stats = stat;
-                    return resolver.readFileAsync(assetOriginalPath)
-                })
-                .then((content)=>{
-                    const fs = resolver.fsToUse;
-                    const rootPath = compilation.options.context;
-                    const targetPath = '../'+projectAssetsMap[assetOriginalPath].replace(rootPath,'');
-                    compilation.assets[targetPath] = {
-                        source: function(){
-                            return content
-                        },
-                        size: function(){
-                            return content!.byteLength;
-                        }
-                    }
-                })
-            }))
-            .then(()=>{
-                projectAssetsMap = {};
-                callback();
-            })
-
-
+            ensureAssets(projectAssetsMap,resolver,compilation.options.context)
+            projectAssetsMap = {};
+            callback();
         });
     }
 }

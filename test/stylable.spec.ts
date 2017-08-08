@@ -306,6 +306,32 @@ describe('plugin', function(){
             done();
         },userConfig);
     });
+    it('should not break on missing asset',function(done){
+        const files = {
+            'main.js':jsThatImports(['./main.css']),
+            'main.css':`
+                .gaga{
+                    background:url( ./asset.svg);
+                }
+                .baga{
+                    background:url(./asset.svg);
+                }
+                .daga{
+                    background:url("./asset.svg");
+                }
+                .daga{
+                    background:url("./asset.svg");
+                }
+            `
+        }
+        testJsEntry('main.js',files,(bundle,css,memfs)=>{
+            expect(css).to.not.include( './asset.svg');
+            expect(css.split(`url("${userConfig.assetsServerUri}/sources/asset.svg")`).length,'converted url count').to.equal(5);
+            // expect(memfs.readFileSync(getAssetPath(userConfig)+'\\sources\\asset.svg','utf8')).to.eql(files['asset.svg'])
+
+            done();
+        },userConfig);
+    });
     it('should move imported assets to dist/assets jpg',function(done){
         const banana = fs.readFileSync('./test/fixtures/banana.jpg');
         const files = {
