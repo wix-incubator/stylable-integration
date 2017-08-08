@@ -11,7 +11,7 @@ const relativeImportRegExp1 = /:import\(["']?(\.\/)(.*?)["']?\)/gm;
 const relativeImportRegExp2 = /-st-from\s*:\s*["'](\.\.?\/)(.*?)["']/gm;
 const relativeImportAsset = /url\s*\(\s*["']?(.*?)["']?\s*\)/gm;
 
-export function resolveImports(source: string, context: string, projectRoot:string) {
+export function resolveImports(source: string, context: string, projectRoot:string, assetVersions?:{[origPath:string]:number}) {
     const importMapping: { [key: string]: string } = {};
     const assetMapping: { [key: string]: string } = {}
     const resolved = source
@@ -30,10 +30,11 @@ export function resolveImports(source: string, context: string, projectRoot:stri
     function replaceAsset(match: string, rel: string) {
         const originPath = path.resolve(htap(context, rel));
         const relativePath = path.relative(projectRoot,originPath);
+        const buster = assetVersions && assetVersions[originPath] ? '?buster='+assetVersions[originPath] : '';
         const distPath = path.resolve(htap(currentOptions.assetsDir,relativePath));
         assetMapping[originPath] = distPath;
         const changedSlashes = relativePath.replace(/\\/g,'/')
-        return 'url("'+path.posix.join(currentOptions.assetsServerUri,changedSlashes)+'")'
+        return 'url("'+path.posix.join(currentOptions.assetsServerUri,changedSlashes)+buster+'")'
         // return match.replace(rel, path.posix.resolve(currentOptions.assetsUri,rel));
     }
     return { resolved, importMapping ,assetMapping};
@@ -60,9 +61,9 @@ export function justImport(path: string) {
     return `require("${path}");`;
 }
 
-export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, projectRoot:string, options: StylableIntegrationOptions = StylableIntegrationDefaults) {
+export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, projectRoot:string, options: StylableIntegrationOptions = StylableIntegrationDefaults, assetVersions?:{[origPath:string]:number}) {
     currentOptions = options;
-    const { resolved, importMapping, assetMapping } = resolveImports(source, context, projectRoot);
+    const { resolved, importMapping, assetMapping } = resolveImports(source, context, projectRoot, assetVersions);
     const sheet = createStylesheetWithNamespace(resolved, resourcePath, options.defaultPrefix);
 
 

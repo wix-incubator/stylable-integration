@@ -14,7 +14,7 @@ let firstRun:boolean = true;
 
 let used : StylableSheet[] = [];
 let projectAssetsMap:{[key:string]:string} = {};
-
+let projectAssetsVersions:{[key:string]:number} = {};
 
 function createIsUsedComment(ns:string){
     return '\n//*stylable*'+ns+'*stylable*';
@@ -23,19 +23,22 @@ function createIsUsedComment(ns:string){
 export function loader(this:webpack.loader.LoaderContext, source: string) {
     const options = { ...StylableIntegrationDefaults, ...loaderUtils.getOptions(this) };
     const resolver = (options as any).resolver || new FSResolver(options.defaultPrefix,this.options.context);
-    const { sheet, code,assetMapping } = transformStylableCSS(
+    const { sheet, code, assetMapping } = transformStylableCSS(
         source,
         this.resourcePath,
         this.context,
         resolver,
         this.options.context,
-        options
+        options,
+        projectAssetsVersions
     );
     const codeWithComment = code + createIsUsedComment(sheet.namespace);
     Object.assign(projectAssetsMap, assetMapping);
     used.push(sheet);
     this.addDependency('stylable');
-
+    Object.keys(assetMapping).forEach((asset)=>{
+        this.addDependency(asset)
+    })
     // sheet.imports.forEach((importDef: any) => {
     //     this.addDependency(importDef.from);
     // });
@@ -52,7 +55,10 @@ export class Plugin{
     constructor(private options:StylableIntegrationOptions,private resolver?:FSResolver){
     };
     apply = (compiler:webpack.Compiler)=>{
-
+        compiler.plugin('run',(compilation,callback)=>{
+            projectAssetsVersions = {};
+            callback();
+        });
         compiler.plugin('emit',(compilation,callback)=>{
             const entryOptions:string | {[key:string]:string | string[]} | undefined | string[] = compiler.options.entry;
             let entries:{[key:string]:string | string[]} = typeof entryOptions === 'object' ? entryOptions as any : {'bundle':entryOptions};
@@ -88,7 +94,16 @@ export class Plugin{
 
             });
             used = [];
+
             ensureAssets(projectAssetsMap,resolver,compilation.options.context)
+            Object.keys(projectAssetsMap).forEach((assetOrigPath)=>{
+                if(!projectAssetsVersions[assetOrigPath]){
+                    projectAssetsVersions[assetOrigPath] = 1;
+                }else{
+
+                    projectAssetsVersions[assetOrigPath]++;
+                }
+            });
             projectAssetsMap = {};
             callback();
         });
