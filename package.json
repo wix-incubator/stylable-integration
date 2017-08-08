@@ -1,6 +1,6 @@
 {
   "name": "stylable-integration",
-  "version": "3.1.0",
+  "version": "3.1.2",
   "description": "Integration utils for stylable",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -54,7 +54,8 @@
   "files": [
     "dist/src",
     "src",
-    "webpack.js",
+    "webpack-loader.js",
+    "webpack-plugin.js",
     "require.js",
     "tsconfig.json"
   ]
