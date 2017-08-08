@@ -4,14 +4,14 @@ import { htap } from "htap";
 const deindent = require('deindent');
 const murmurhash = require('murmurhash');
 import {StylableIntegrationDefaults,StylableIntegrationOptions} from './options';
-
+import {fsLike} from './types';
 let currentOptions:StylableIntegrationOptions;
 //TODO: remove this regexps!!!!
 const relativeImportRegExp1 = /:import\(["']?(\.\/)(.*?)["']?\)/gm;
 const relativeImportRegExp2 = /-st-from\s*:\s*["'](\.\.?\/)(.*?)["']/gm;
 const relativeImportAsset = /url\s*\(\s*["']?(.*?)["']?\s*\)/gm;
 
-export function resolveImports(source: string, context: string, projectRoot:string, assetVersions?:{[origPath:string]:number}) {
+export function resolveImports(source: string, fs:fsLike, context: string, projectRoot:string, assetVersions?:{[origPath:string]:number}) {
     const importMapping: { [key: string]: string } = {};
     const assetMapping: { [key: string]: string } = {}
     const resolved = source
@@ -29,6 +29,9 @@ export function resolveImports(source: string, context: string, projectRoot:stri
     }
     function replaceAsset(match: string, rel: string) {
         const originPath = path.resolve(htap(context, rel));
+        if(!fs.existsSync(originPath)){
+            return rel
+        }
         const relativePath = path.relative(projectRoot,originPath);
         const buster = assetVersions && assetVersions[originPath] ? '?buster='+assetVersions[originPath] : '';
         const distPath = path.resolve(htap(currentOptions.assetsDir,relativePath));
@@ -63,7 +66,7 @@ export function justImport(path: string) {
 
 export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, projectRoot:string, options: StylableIntegrationOptions = StylableIntegrationDefaults, assetVersions?:{[origPath:string]:number}) {
     currentOptions = options;
-    const { resolved, importMapping, assetMapping } = resolveImports(source, context, projectRoot, assetVersions);
+    const { resolved, importMapping, assetMapping } = resolveImports(source,(resolver as any).fsToUse , context, projectRoot, assetVersions);
     const sheet = createStylesheetWithNamespace(resolved, resourcePath, options.defaultPrefix);
 
 
@@ -100,31 +103,6 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
             );
         `;
 
-    }else if(options.injectBundleCss){
-        const cssBundleDevLocation = "http://localhost:8080/bundle.css";
-        const bundleAddition =  `if (typeof document !== 'undefined') {
-            style = document.getElementById('cssBundle');
-            if(!style){
-                style = document.createElement('link');
-                style.id = "cssBundle";
-                style.setAttribute('rel','stylesheet');
-                style.setAttribute('href','${cssBundleDevLocation}');
-                document.head.appendChild(style);
-            }else{
-                style.setAttribute('href','${cssBundleDevLocation}?queryBuster=${Math.random()}');
-            }
-        }`
-        code = deindent`
-            Object.defineProperty(exports, "__esModule", { value: true });
-            ${bundleAddition};
-            module.exports.default = module.exports.locals = require("${runtimePath}").create(
-                ${root},
-                ${namespace},
-                ${classes},
-                null,
-                module.id
-            );
-        `;
     } else {
         code = deindent`
             Object.defineProperty(exports, "__esModule", { value: true });

@@ -7,7 +7,6 @@ import loaderUtils = require('loader-utils');
 import { dirname } from 'path';
 import {ensureAssets} from "./assetor";
 import webpack = require('webpack');
-
 // const assetDir:string = '/dist/assets';
 
 let firstRun:boolean = true;
@@ -75,6 +74,33 @@ export class Plugin{
             const resolver = this.resolver || new FSResolver(options.defaultPrefix,compilation.options.context);
             Object.keys(simpleEntries).forEach(entryName=>{
                 const entryContent = compilation.assets[entryName+'.js'].source();
+                if(this.options.injectBundleCss){
+                    const cssBundleDevLocation = "http://localhost:8080/"+entryName+".css";
+                    const bundleAddition =  `(()=>{if (typeof document !== 'undefined') {
+                        style = document.getElementById('cssBundle');
+                        if(!style){
+                            style = document.createElement('link');
+                            style.id = "cssBundle";
+                            style.setAttribute('rel','stylesheet');
+                            style.setAttribute('href','${cssBundleDevLocation}');
+                            document.head.appendChild(style);
+                        }else{
+                            style.setAttribute('href','${cssBundleDevLocation}?queryBuster=${Math.random()}');
+                        }
+                    }})()`
+                    const revisedSource = bundleAddition+' ,'+compilation.assets[entryName+'.js'].source();
+                    compilation.assets[entryName+'.js'] = {
+                        source: function(){
+                            return new Buffer(revisedSource,"utf-8")
+                        },
+                        size: function(){
+                            return Buffer.byteLength(revisedSource,"utf-8");
+                        }
+                    }
+                }
+
+
+
                 const gen = new Generator({resolver, namespaceDivider:options.nsDelimiter});
                 used.reverse().forEach((sheet)=>{
                     const idComment = createIsUsedComment(sheet.namespace);

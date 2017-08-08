@@ -7,12 +7,13 @@ import * as postcss from 'postcss';
 const EnvPlugin = require('webpack/lib/web/WebEnvironmentPlugin');
 const _eval = require('node-eval');
 import {Plugin} from '../src/webpack-loader'
-import {fsLike,FSResolver} from '../src/fs-resolver';
+import {FSResolver} from '../src/fs-resolver';
+import {fsLike} from '../src/types';
 import { dirname } from 'path';
 import { Resolver } from 'stylable'; //peer
-import {dotLess,expectRule,expectRuleOrder,findDecl,findRule,getContentPath,getDistPath,getMemFs,getRuleValue,hasNoCls,isDecl,isRule,jsThatImports,nsChunk,nsSeparator,registerMemFs,selectorClsChunk,TestFunction,testJsEntries,testJsEntry,TestMultiEntries,testRule,testComplexRule,UserConfig,getAssetPath} from '../test-kit/index';
+import {dotLess,expectRule,expectRuleOrder,findDecl,findRule,getContentPath,getDistPath,getMemFs,getRuleValue,hasNoCls,isDecl,isRule,jsThatImports,nsChunk,nsSeparator,registerMemFs,selectorClsChunk,TestFunction,testJsEntries,testJsEntry,TestMultiEntries,testRule,testComplexRule,TestConfig,getAssetPath} from '../test-kit/index';
 import {StylableIntegrationDefaults,StylableIntegrationOptions} from '../src/options';
-const userConfig:UserConfig = {
+const testConfig:TestConfig = {
     rootPath:process.cwd(),
     distRelativePath:'dist',
     assetsRelativePath:'assets',
@@ -36,7 +37,7 @@ describe('plugin', function(){
             const cssModule = bundle.main.default;
             testRule(cssModule,cssAst,'.gaga','color','red');
             done();
-        },userConfig);
+        },testConfig);
     });
     it('should work with multiple webpack entries',function(done){
         const files = {
@@ -67,7 +68,7 @@ describe('plugin', function(){
             hasNoCls(csss[0],
                 testRule(aboutCssModule,aboutCssAst,'.baga','background','red'))
             done();
-        },userConfig);
+        },testConfig);
     });
 
     it('should add script for appending to html',function(done){
@@ -89,10 +90,13 @@ describe('plugin', function(){
         }
         const entries = ['home','about'];
         testJsEntries(entries,files,(bundles,csss,memfs)=>{
-            const homeBundleStr:string = memfs.readFileSync(path.join(getDistPath(userConfig),'home.js')).toString();
+            const homeBundleStr:string = memfs.readFileSync(path.join(getDistPath(testConfig),'home.js')).toString();
+            const aboutBundleStr:string = memfs.readFileSync(path.join(getDistPath(testConfig),'about.js')).toString();
             expect(homeBundleStr).to.include('document.createElement');
+            expect(homeBundleStr).to.include('http://localhost:8080/home.css');
+            expect(aboutBundleStr).to.include('http://localhost:8080/about.css');
             done();
-        },userConfig,{injectBundleCss:true});
+        },testConfig,{injectBundleCss:true});
     });
 
 
@@ -124,7 +128,7 @@ describe('plugin', function(){
             const aboutBundleTargetAst = postcss.parse(aboutBundle.targetCss);
             testRule(aboutBundle,aboutBundleTargetAst,'.baga','background','red');
             done();
-        },userConfig,{injectFileCss:true});
+        },testConfig,{injectFileCss:true});
     });
 
 
@@ -148,7 +152,7 @@ describe('plugin', function(){
             testRule(homeCssModule,homeCssAst,'.gaga','background','green');
             testRule(aboutCssModule,aboutCssAst,'.gaga','background','green');
             done();
-        },userConfig);
+        },testConfig);
     });
     it('should not keep output css across multiple runs',function(done){
         const files = {
@@ -174,8 +178,8 @@ describe('plugin', function(){
             testJsEntry('main.js',files2,(bundle,css)=>{
                 hasNoCls(css,'gaga');
                 done();
-            },userConfig);
-        },userConfig);
+            },testConfig);
+        },testConfig);
     });
     it('should work for many files',function(done){
         const files = {
@@ -203,7 +207,7 @@ describe('plugin', function(){
                 testRule(cssModule,cssAst,'.gaga','color','red')
             ]);
             done();
-        },userConfig);
+        },testConfig);
     });
     it('should generate css for imported files',function(done){
         const files = {
@@ -240,7 +244,7 @@ describe('plugin', function(){
 
 
             done();
-        },userConfig);
+        },testConfig);
     });
     it('should resolve variables',function(done){
         const files = {
@@ -273,7 +277,7 @@ describe('plugin', function(){
             testRule(cssModule,cssAst,'.gaga','background','white');
             testRule(cssModule,cssAst,'.gaga','color','red');
             done();
-        },userConfig);
+        },testConfig);
     });
     it('should move imported assets to dist/assets svg',function(done){
         const files = {
@@ -300,11 +304,11 @@ describe('plugin', function(){
         }
         testJsEntry('main.js',files,(bundle,css,memfs)=>{
             expect(css).to.not.include( './asset.svg');
-            expect(css.split(`url("${userConfig.assetsServerUri}/sources/asset.svg")`).length,'converted url count').to.equal(5);
-            expect(memfs.readFileSync(getAssetPath(userConfig)+'\\sources\\asset.svg','utf8')).to.eql(files['asset.svg'])
+            expect(css.split(`url("${testConfig.assetsServerUri}/sources/asset.svg")`).length,'converted url count').to.equal(5);
+            expect(memfs.readFileSync(getAssetPath(testConfig)+'/sources/asset.svg','utf8')).to.eql(files['asset.svg'])
 
             done();
-        },userConfig);
+        },testConfig);
     });
     it('should not break on missing asset',function(done){
         const files = {
@@ -326,11 +330,11 @@ describe('plugin', function(){
         }
         testJsEntry('main.js',files,(bundle,css,memfs)=>{
             expect(css).to.not.include( './asset.svg');
-            expect(css.split(`url("${userConfig.assetsServerUri}/sources/asset.svg")`).length,'converted url count').to.equal(5);
+            expect(css.split(`url("${testConfig.assetsServerUri}/sources/asset.svg")`).length,'converted url count').to.equal(5);
             // expect(memfs.readFileSync(getAssetPath(userConfig)+'\\sources\\asset.svg','utf8')).to.eql(files['asset.svg'])
 
             done();
-        },userConfig);
+        },testConfig);
     });
     it('should move imported assets to dist/assets jpg',function(done){
         const banana = fs.readFileSync('./test/fixtures/banana.jpg');
@@ -345,11 +349,11 @@ describe('plugin', function(){
         }
         testJsEntry('main.js',files,(bundle,css,memfs)=>{
             expect(css).to.not.include( './banana.jpg');
-            expect(css.split(`url("${userConfig.assetsServerUri}/sources/banana.jpg")`).length,'converted url count').to.equal(2);
-            expect(memfs.readFileSync(getAssetPath(userConfig)+'\\sources\\banana.jpg')).to.eql(files['banana.jpg'])
+            expect(css.split(`url("${testConfig.assetsServerUri}/sources/banana.jpg")`).length,'converted url count').to.equal(2);
+            expect(memfs.readFileSync(getAssetPath(testConfig)+'\\sources\\banana.jpg')).to.eql(files['banana.jpg'])
 
             done();
-        },userConfig);
+        },testConfig);
     });
     xit('should not generate css for files imported only through css',function(done){
         const files = {
@@ -380,6 +384,6 @@ describe('plugin', function(){
             hasNoCls(css,'gaga');
 
             done();
-        },userConfig);
+        },testConfig);
     });
 });

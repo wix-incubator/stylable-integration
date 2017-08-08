@@ -10,7 +10,7 @@
   "scripts": {
     "build": "tsc && cp test/fixtures/ dist/test/fixtures -r",
     "webpack": "webpack",
-    "test": "tsc && ts-mocha test/**/*.spec.*",
+    "test": "tsc && mocha ./dist/test/index.js",
     "prepublish": "npm run build",
     "start": "rimraf dist && yarn build && concurrently --kill-others --success first \"yarn build -- -w\" \"webpack-dev-server --no-info\""
   },
@@ -22,15 +22,10 @@
   "license": "MIT",
   "dependencies": {
     "deindent": "^0.1.0",
-    "enhanced-resolve": "3.4.1",
-    "fs-extra": "^4.0.0",
+    "enhanced-resolve": "^3.4.1",
     "htap": "^1.0.2",
     "loader-utils": "^1.1.0",
     "murmurhash": "^0.0.2",
-    "murmurhash-js": "1.0.0",
-    "node-fs-extra": "^0.8.2",
-    "postcss": "^6.0.8",
-    "stylable": "3.0.0",
     "yargs": "^8.0.2"
   },
   "peerDependencies": {
@@ -38,22 +33,23 @@
   },
   "devDependencies": {
     "@types/chai": "^4.0.1",
-    "@types/enhanced-resolve": "3.0.3",
+    "@types/enhanced-resolve": "^3.0.3",
     "@types/loader-utils": "^1.1.0",
     "@types/memory-fs": "^0.3.0",
     "@types/mocha": "^2.2.41",
-    "@types/murmurhash-js": "1.0.2",
     "@types/node": "^8.0.13",
     "@types/webpack": "^3.0.4",
     "chai": "^4.0.2",
-    "concurrently": "~3.5.0",
+    "concurrently": "^3.5.0",
     "memory-fs": "^0.4.1",
     "mocha": "^3.4.2",
-    "mocha-loader": "~1.1.1",
+    "postcss": "^6.0.8",
+    "mocha-loader": "^1.1.1",
+    "stylable": "^3.0.0",
     "node-eval": "^1.1.0",
     "ts-mocha": "^1.0.3",
     "typescript": "^2.4.1",
-    "webpack": "3.4.1"
+    "webpack": "^3.4.1"
   },
   "files": [
     "dist/src",

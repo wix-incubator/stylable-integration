@@ -7,13 +7,14 @@ import * as postcss from 'postcss';
 const EnvPlugin = require('webpack/lib/web/WebEnvironmentPlugin');
 const _eval = require('node-eval');
 import { Plugin } from '../src/webpack-loader'
-import { fsLike, FSResolver } from '../src/fs-resolver';
+import { FSResolver } from '../src/fs-resolver';
+import { fsLike } from '../src/types';
 import { dirname } from 'path';
 import { Resolver } from 'stylable'; //peer
-import { dotLess, expectRule, expectRuleOrder, findDecl, findRule, getContentPath, getDistPath, getMemFs, getRuleValue, hasNoCls, isDecl, isRule, jsThatImports, nsChunk, nsSeparator, registerMemFs, selectorClsChunk, TestFunction, testJsEntries, testJsEntry, TestMultiEntries, testRule, testComplexRule, UserConfig, getAssetPath, testCssModule, evalCommonJsCssModule } from '../test-kit/index';
+import { dotLess, expectRule, expectRuleOrder, findDecl, findRule, getContentPath, getDistPath, getMemFs, getRuleValue, hasNoCls, isDecl, isRule, jsThatImports, nsChunk, nsSeparator, registerMemFs, selectorClsChunk, TestFunction, testJsEntries, testJsEntry, TestMultiEntries, testRule, testComplexRule, TestConfig, getAssetPath, testCssModule, evalCommonJsCssModule } from '../test-kit/index';
 import { StylableIntegrationDefaults, StylableIntegrationOptions } from '../src/options';
 import { build, globSearcher } from '../src/builder';
-const userConfig: UserConfig = {
+const testConfig: TestConfig = {
     rootPath: process.cwd(),
     distRelativePath: 'dist',
     assetsRelativePath: 'assets',
@@ -87,10 +88,10 @@ describe('build stand alone', function () {
                 }
             `,
         }
-        const fs = getMemFs(files, userConfig.rootPath, userConfig.contentRelativePath);
-        const resolver = new FSResolver('s', userConfig.rootPath, fs as any);
-        build('**/*.css', fs as any, resolver, 'lib', userConfig.contentRelativePath, userConfig.rootPath, mockGlob(fs, userConfig.rootPath), (...args) => console.log(args));
-        const outPath = path.join(userConfig.rootPath, 'lib');
+        const fs = getMemFs(files, testConfig.rootPath, testConfig.contentRelativePath);
+        const resolver = new FSResolver('s', testConfig.rootPath, fs as any);
+        build('**/*.css', fs as any, resolver, 'lib', testConfig.contentRelativePath, testConfig.rootPath, mockGlob(fs, testConfig.rootPath), (...args) => console.log(args));
+        const outPath = path.join(testConfig.rootPath, 'lib');
         const mainModulePath = path.join(outPath, 'main.css.js');
         const subModulePath = path.join(outPath, 'components', 'comp.css.js');
         const mainModuleContent = fs.readFileSync(mainModulePath).toString();
@@ -163,11 +164,11 @@ describe("lib usage with loader", () => {
         files[path.join('../', 'node_modules', 'my-lib', 'sources', filePath)] = libFiles[filePath];
     });
     it('should be usable as a component library with injectFileCss mode', function (done) {
-        const fs = getMemFs(files, userConfig.rootPath, userConfig.contentRelativePath);
+        const fs = getMemFs(files, testConfig.rootPath, testConfig.contentRelativePath);
         const libRelPath = 'node_modules/my-lib';
-        const innerLibPath = path.join(userConfig.rootPath, libRelPath);
+        const innerLibPath = path.join(testConfig.rootPath, libRelPath);
         const resolver = new FSResolver('s', innerLibPath, fs as any);
-        build('**/*.css', fs as any, resolver, 'lib', userConfig.contentRelativePath, innerLibPath, mockGlob(fs, innerLibPath), (...args) =>{});
+        build('**/*.css', fs as any, resolver, 'lib', testConfig.contentRelativePath, innerLibPath, mockGlob(fs, innerLibPath), (...args) =>{});
         testJsEntry('app.js', fs, (bundle, css, memfs) => {
             const mainModule = bundle.main.default;
             const compModule = bundle['my-lib/lib/comp'].comp.default
@@ -185,18 +186,18 @@ describe("lib usage with loader", () => {
             testComplexRule(compModuleTargetAst, [{ m: compModule, cls: '.sub-comp' }, { m: subModule, cls: '.root' }], 'color', 'blue');
             testComplexRule(mainModuleTargetAst, [{ m: mainModule, cls: '.gaga' }, { m: compModule, cls: '.root' }], 'background', 'blue');
             testComplexRule(mainModuleTargetAst, [{ m: mainModule, cls: '.gaga' }, { m: compModule, cls: '.sub-comp' }], 'outline', 'pink');
-            const assetFile = memfs.readFileSync(path.join(userConfig.rootPath,asssetExpectedUrl));
+            const assetFile = memfs.readFileSync(path.join(testConfig.rootPath,asssetExpectedUrl));
             expect(assetFile.toString()).to.equal(libFiles['components/asset.svg']);
             done()
-        }, userConfig, { ...StylableIntegrationDefaults, injectFileCss: true })
+        }, testConfig, { ...StylableIntegrationDefaults, injectFileCss: true })
     });
 
     it('should be usable as a component library in bundle mode', function (done) {
-        const fs = getMemFs(files, userConfig.rootPath, userConfig.contentRelativePath);
-        const resolver = new FSResolver('s', userConfig.rootPath, fs as any);
+        const fs = getMemFs(files, testConfig.rootPath, testConfig.contentRelativePath);
+        const resolver = new FSResolver('s', testConfig.rootPath, fs as any);
         const libRelPath = 'node_modules/my-lib';
-        const innerLibPath = path.join(userConfig.rootPath, libRelPath);
-        build('**/*.css', fs as any, resolver, 'lib', userConfig.contentRelativePath, innerLibPath, mockGlob(fs, innerLibPath), (...args) => {});
+        const innerLibPath = path.join(testConfig.rootPath, libRelPath);
+        build('**/*.css', fs as any, resolver, 'lib', testConfig.contentRelativePath, innerLibPath, mockGlob(fs, innerLibPath), (...args) => {});
         testJsEntry('app.js', fs, (bundle, css, memfs) => {
             const mainModule = bundle.main.default;
             const compModule = bundle['my-lib/lib/comp'].comp.default
@@ -208,6 +209,6 @@ describe("lib usage with loader", () => {
             testComplexRule(cssAst, [{ m: mainModule, cls: '.gaga' }, { m: compModule, cls: '.root' }], 'background', 'blue');
             testComplexRule(cssAst, [{ m: mainModule, cls: '.gaga' }, { m: compModule, cls: '.sub-comp' }], 'outline', 'pink');
             done()
-        }, userConfig, { ...StylableIntegrationDefaults })
+        }, testConfig, { ...StylableIntegrationDefaults })
     });
 })
