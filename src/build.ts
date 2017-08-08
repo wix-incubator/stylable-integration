@@ -3,7 +3,7 @@ import { transformStylableCSS } from "./stylable-transform";
 import { FSResolver } from "./fs-resolver";
 import { dirname, join } from "path";
 import { htap } from "htap";
-
+import {build} from './builder';
 const glob = require('glob');
 const fs = require('fs-extra');
 
@@ -40,30 +40,11 @@ const cwd = argv.cwd;
 const match = argv.match;
 const fullSrcDir = join(cwd, srcDir);
 const fullMatch = htap(srcDir, match);
-const resolver = new FSResolver('s');
+const resolver = new FSResolver('s',cwd);
 
 log('[Arguments]',argv);
 
-glob(fullMatch, {}, function (er: Error, files: string[]) {
-
-    files.forEach((file) => {
-        const fullpath = join(cwd, file);
-        const outPath = join(cwd, outDir, fullpath.replace(fullSrcDir, '') + '.js');
-        log('[Build]', fullpath + ' --> ' + outPath);
-        const content = tryRun(() => fs.readFileSync(fullpath, 'utf8'), 'Read File Error');
-        const { code } = tryRun(() => transformStylableCSS(content, fullpath, dirname(fullpath), resolver), 'Transform Error');
-        tryRun(() => fs.outputFileSync(outPath, code), 'Write File Error');
-    });
-
-});
-
-function tryRun<T>(fn: () => T, errorMessage: string): T {
-    try {
-        return fn();
-    } catch (e) {
-        throw new Error(errorMessage + ': \n' + e.stack)
-    }
-}
+build(match,fs,resolver,outDir,srcDir,cwd,glob,log);
 
 function createLogger(prefix: string, shouldLog: boolean) {
     return function log(...messages: string[]) {

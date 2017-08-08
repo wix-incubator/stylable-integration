@@ -1,37 +1,50 @@
 import { Stylesheet, Generator, objectifyCSS, Resolver } from 'stylable';
 import path = require('path');
+import { htap } from "htap";
 const deindent = require('deindent');
 const murmurhash = require('murmurhash');
-
-/* must be flat */
-export const defaults = {
-    defaultPrefix: 's',
-    standalone: true
-};
-
+import {StylableIntegrationDefaults,StylableIntegrationOptions} from './options';
+import {fsLike} from './types';
+let currentOptions:StylableIntegrationOptions;
 //TODO: remove this regexps!!!!
 const relativeImportRegExp1 = /:import\(["']?(\.\/)(.*?)["']?\)/gm;
 const relativeImportRegExp2 = /-st-from\s*:\s*["'](\.\.?\/)(.*?)["']/gm;
+const relativeImportAsset = /url\s*\(\s*["']?(.*?)["']?\s*\)/gm;
 
-export function resolveImports(source: string, context: string) {
+export function resolveImports(source: string, fs:fsLike, context: string, projectRoot:string, assetVersions?:{[origPath:string]:number}) {
     const importMapping: { [key: string]: string } = {};
+    const assetMapping: { [key: string]: string } = {}
     const resolved = source
         .replace(relativeImportRegExp1, replace)
-        .replace(relativeImportRegExp2, replace);
+        .replace(relativeImportRegExp2, replace)
+        .replace(relativeImportAsset,replaceAsset);
 
 
     function replace(match: string, rel: string, thing: string) {
         const relativePath = rel + thing;
-        const fullPath = path.resolve(context, relativePath);
+        const fullPath = path.resolve(htap(context, relativePath));
         importMapping[relativePath] = fullPath;
         importMapping[fullPath] = relativePath;
         return match.replace(relativePath, fullPath);
     }
-
-    return { resolved, importMapping };
+    function replaceAsset(match: string, rel: string) {
+        const originPath = path.resolve(htap(context, rel));
+        if(!fs.existsSync(originPath)){
+            return rel
+        }
+        const relativePath = path.relative(projectRoot,originPath);
+        const buster = assetVersions && assetVersions[originPath] ? '?buster='+assetVersions[originPath] : '';
+        const distPath = path.resolve(htap(currentOptions.assetsDir,relativePath));
+        assetMapping[originPath] = distPath;
+        const changedSlashes = relativePath.replace(/\\/g,'/')
+        return 'url("'+path.posix.join(currentOptions.assetsServerUri,changedSlashes)+buster+'")'
+        // return match.replace(rel, path.posix.resolve(currentOptions.assetsUri,rel));
+    }
+    return { resolved, importMapping ,assetMapping};
 }
 
-export function createStylesheetWithNamespace(source: string, path: string, prefix: string = defaults.defaultPrefix) {
+
+export function createStylesheetWithNamespace(source: string, path: string, prefix: string = StylableIntegrationDefaults.defaultPrefix) {
     const cssObject = objectifyCSS(source);
     const atNS = cssObject['@namespace'];
     const ns = Array.isArray(atNS) ? atNS[atNS.length - 1] : atNS;
@@ -51,30 +64,36 @@ export function justImport(path: string) {
     return `require("${path}");`;
 }
 
-export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, options: typeof defaults = defaults) {
-
-    const { resolved, importMapping } = resolveImports(source, context);
+export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, projectRoot:string, options: StylableIntegrationOptions = StylableIntegrationDefaults, assetVersions?:{[origPath:string]:number}) {
+    currentOptions = options;
+    const { resolved, importMapping, assetMapping } = resolveImports(source,(resolver as any).fsToUse , context, projectRoot, assetVersions);
     const sheet = createStylesheetWithNamespace(resolved, resourcePath, options.defaultPrefix);
 
-    const gen = new Generator({ resolver });
-    gen.addEntry(sheet, false);
+
 
     const imports = sheet.imports.map((importDef: any) => {
         return justImport(importMapping[importDef.from]);
     });
 
+    let css:string = '';
+    const gen = new Generator({ resolver, namespaceDivider:options.nsDelimiter });
+    gen.addEntry(sheet, false);
+    if(options.injectFileCss){
+        css = JSON.stringify(gen.buffer.join('\n'))
+    }
+
+
+
     const root = JSON.stringify(sheet.root);
     const namespace = JSON.stringify(sheet.namespace);
     const classes = JSON.stringify(Object.assign({}, sheet.vars, sheet.classes));
-    const css = JSON.stringify(gen.buffer.join('\n'));
     // const runtimePath = path.join(__dirname, "runtime").replace(/\\/gm, "\\\\");
     const runtimePath = 'stylable/runtime';
-    
-    let code: string
-    if (options.standalone) {
+    // ${imports.join('\n')}
+    let code:string = '';
+     if (options.injectFileCss) {
         code = deindent`
             Object.defineProperty(exports, "__esModule", { value: true });
-            ${imports.join('\n')}
             module.exports.default = require("${runtimePath}").create(
                 ${root},
                 ${namespace},
@@ -87,8 +106,6 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
     } else {
         code = deindent`
             Object.defineProperty(exports, "__esModule", { value: true });
-            ${imports.join('\n')}
-            module.exports = [[module.id, ${css}, ""]];
             module.exports.default = module.exports.locals = require("${runtimePath}").create(
                 ${root},
                 ${namespace},
@@ -99,6 +116,9 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
         `;
     }
 
-    return { sheet, code };
+
+
+
+    return { sheet, code, assetMapping };
 
 }
