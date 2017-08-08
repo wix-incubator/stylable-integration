@@ -20,9 +20,6 @@ function createIsUsedComment(ns:string){
 }
 
 export function loader(this:webpack.loader.LoaderContext, source: string) {
-    console.log('loader start '+source);
-
-
     const options = { ...StylableIntegrationDefaults, ...loaderUtils.getOptions(this) };
     const resolver = (options as any).resolver || new FSResolver(options.defaultPrefix,this.options.context);
     const { sheet, code,assetMapping } = transformStylableCSS(
@@ -34,7 +31,6 @@ export function loader(this:webpack.loader.LoaderContext, source: string) {
         options
     );
     const codeWithComment = code + createIsUsedComment(sheet.namespace);
-    console.log('adding assets',assetMapping)
     Object.assign(projectAssetsMap, assetMapping);
     used.push(sheet);
     this.addDependency('stylable');
@@ -42,30 +38,11 @@ export function loader(this:webpack.loader.LoaderContext, source: string) {
     // sheet.imports.forEach((importDef: any) => {
     //     this.addDependency(importDef.from);
     // });
-    console.log('loader end '+source);
     return codeWithComment;
 };
 
 function isArray(a:any): a is Array<any>{
     return !!a.push
-}
-
-const ensureDir = (dir:string,fs:any) => {
-  // This will create a dir given a path such as './folder/subfolder'
-  const splitPath = dir.split('\\');
-  splitPath.reduce((path, subPath) => {
-    let currentPath;
-    if(subPath != '.'){
-      currentPath = path + '\\' + subPath;
-      if (!fs.existsSync(currentPath)){
-        fs.mkdirSync(currentPath);
-      }
-    }
-    else{
-      currentPath = subPath;
-    }
-    return currentPath
-  }, '')
 }
 
 export class Plugin{
@@ -85,7 +62,6 @@ export class Plugin{
                     simpleEntries[entryName] = entry;
                 }
             })
-            console.log('emiting ',simpleEntries);
             const options = { ...StylableIntegrationDefaults, ...this.options };
             const resolver = this.resolver || new FSResolver(options.defaultPrefix,compilation.options.context);
             Object.keys(simpleEntries).forEach(entryName=>{
@@ -119,13 +95,11 @@ export class Plugin{
                 // }
 
             });
-            console.log('emiting assets '+projectAssetsMap);
             used = [];
             let stats:Stats;
             Promise.all(Object.keys(projectAssetsMap).map((assetOriginalPath)=>{
                 return resolver.statAsync(assetOriginalPath)
                 .then((stat)=>{
-                    console.log('emiting asset '+assetOriginalPath);
                     // We don't write empty directories
                     if (stat.isDirectory()) {
                         return;
@@ -134,15 +108,10 @@ export class Plugin{
                     return resolver.readFileAsync(assetOriginalPath)
                 })
                 .then((content)=>{
-                     console.log('writing asset '+projectAssetsMap[assetOriginalPath]);
-                     const fs = resolver.fsToUse;
-                     const targetPath = projectAssetsMap[assetOriginalPath];
-                     const targetDir = dirname(targetPath).slice(3);
-                     console.log('creating '+targetDir);
-                    //  ensureDir(targetDir,fs);
-                      console.log('created '+targetDir);
-                    //  fs.writeFileSync(targetPath,content);
-                    compilation.assets[targetPath.slice(3)] = {
+                    const fs = resolver.fsToUse;
+                    const rootPath = compilation.options.context;
+                    const targetPath = '../'+projectAssetsMap[assetOriginalPath].replace(rootPath,'');
+                    compilation.assets[targetPath] = {
                         source: function(){
                             return content
                         },
@@ -153,7 +122,6 @@ export class Plugin{
                 })
             }))
             .then(()=>{
-                console.log('done ');
                 projectAssetsMap = {};
                 callback();
             })
