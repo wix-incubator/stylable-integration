@@ -329,7 +329,7 @@ describe('plugin', function(){
             `
         }
         testJsEntry('main.js',files,(bundle,css,memfs)=>{
-            expect(css.split('./asset.svg')).to.equal(5);
+            expect(css.split('./asset.svg').length).to.equal(5);
             // expect(memfs.readFileSync(getAssetPath(userConfig)+'\\sources\\asset.svg','utf8')).to.eql(files['asset.svg'])
 
             done();
