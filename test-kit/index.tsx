@@ -75,6 +75,9 @@ export interface TestConfig{
     assetsRelativePath:string;
 }
 
+export const getAssetRegExp = (config:TestConfig)=>new RegExp( `url\\s*\\(\\s*["']?${config.assetsServerUri}\\/(.*?)["']?\\s*\\)`);
+
+
 export function getDistPath(config:TestConfig){
     return path.join(config.rootPath,config.distRelativePath);
 }
@@ -140,6 +143,7 @@ export function testJsEntry(entry: string,files:{[key:string]:string | Buffer} |
 	const compiler = webpack({
         entry: path.join(contentPath,entry),
 		output: {
+            publicPath:config.assetsServerUri+'/',
 			path:distPath,
 			filename: 'bundle.js'
 		},

@@ -12,14 +12,12 @@ const relativeImportRegExp1 = /:import\(["']?(\.\/)(.*?)["']?\)/gm;
 const relativeImportRegExp2 = /-st-from\s*:\s*["'](\.\.?\/)(.*?)["']/gm;
 const relativeImportAsset = /url\s*\(\s*["']?(.*?)["']?\s*\)/gm;
 
-export function resolveImports(this:any,source: string, fs:fsLike, context: string, projectRoot:string, assetVersions?:{[origPath:string]:number},ldr?:any) {
+export function resolveImports(this:any,source: string, fs:fsLike, context: string, projectRoot:string,ldr?:any) {
     const importMapping: { [key: string]: string } = {};
-    const assetMapping: { [key: string]: string } = {}
     const that = this;
     const resolved = source
         .replace(relativeImportRegExp1, replace)
         .replace(relativeImportRegExp2, replace)
-        .replace(relativeImportAsset,replaceAsset);
 
 
     function replace(match: string, rel: string, thing: string) {
@@ -29,24 +27,35 @@ export function resolveImports(this:any,source: string, fs:fsLike, context: stri
         importMapping[fullPath] = relativePath;
         return match.replace(relativePath, fullPath);
     }
-    function replaceAsset(match: string, rel: string) {
-        const originPath = path.resolve(htap(context, rel));
-        if(!fs.existsSync(originPath)){
-            return rel
-        }
-        const relativePath = path.relative(projectRoot,originPath);
-        const buster = assetVersions && assetVersions[originPath] ? '?buster='+assetVersions[originPath] : '';
-        const distPath = path.resolve(htap(currentOptions.assetsDir,relativePath));
-        assetMapping[originPath] = distPath;
-        // const uldr = (UrlLoader as any);
-        // uldr.call(ldr,relativePath);
-        const changedSlashes = relativePath.replace(/\\/g,'/')
-        return 'url("'+path.posix.join(currentOptions.assetsServerUri,changedSlashes)+buster+'")'
-        // return match.replace(rel, path.posix.resolve(currentOptions.assetsUri,rel));
-    }
-    return { resolved, importMapping ,assetMapping};
+
+    return { resolved, importMapping};
 }
 
+
+export function getUsedAssets(source:string):string[]{
+    const splitSource = source.split(relativeImportAsset);
+    const res:string[] = [];
+    splitSource.forEach((chunk,idx)=>{
+        if(idx%2){
+            res.push(chunk);
+        }
+    })
+    return res;
+}
+
+export function replaceAssetsAsync(source:string,resolveAssetAsync:(relativeUrl:string)=>Promise<string>):Promise<string>{
+    const splitSource = source.split(relativeImportAsset);
+    return Promise.all(splitSource.map((srcChunk,idx)=>{
+        if(idx%2){
+            return resolveAssetAsync(srcChunk).then((resolved)=>`url("${resolved}")`);
+        }else{
+            return srcChunk;
+        }
+    })).then((modifiedSplitSource)=>{
+        return modifiedSplitSource.join('');
+    })
+
+}
 
 export function createStylesheetWithNamespace(source: string, path: string, prefix: string = StylableIntegrationDefaults.defaultPrefix) {
     const cssObject = objectifyCSS(source);
@@ -68,13 +77,10 @@ export function justImport(path: string) {
     return `require("${path}");`;
 }
 
-export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, projectRoot:string, options: StylableIntegrationOptions = StylableIntegrationDefaults, assetVersions?:{[origPath:string]:number},ldr?:any) {
+export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, projectRoot:string, options: StylableIntegrationOptions = StylableIntegrationDefaults,ldr?:any) {
     currentOptions = options;
-    const { resolved, importMapping, assetMapping } = resolveImports(source,(resolver as any).fsToUse , context, projectRoot, assetVersions,ldr);
+    const { resolved, importMapping } = resolveImports(source,(resolver as any).fsToUse , context, projectRoot,ldr);
     const sheet = createStylesheetWithNamespace(resolved, resourcePath, options.defaultPrefix);
-
-
-
     const imports = sheet.imports.map((importDef: any) => {
         return justImport(importMapping[importDef.from]);
     });
@@ -123,6 +129,6 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
 
 
 
-    return { sheet, code, assetMapping };
+    return { sheet, code };
 
 }

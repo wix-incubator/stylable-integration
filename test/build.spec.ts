@@ -11,7 +11,7 @@ import { FSResolver } from '../src/fs-resolver';
 import { fsLike } from '../src/types';
 import { dirname } from 'path';
 import { Resolver } from 'stylable'; //peer
-import { dotLess, expectRule, expectRuleOrder, findDecl, findRule, getContentPath, getDistPath, getMemFs, getRuleValue, hasNoCls, isDecl, isRule, jsThatImports, nsChunk, nsSeparator, registerMemFs, selectorClsChunk, TestFunction, testJsEntries, testJsEntry, TestMultiEntries, testRule, testComplexRule, TestConfig, getAssetPath, testCssModule, evalCommonJsCssModule } from '../test-kit/index';
+import { dotLess, expectRule, expectRuleOrder, findDecl, findRule, getContentPath, getDistPath, getMemFs, getRuleValue, hasNoCls, isDecl, isRule, jsThatImports, nsChunk, nsSeparator, registerMemFs, selectorClsChunk, TestFunction, testJsEntries, testJsEntry, TestMultiEntries, testRule, testComplexRule, TestConfig, getAssetPath, testCssModule, evalCommonJsCssModule ,getAssetRegExp} from '../test-kit/index';
 import { StylableIntegrationDefaults, StylableIntegrationOptions } from '../src/options';
 import { build, globSearcher } from '../src/builder';
 const testConfig: TestConfig = {
@@ -21,6 +21,7 @@ const testConfig: TestConfig = {
     contentRelativePath: 'sources',
     assetsServerUri: 'serve-assets'
 }
+const assetRegEx = getAssetRegExp(testConfig);
 
 interface recursiveFsInternals { [fileName: string]: Buffer | recursiveFsInternals };
 
@@ -178,16 +179,20 @@ describe("lib usage with loader", () => {
             const compModuleTargetAst = postcss.parse(compModule.targetCss);
             const subModuleTargetAst = postcss.parse(subModule.targetCss);
 
-            const asssetExpectedUrl = "/assets/node_modules/my-lib/lib/components/asset.svg";
-            expect(subModule.targetCss).to.not.include('url("./asset.svg")')
-            expect(subModule.targetCss).to.include('url("'+asssetExpectedUrl+'")')
+
 
             testRule(subModule, subModuleTargetAst, '.title', 'color', 'red');
             testComplexRule(compModuleTargetAst, [{ m: compModule, cls: '.sub-comp' }, { m: subModule, cls: '.root' }], 'color', 'blue');
             testComplexRule(mainModuleTargetAst, [{ m: mainModule, cls: '.gaga' }, { m: compModule, cls: '.root' }], 'background', 'blue');
             testComplexRule(mainModuleTargetAst, [{ m: mainModule, cls: '.gaga' }, { m: compModule, cls: '.sub-comp' }], 'outline', 'pink');
-            const assetFile = memfs.readFileSync(path.join(testConfig.rootPath,asssetExpectedUrl));
-            expect(assetFile.toString()).to.equal(libFiles['components/asset.svg']);
+
+
+
+            expect(subModule.targetCss).to.not.include('url("./asset.svg")')
+            const match = subModule.targetCss.split(assetRegEx);
+
+            expect(match!.length,'converted url count').to.equal(3);
+            expect(memfs.readFileSync(getDistPath(testConfig)+'\\'+match![1]).toString()).to.eql(libFiles['components/asset.svg']);
             done()
         }, testConfig, { ...StylableIntegrationDefaults, injectFileCss: true })
     });
@@ -208,6 +213,13 @@ describe("lib usage with loader", () => {
             testComplexRule(cssAst, [{ m: compModule, cls: '.sub-comp' }, { m: subModule, cls: '.root' }], 'color', 'blue');
             testComplexRule(cssAst, [{ m: mainModule, cls: '.gaga' }, { m: compModule, cls: '.root' }], 'background', 'blue');
             testComplexRule(cssAst, [{ m: mainModule, cls: '.gaga' }, { m: compModule, cls: '.sub-comp' }], 'outline', 'pink');
+
+
+
+            expect(css).to.not.include('url("./asset.svg")')
+            const match = css.split(assetRegEx);
+            expect(match!.length,'converted url count').to.equal(3);
+            expect(memfs.readFileSync(getDistPath(testConfig)+'\\'+match![1]).toString()).to.eql(libFiles['components/asset.svg']);
             done()
         }, testConfig, { ...StylableIntegrationDefaults })
     });
