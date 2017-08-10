@@ -12,7 +12,6 @@ let firstRun:boolean = true;
 
 let used : StylableSheet[] = [];
 let projectAssetsMap:{[key:string]:string} = {};
-
 function createIsUsedComment(ns:string){
     return '\n//*stylable*'+ns+'*stylable*';
 }
@@ -23,6 +22,7 @@ export function loader(this:webpack.loader.LoaderContext, source: string) {
     const publicPath  = this.options.output.publicPath || '//assets';
     return replaceAssetsAsync(source,(relativeUrl:string)=>{
         return new Promise<string>((resolve)=>{
+            this.addDependency(relativeUrl);
             (this as any).loadModule(relativeUrl,(err:any,data:any)=>{
                 if(data && !err){
                     const mod = {exports:''};
@@ -33,7 +33,7 @@ export function loader(this:webpack.loader.LoaderContext, source: string) {
             })
         });
     }).then((modifiedSource)=>{
-        const { sheet, code } = transformStylableCSS(
+        let { sheet, code } = transformStylableCSS(
             modifiedSource,
             this.resourcePath,
             this.context,
@@ -42,10 +42,15 @@ export function loader(this:webpack.loader.LoaderContext, source: string) {
             options,
             this
         );
-        const codeWithComment = code + createIsUsedComment(sheet.namespace);
+        if(options.injectBundleCss && !firstRun){
+            const rand = Math.random();
+            code+='\n+window.refreshStyleSheet('+rand+');\n'
+        }
+        code = code + createIsUsedComment(sheet.namespace);
+
         used.push(sheet);
         this.addDependency('stylable');
-        return codeWithComment;
+        return code;
     })
 
 };
@@ -61,7 +66,12 @@ export class Plugin{
     };
     apply = (compiler:webpack.Compiler)=>{
 
+        compiler.plugin('run',(compilation,callback)=>{
+            firstRun = true;
+            callback();
+        })
         compiler.plugin('emit',(compilation,callback)=>{
+            firstRun = false;
             const entryOptions:string | {[key:string]:string | string[]} | undefined | string[] = compiler.options.entry;
             let entries:{[key:string]:string | string[]} = typeof entryOptions === 'object' ? entryOptions as any : {'bundle':entryOptions};
             let simpleEntries:{[key:string]:string} = {};
@@ -80,16 +90,19 @@ export class Plugin{
                 if(this.options.injectBundleCss){
                     const cssBundleDevLocation = "http://localhost:8080/"+entryName+".css";
                     const bundleAddition =  `(()=>{if (typeof document !== 'undefined') {
-                        style = document.getElementById('cssBundle');
-                        if(!style){
-                            style = document.createElement('link');
-                            style.id = "cssBundle";
-                            style.setAttribute('rel','stylesheet');
-                            style.setAttribute('href','${cssBundleDevLocation}');
-                            document.head.appendChild(style);
-                        }else{
-                            style.setAttribute('href','${cssBundleDevLocation}?queryBuster=${Math.random()}');
+                        window.refreshStyleSheet = ()=>{
+                            style = document.getElementById('cssBundle');
+                            if(!style){
+                                style = document.createElement('link');
+                                style.id = "cssBundle";
+                                style.setAttribute('rel','stylesheet');
+                                style.setAttribute('href','${cssBundleDevLocation}');
+                                document.head.appendChild(style);
+                            }else{
+                                style.setAttribute('href','${cssBundleDevLocation}?queryBuster=${Math.random()}');
+                            }
                         }
+                        window.refreshStyleSheet();
                     }})()`
                     const revisedSource = bundleAddition+' ,'+compilation.assets[entryName+'.js'].source();
                     compilation.assets[entryName+'.js'] = {
