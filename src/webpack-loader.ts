@@ -4,7 +4,7 @@ import { Stylesheet as StylableSheet, Generator, objectifyCSS, Resolver } from '
 import { FSResolver } from "./fs-resolver";
 import { StylableIntegrationDefaults,StylableIntegrationOptions} from './options';
 import loaderUtils = require('loader-utils');
-import { dirname } from 'path';
+import { dirname , join} from 'path';
 import {ensureAssets} from "./assetor";
 import webpack = require('webpack');
 // const assetDir:string = '/dist/assets';
@@ -22,6 +22,10 @@ function createIsUsedComment(ns:string){
 export function loader(this:webpack.loader.LoaderContext, source: string) {
     const options = { ...StylableIntegrationDefaults, ...loaderUtils.getOptions(this) };
     const resolver = (options as any).resolver || new FSResolver(options.defaultPrefix,this.options.context);
+
+    (this as any).loadModule(join(this.context,'./banana.jpg'),(err:any,data:any)=>{
+        debugger;
+    })
     const { sheet, code, assetMapping } = transformStylableCSS(
         source,
         this.resourcePath,
@@ -29,7 +33,8 @@ export function loader(this:webpack.loader.LoaderContext, source: string) {
         resolver,
         this.options.context,
         options,
-        projectAssetsVersions
+        projectAssetsVersions,
+        this
     );
     const codeWithComment = code + createIsUsedComment(sheet.namespace);
     Object.assign(projectAssetsMap, assetMapping);

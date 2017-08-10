@@ -5,15 +5,17 @@ const deindent = require('deindent');
 const murmurhash = require('murmurhash');
 import {StylableIntegrationDefaults,StylableIntegrationOptions} from './options';
 import {fsLike} from './types';
+import * as UrlLoader from 'url-loader';
 let currentOptions:StylableIntegrationOptions;
 //TODO: remove this regexps!!!!
 const relativeImportRegExp1 = /:import\(["']?(\.\/)(.*?)["']?\)/gm;
 const relativeImportRegExp2 = /-st-from\s*:\s*["'](\.\.?\/)(.*?)["']/gm;
 const relativeImportAsset = /url\s*\(\s*["']?(.*?)["']?\s*\)/gm;
 
-export function resolveImports(source: string, fs:fsLike, context: string, projectRoot:string, assetVersions?:{[origPath:string]:number}) {
+export function resolveImports(this:any,source: string, fs:fsLike, context: string, projectRoot:string, assetVersions?:{[origPath:string]:number},ldr?:any) {
     const importMapping: { [key: string]: string } = {};
     const assetMapping: { [key: string]: string } = {}
+    const that = this;
     const resolved = source
         .replace(relativeImportRegExp1, replace)
         .replace(relativeImportRegExp2, replace)
@@ -36,6 +38,8 @@ export function resolveImports(source: string, fs:fsLike, context: string, proje
         const buster = assetVersions && assetVersions[originPath] ? '?buster='+assetVersions[originPath] : '';
         const distPath = path.resolve(htap(currentOptions.assetsDir,relativePath));
         assetMapping[originPath] = distPath;
+        // const uldr = (UrlLoader as any);
+        // uldr.call(ldr,relativePath);
         const changedSlashes = relativePath.replace(/\\/g,'/')
         return 'url("'+path.posix.join(currentOptions.assetsServerUri,changedSlashes)+buster+'")'
         // return match.replace(rel, path.posix.resolve(currentOptions.assetsUri,rel));
@@ -64,9 +68,9 @@ export function justImport(path: string) {
     return `require("${path}");`;
 }
 
-export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, projectRoot:string, options: StylableIntegrationOptions = StylableIntegrationDefaults, assetVersions?:{[origPath:string]:number}) {
+export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, projectRoot:string, options: StylableIntegrationOptions = StylableIntegrationDefaults, assetVersions?:{[origPath:string]:number},ldr?:any) {
     currentOptions = options;
-    const { resolved, importMapping, assetMapping } = resolveImports(source,(resolver as any).fsToUse , context, projectRoot, assetVersions);
+    const { resolved, importMapping, assetMapping } = resolveImports(source,(resolver as any).fsToUse , context, projectRoot, assetVersions,ldr);
     const sheet = createStylesheetWithNamespace(resolved, resourcePath, options.defaultPrefix);
 
 

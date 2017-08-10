@@ -153,7 +153,18 @@ export function testJsEntry(entry: string,files:{[key:string]:string | Buffer} |
 					test: /\.css$/,
 					loader: path.join(process.cwd(), 'webpack-loader'),
                     options: Object.assign({resolver}, options)
-				}
+				},
+                {
+                    test: /\.(png|jpg|gif|svg)$/,
+                    use: [
+                    {
+                        loader: 'url-loader',
+                        options: {
+                            limit: 1
+                        }
+                    }
+                    ]
+                }
 			]
 		}
     });

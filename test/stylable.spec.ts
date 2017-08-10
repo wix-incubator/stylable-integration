@@ -335,7 +335,7 @@ describe('plugin', function(){
             done();
         },testConfig);
     });
-    it('should move imported assets to dist/assets jpg',function(done){
+    it.only('should move imported assets to dist/assets jpg',function(done){
         const banana = fs.readFileSync('./test/fixtures/banana.jpg');
         const files = {
             'main.js':jsThatImports(['./main.css']),
