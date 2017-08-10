@@ -4,7 +4,6 @@ import { htap } from "htap";
 const deindent = require('deindent');
 const murmurhash = require('murmurhash');
 import {StylableIntegrationDefaults,StylableIntegrationOptions} from './options';
-import * as UrlLoader from 'url-loader';
 let currentOptions:StylableIntegrationOptions;
 //TODO: remove this regexps!!!!
 const relativeImportRegExp1 = /:import\(["']?(\.\/)(.*?)["']?\)/gm;
