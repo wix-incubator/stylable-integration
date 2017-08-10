@@ -106,8 +106,8 @@ describe('build stand alone', function () {
         testComplexRule(mainCssAst, [{ m: evaledMain, cls: '.gaga' }, { m: evaledSub, cls: '.root' }], 'color', 'blue');
 
 
-        const mainCssPath = path.join(outPath, 'main.css');
-        const subCssPath = path.join(outPath, 'components', 'comp.css');
+        const mainCssPath = path.join(outPath, 'main.css.src');
+        const subCssPath = path.join(outPath, 'components', 'comp.css.src');
 
         const mainCssContent = fs.readFileSync(mainCssPath).toString();
         const subCssContent = fs.readFileSync(subCssPath).toString();
@@ -143,7 +143,7 @@ describe("lib usage with loader", () => {
                 </svg>
         `,
         'package.json': `{
-                name:"my-lib"
+                "name":"my-lib"
         }`
     }
     const files: StringMap = {

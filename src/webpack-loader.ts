@@ -17,6 +17,13 @@ function createIsUsedComment(ns:string){
 }
 
 export function loader(this:webpack.loader.LoaderContext, source: string) {
+    let originalCode:string = '';
+    let resourcePath = this.resourcePath;
+    if(this.resourcePath.indexOf('.css.js')===this.resourcePath.length-7){
+        originalCode = source;
+        resourcePath = this.resourcePath.slice(0,this.resourcePath.length-3);
+        source = this.fs.readFileSync(resourcePath+'.src').toString();
+    }
     const options = { ...StylableIntegrationDefaults, ...loaderUtils.getOptions(this) };
     const resolver = new FSResolver(options.defaultPrefix,this.options.context,this.fs);
     const publicPath  = this.options.output.publicPath || '//assets';
@@ -38,7 +45,7 @@ export function loader(this:webpack.loader.LoaderContext, source: string) {
         try{
             const { sheet, code } = transformStylableCSS(
                 modifiedSource,
-                this.resourcePath,
+                resourcePath,
                 this.context,
                 resolver,
                 this.options.context,

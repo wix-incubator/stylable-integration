@@ -119,7 +119,7 @@ export function testJsEntries(entries:string[],files:{[key:string]:string},test:
 		module: {
 			rules: [
 				{
-					test: /\.css$/,
+					test: /\.css$|\.css\.src$|\.css\.js$/,
 					loader: path.join(process.cwd(), 'webpack-loader'),
                     options:options
 				}
@@ -169,7 +169,7 @@ export function testJsEntry(entry: string,files:{[key:string]:string | Buffer} |
 		module: {
 			rules: [
 				{
-					test: /\.css$/,
+					test: /\.css$|\.css\.src$|\.css\.js$/,
 					loader: path.join(process.cwd(), 'webpack-loader'),
                     options
 				},
