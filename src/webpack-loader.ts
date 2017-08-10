@@ -23,7 +23,8 @@ export function loader(this:webpack.loader.LoaderContext, source: string) {
     return replaceAssetsAsync(source,(relativeUrl:string)=>{
         return new Promise<string>((resolve)=>{
             this.addDependency(relativeUrl);
-            (this as any).loadModule(relativeUrl,(err:any,data:any)=>{
+            //seems to be an error in webpack d.ts
+            (this as any).loadModule(relativeUrl,(err:Error | null,data:string)=>{
                 if(data && !err){
                     const mod = {exports:''};
                     Function("module","__webpack_public_path__",data)(mod,publicPath)
@@ -39,8 +40,7 @@ export function loader(this:webpack.loader.LoaderContext, source: string) {
             this.context,
             resolver,
             this.options.context,
-            options,
-            this
+            options
         );
         if(options.injectBundleCss && !firstRun){
             const rand = Math.random();

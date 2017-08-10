@@ -8,12 +8,22 @@ import * as postcss from 'postcss';
 const EnvPlugin = require('webpack/lib/web/WebEnvironmentPlugin');
 const _eval = require('node-eval');
 import {Plugin} from '../src/webpack-loader'
-export type TestFunction = (evaluated: any, css: string, memfs: MemoryFileSystem) => void
-export type TestMultiEntries = (evaluated: any[], csss: string[], memfs: MemoryFileSystem) => void
+
+
+
 import {fsLike} from '../src/types';
 import { dirname } from 'path';
 import {StylableIntegrationDefaults,StylableIntegrationOptions} from '../src/options';
 
+export interface MockedRuntime {
+    rootClass : string;
+    namespace :string;
+    namespaceMap:{[key:string]:string};
+    targetCss:string;
+}
+
+export type TestMultiEntries = (evaluated: MockedRuntime[], csss: string[], memfs: MemoryFileSystem) => void
+export type TestFunction = (evaluated: MockedRuntime, css: string, memfs: MemoryFileSystem) => void
 export const nsSeparator = '💠';
 
 

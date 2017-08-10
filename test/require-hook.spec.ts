@@ -72,5 +72,4 @@ describe('require-hook', function () {
         expect(called).to.equal(true);
     });
 
-
 });

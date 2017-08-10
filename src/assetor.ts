@@ -1,17 +1,17 @@
 import { FSResolver } from "./fs-resolver";
 import { dirname } from 'path';
+import * as fs from 'fs'
 
 
-
-const ensureDir = (dir:string,fs:any) => {
+const ensureDir = (dir:string,_fs:typeof fs) => {
   // This will create a dir given a path such as './folder/subfolder'
   const splitPath = dir.split('\\');
   splitPath.reduce((path, subPath) => {
     let currentPath;
     if(subPath != '.'){
       currentPath = path ? path + '\\' + subPath : subPath;
-      if (!fs.existsSync(currentPath)){
-        fs.mkdirSync(currentPath);
+      if (!_fs.existsSync(currentPath)){
+        _fs.mkdirSync(currentPath);
       }
     }
     else{
@@ -22,14 +22,14 @@ const ensureDir = (dir:string,fs:any) => {
 }
 
 
-export function ensureAssets(projectAssetsMap:{[key:string]:string},fs:any,rootPath:string){
+export function ensureAssets(projectAssetsMap:{[key:string]:string},_fs:typeof fs,rootPath:string){
     Object.keys(projectAssetsMap).map((assetOriginalPath)=>{
-        if(fs.existsSync(assetOriginalPath)){
-            const content = fs.readFileSync(assetOriginalPath);
+        if(_fs.existsSync(assetOriginalPath)){
+            const content = _fs.readFileSync(assetOriginalPath);
             const targetPath = projectAssetsMap[assetOriginalPath]//.replace(rootPath,process.cwd());
             const targetDir = dirname(targetPath);
-            ensureDir(targetDir,fs);
-            fs.writeFileSync(targetPath,content);
+            ensureDir(targetDir,_fs);
+            _fs.writeFileSync(targetPath,content);
         }
     })
 }

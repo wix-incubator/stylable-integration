@@ -10,9 +10,8 @@ const relativeImportRegExp1 = /:import\(["']?(\.\/)(.*?)["']?\)/gm;
 const relativeImportRegExp2 = /-st-from\s*:\s*["'](\.\.?\/)(.*?)["']/gm;
 const relativeImportAsset = /url\s*\(\s*["']?(.*?)["']?\s*\)/gm;
 
-export function resolveImports(this:any,source: string, context: string, projectRoot:string,ldr?:any) {
+export function resolveImports(source: string, context: string, projectRoot:string) {
     const importMapping: { [key: string]: string } = {};
-    const that = this;
     const resolved = source
         .replace(relativeImportRegExp1, replace)
         .replace(relativeImportRegExp2, replace)
@@ -75,11 +74,11 @@ export function justImport(path: string) {
     return `require("${path}");`;
 }
 
-export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, projectRoot:string, options: StylableIntegrationOptions = StylableIntegrationDefaults,ldr?:any) {
+export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, projectRoot:string, options: StylableIntegrationOptions = StylableIntegrationDefaults) {
     currentOptions = options;
-    const { resolved, importMapping } = resolveImports(source, context, projectRoot,ldr);
+    const { resolved, importMapping } = resolveImports(source, context, projectRoot);
     const sheet = createStylesheetWithNamespace(resolved, resourcePath, options.defaultPrefix);
-    const imports = sheet.imports.map((importDef: any) => {
+    const imports = sheet.imports.map((importDef) => {
         return justImport(importMapping[importDef.from]);
     });
 
