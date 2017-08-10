@@ -22,8 +22,8 @@ export interface MockedRuntime {
     targetCss:string;
 }
 
-export type TestMultiEntries = (evaluated: MockedRuntime[], csss: string[], memfs: MemoryFileSystem) => void
-export type TestFunction = (evaluated: MockedRuntime, css: string, memfs: MemoryFileSystem) => void
+export type TestMultiEntries = (evaluated: any[], csss: string[], memfs: MemoryFileSystem) => void
+export type TestFunction = (evaluated: any, css: string, memfs: MemoryFileSystem) => void
 export const nsSeparator = '💠';
 
 
