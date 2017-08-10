@@ -8,7 +8,7 @@
     "stc": "./dist/src/build.js"
   },
   "scripts": {
-    "build": "tsc && cp test/fixtures/ dist/test/fixtures -r",
+    "build": "tsc && cp -r test/fixtures/ dist/test/fixtures",
     "webpack": "webpack",
     "test": "tsc && mocha ./dist/test/index.js",
     "prepublish": "npm run build",
