@@ -18,16 +18,19 @@ export class FSResolver extends Resolver {
         if (path.match(/\.css$/)) {
             const eResolver = ResolverFactory.createResolver({
                 fileSystem:this.fs,
-                useSyncFileSystemCalls:true
+                useSyncFileSystemCalls:true,
+                extensions:[".src", ".css"]
             })
 
-            if(path.indexOf(':\\')==-1){
-                path = eResolver.resolveSync({},this.projectRoot,path);
-            }
+            // if(path.indexOf(':\\')==-1){
+            //     path += '.src';
+            // }
+
+            path = eResolver.resolveSync({},this.projectRoot,path);
             //this.fsToUse.readFileSync("C:\\projects\\stylable-integration\\node_modules\\my-lib\\sources\\comp.css")
             resolved = createStylesheetWithNamespace(
                 resolveImports(this.fs.readFileSync(path, 'utf8').toString(), dirname(path),this.projectRoot).resolved,
-                path,
+                path.replace(/\.css\.src$/,'.css'),
                 this.prefix
             );
         } else {

@@ -29,7 +29,7 @@ export function build(match:string,suppliedFs:typeof fs,resolver:FSResolver,outD
             if(!hasDir){
                 tryRun(() => suppliedFs.mkdirSync(outDirPath, code), 'create dir Error');
             }
-            tryRun(() => suppliedFs.writeFileSync(outSrcPath, content), 'Write File Error');
+            tryRun(() => suppliedFs.writeFileSync(outSrcPath+'.src', content), 'Write File Error');
             tryRun(() => suppliedFs.writeFileSync(outPath, code), 'Write File Error');
             projectAssets = projectAssets.concat(getUsedAssets(content).map((uri:string)=>resolve(dir,uri)));
         });
