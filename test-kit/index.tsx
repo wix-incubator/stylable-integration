@@ -10,10 +10,8 @@ const _eval = require('node-eval');
 import {Plugin} from '../src/webpack-loader'
 export type TestFunction = (evaluated: any, css: string, memfs: MemoryFileSystem) => void
 export type TestMultiEntries = (evaluated: any[], csss: string[], memfs: MemoryFileSystem) => void
-import {FSResolver} from '../src/fs-resolver';
 import {fsLike} from '../src/types';
 import { dirname } from 'path';
-import { Resolver } from 'stylable'; //peer
 import {StylableIntegrationDefaults,StylableIntegrationOptions} from '../src/options';
 
 export const nsSeparator = '💠';
@@ -93,7 +91,6 @@ export function testJsEntries(entries:string[],files:{[key:string]:string},test:
     const contentPath = getContentPath(config)
     const distPath = getDistPath(config);
     const memfs = getMemFs(files,config.rootPath,config.contentRelativePath);
-    const resolver = new FSResolver('s',memfs as any);
     let entriesRes : {[key:string]:string} = {};
 	const compiler = webpack({
         entry: entries.reduce((accum,entry)=>{
@@ -105,14 +102,14 @@ export function testJsEntries(entries:string[],files:{[key:string]:string},test:
 			filename: '[name].js'
 		},
 		plugins: [
-            new Plugin({...StylableIntegrationDefaults,...options},resolver)
+            new Plugin({...StylableIntegrationDefaults,...options})
         ],
 		module: {
 			rules: [
 				{
 					test: /\.css$/,
 					loader: path.join(process.cwd(), 'webpack-loader'),
-                    options: {resolver,filename: '[name].css',...options}
+                    options: {filename: '[name].css',...options}
 				}
 			]
 		}
@@ -134,12 +131,11 @@ export function testJsEntries(entries:string[],files:{[key:string]:string},test:
 
 
 
-export function testJsEntry(entry: string,files:{[key:string]:string | Buffer} | MemoryFileSystem, test: TestFunction,config:TestConfig, options:StylableIntegrationOptions = {...StylableIntegrationDefaults,assetsDir:path.resolve(config.rootPath,config.assetsRelativePath),assetsServerUri:config.assetsServerUri}) {
+export function testJsEntry(entry: string,files:{[key:string]:string | Buffer} | MemoryFileSystem, test: TestFunction,config:TestConfig, options:StylableIntegrationOptions = {...StylableIntegrationDefaults}) {
 
     const memfs = files instanceof MemoryFileSystem ? files : getMemFs(files,config.rootPath,config.contentRelativePath);
     const contentPath = getContentPath(config);
     const distPath = getDistPath(config);
-    const resolver = new FSResolver('s',process.cwd(),memfs as any);
 	const compiler = webpack({
         entry: path.join(contentPath,entry),
 		output: {
@@ -148,7 +144,7 @@ export function testJsEntry(entry: string,files:{[key:string]:string | Buffer} |
 			filename: 'bundle.js'
 		},
 		plugins: [
-            new Plugin({...StylableIntegrationDefaults,...options},resolver)
+            new Plugin({...StylableIntegrationDefaults,...options})
         ]
         ,
 		module: {
@@ -156,7 +152,7 @@ export function testJsEntry(entry: string,files:{[key:string]:string | Buffer} |
 				{
 					test: /\.css$/,
 					loader: path.join(process.cwd(), 'webpack-loader'),
-                    options: Object.assign({resolver}, options)
+                    options
 				},
                 {
                     test: /\.(png|jpg|gif|svg)$/,

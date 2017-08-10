@@ -7,10 +7,8 @@ import * as postcss from 'postcss';
 const EnvPlugin = require('webpack/lib/web/WebEnvironmentPlugin');
 const _eval = require('node-eval');
 import {Plugin} from '../src/webpack-loader'
-import {FSResolver} from '../src/fs-resolver';
 import {fsLike} from '../src/types';
 import { dirname } from 'path';
-import { Resolver } from 'stylable'; //peer
 import {dotLess,expectRule,expectRuleOrder,findDecl,findRule,getContentPath,getDistPath,getMemFs,getRuleValue,hasNoCls,isDecl,isRule,jsThatImports,nsChunk,nsSeparator,registerMemFs,selectorClsChunk,TestFunction,testJsEntries,testJsEntry,TestMultiEntries,testRule,testComplexRule,TestConfig,getAssetPath,getAssetRegExp} from '../test-kit/index';
 import {StylableIntegrationDefaults,StylableIntegrationOptions} from '../src/options';
 const testConfig:TestConfig = {

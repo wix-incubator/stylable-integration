@@ -5,7 +5,6 @@ import { FSResolver } from "./fs-resolver";
 import { StylableIntegrationDefaults,StylableIntegrationOptions} from './options';
 import loaderUtils = require('loader-utils');
 import { dirname , join} from 'path';
-import {ensureAssets} from "./assetor";
 import webpack = require('webpack');
 // const assetDir:string = '/dist/assets';
 
@@ -20,7 +19,7 @@ function createIsUsedComment(ns:string){
 
 export function loader(this:webpack.loader.LoaderContext, source: string) {
     const options = { ...StylableIntegrationDefaults, ...loaderUtils.getOptions(this) };
-    const resolver = (options as any).resolver || new FSResolver(options.defaultPrefix,this.options.context);
+    const resolver = new FSResolver(options.defaultPrefix,this.options.context,this.fs);
     const publicPath  = this.options.output.publicPath || '//assets';
     return replaceAssetsAsync(source,(relativeUrl:string)=>{
         return new Promise<string>((resolve)=>{
@@ -75,7 +74,7 @@ export class Plugin{
                 }
             })
             const options = { ...StylableIntegrationDefaults, ...this.options };
-            const resolver = this.resolver || new FSResolver(options.defaultPrefix,compilation.options.context);
+            const resolver = new FSResolver(options.defaultPrefix,compilation.options.context,compilation.inputFileSystem);
             Object.keys(simpleEntries).forEach(entryName=>{
                 const entryContent = compilation.assets[entryName+'.js'].source();
                 if(this.options.injectBundleCss){

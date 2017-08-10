@@ -5,7 +5,7 @@ import { dirname, join } from "path";
 import { htap } from "htap";
 import {build} from './builder';
 const glob = require('glob');
-const fs = require('fs-extra');
+const fs = require('fs');
 
 const argv = require('yargs')
     .option('outDir')

@@ -24,7 +24,7 @@ export function build(match:string,suppliedFs:typeof fs,resolver:FSResolver,outD
             const content = tryRun(() => suppliedFs.readFileSync(fullpath, 'utf8'), 'Read File Error');
             const dir = dirname(fullpath);
             const outDirPath = dirname(outPath);
-            const { code } = tryRun(() => transformStylableCSS(content, fullpath, dir, resolver,cwd,{...StylableIntegrationDefaults,injectFileCss:true,assetsDir:join(cwd, outDir)}), 'Transform Error');
+            const { code } = tryRun(() => transformStylableCSS(content, fullpath, dir, resolver,cwd,{...StylableIntegrationDefaults,injectFileCss:true}), 'Transform Error');
             const hasDir = suppliedFs.existsSync(outDirPath);
             if(!hasDir){
                 tryRun(() => suppliedFs.mkdirSync(outDirPath, code), 'create dir Error');
@@ -36,7 +36,7 @@ export function build(match:string,suppliedFs:typeof fs,resolver:FSResolver,outD
         projectAssets.forEach((originalPath:string)=>{
             projectAssetMapping[originalPath] = originalPath.replace(join(cwd, srcDir),join(cwd, outDir))
         })
-        ensureAssets(projectAssetMapping,resolver,cwd);
+        ensureAssets(projectAssetMapping,suppliedFs,cwd);
     });
 }
 

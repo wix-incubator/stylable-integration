@@ -22,9 +22,8 @@ const ensureDir = (dir:string,fs:any) => {
 }
 
 
-export function ensureAssets(projectAssetsMap:{[key:string]:string},resolver:FSResolver,rootPath:string){
+export function ensureAssets(projectAssetsMap:{[key:string]:string},fs:any,rootPath:string){
     Object.keys(projectAssetsMap).map((assetOriginalPath)=>{
-        const fs = resolver.fsToUse;
         if(fs.existsSync(assetOriginalPath)){
             const content = fs.readFileSync(assetOriginalPath);
             const targetPath = projectAssetsMap[assetOriginalPath]//.replace(rootPath,process.cwd());

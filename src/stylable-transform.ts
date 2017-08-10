@@ -4,7 +4,6 @@ import { htap } from "htap";
 const deindent = require('deindent');
 const murmurhash = require('murmurhash');
 import {StylableIntegrationDefaults,StylableIntegrationOptions} from './options';
-import {fsLike} from './types';
 import * as UrlLoader from 'url-loader';
 let currentOptions:StylableIntegrationOptions;
 //TODO: remove this regexps!!!!
@@ -12,7 +11,7 @@ const relativeImportRegExp1 = /:import\(["']?(\.\/)(.*?)["']?\)/gm;
 const relativeImportRegExp2 = /-st-from\s*:\s*["'](\.\.?\/)(.*?)["']/gm;
 const relativeImportAsset = /url\s*\(\s*["']?(.*?)["']?\s*\)/gm;
 
-export function resolveImports(this:any,source: string, fs:fsLike, context: string, projectRoot:string,ldr?:any) {
+export function resolveImports(this:any,source: string, context: string, projectRoot:string,ldr?:any) {
     const importMapping: { [key: string]: string } = {};
     const that = this;
     const resolved = source
@@ -79,7 +78,7 @@ export function justImport(path: string) {
 
 export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, projectRoot:string, options: StylableIntegrationOptions = StylableIntegrationDefaults,ldr?:any) {
     currentOptions = options;
-    const { resolved, importMapping } = resolveImports(source,(resolver as any).fsToUse , context, projectRoot,ldr);
+    const { resolved, importMapping } = resolveImports(source, context, projectRoot,ldr);
     const sheet = createStylesheetWithNamespace(resolved, resourcePath, options.defaultPrefix);
     const imports = sheet.imports.map((importDef: any) => {
         return justImport(importMapping[importDef.from]);
