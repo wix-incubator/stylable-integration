@@ -86,7 +86,9 @@ export class Plugin{
             const options = { ...StylableIntegrationDefaults, ...this.options };
             const resolver = new FSResolver(options.defaultPrefix,compilation.options.context,compilation.inputFileSystem);
             Object.keys(simpleEntries).forEach(entryName=>{
-                const entryContent = compilation.assets[entryName+'.js'].source();
+                const outputFormat = compilation.options.output.filename;
+                const bundleName = outputFormat.replace('[name]', entryName);
+                const entryContent = compilation.assets[bundleName].source();
                 if(this.options.injectBundleCss){
                     const cssBundleDevLocation = "http://localhost:8080/"+entryName+".css";
                     const bundleAddition =  `(()=>{if (typeof document !== 'undefined') {
@@ -125,7 +127,8 @@ export class Plugin{
                     }
                 })
                 const resultCssBundle = gen.buffer.join('\n');
-                compilation.assets[entryName+'.css'] = {
+                const bundleCssName  = bundleName.lastIndexOf('.js') === bundleName.length-3 ? bundleName.slice(0,bundleName.length-3)+'.css' : bundleName+'.css';
+                compilation.assets[bundleCssName] = {
                     source: function(){
                         return new Buffer(resultCssBundle,"utf-8")
                     },

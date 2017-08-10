@@ -19,7 +19,8 @@ const testConfig: TestConfig = {
     distRelativePath: 'dist',
     assetsRelativePath: 'assets',
     contentRelativePath: 'sources',
-    assetsServerUri: 'serve-assets'
+    assetsServerUri: 'serve-assets',
+    fileNameFormat:'[name].js'
 }
 const assetRegEx = getAssetRegExp(testConfig);
 

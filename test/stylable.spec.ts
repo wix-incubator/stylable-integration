@@ -14,6 +14,7 @@ import {StylableIntegrationDefaults,StylableIntegrationOptions} from '../src/opt
 const testConfig:TestConfig = {
     rootPath:process.cwd(),
     distRelativePath:'dist',
+    fileNameFormat:'[name].js',
     assetsRelativePath:'assets',
     contentRelativePath:'sources',
     assetsServerUri:'serve-assets'
@@ -38,6 +39,7 @@ describe('plugin', function(){
             done();
         },testConfig);
     });
+
     it('should work with multiple webpack entries',function(done){
         const files = {
             'home.js':jsThatImports(['./home.css']),
@@ -68,6 +70,38 @@ describe('plugin', function(){
                 testRule(aboutCssModule,aboutCssAst,'.baga','background','red'))
             done();
         },testConfig);
+    });
+
+    it('should support fileName webpack format',function(done){
+        const files = {
+            'home.js':jsThatImports(['./home.css']),
+            'home.css':`
+                .gaga{
+                    background:green;
+                }
+
+            `,
+            'about.js':jsThatImports(['./about.css']),
+            'about.css':`
+                .baga{
+                    background:red;
+                }
+
+            `
+        }
+        const entries = ['home','about'];
+        testJsEntries(entries,files,(bundles,csss,memfs)=>{
+            const homeCssAst = postcss.parse(csss[0]);
+            const homeCssModule = bundles[0].home.default;
+            const aboutCssAst = postcss.parse(csss[1]);
+            const aboutCssModule = bundles[1].about.default;
+            hasNoCls(csss[1],
+                testRule(homeCssModule,homeCssAst,'.gaga','background','green')
+            );
+            hasNoCls(csss[0],
+                testRule(aboutCssModule,aboutCssAst,'.baga','background','red'))
+            done();
+        },{...testConfig,fileNameFormat:'[name].bundle.js'});
     });
 
     it('should add script for appending to html',function(done){

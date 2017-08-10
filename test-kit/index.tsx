@@ -81,6 +81,7 @@ export interface TestConfig{
     distRelativePath:string;
     assetsServerUri:string;
     assetsRelativePath:string;
+    fileNameFormat:string;
 }
 
 export const getAssetRegExp = (config:TestConfig)=>new RegExp( `url\\s*\\(\\s*["']?${config.assetsServerUri}\\/(.*?)["']?\\s*\\)`);
@@ -109,7 +110,7 @@ export function testJsEntries(entries:string[],files:{[key:string]:string},test:
         },entriesRes),
 		output: {
 			path:distPath,
-			filename: '[name].js'
+			filename: config.fileNameFormat
 		},
 		plugins: [
             new Plugin({...StylableIntegrationDefaults,...options})
@@ -119,7 +120,7 @@ export function testJsEntries(entries:string[],files:{[key:string]:string},test:
 				{
 					test: /\.css$/,
 					loader: path.join(process.cwd(), 'webpack-loader'),
-                    options: {filename: '[name].css',...options}
+                    options:options
 				}
 			]
 		}
@@ -129,8 +130,15 @@ export function testJsEntries(entries:string[],files:{[key:string]:string},test:
 
     compiler.run( function (err: Error, stats: any) {
         if (err) { throw err; }
-		const evaledBundles = entries.map((entry)=>_eval(memfs.readFileSync(path.join(distPath,entry+'.js'), 'utf8')));
-		const bundlesCss = entries.map((entry)=>memfs.readFileSync(path.join(distPath,entry+'.css'), 'utf8'));
+		const evaledBundles = entries.map((entry)=>{
+            const bundleName = config.fileNameFormat.replace('[name]',entry)
+            return _eval(memfs.readFileSync(path.join(distPath,bundleName), 'utf8'))
+        });
+		const bundlesCss = entries.map((entry)=>{
+            const bundleName = config.fileNameFormat.replace('[name]',entry);
+            const bundleCssName  = bundleName.lastIndexOf('.js') === bundleName.length-3 ? bundleName.slice(0,bundleName.length-3)+'.css' : bundleName+'.css';
+            return memfs.readFileSync(path.join(distPath,bundleCssName), 'utf8')
+        });
 
         test(evaledBundles,bundlesCss, memfs);
 
