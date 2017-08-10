@@ -34,23 +34,30 @@ export function loader(this:webpack.loader.LoaderContext, source: string) {
             })
         });
     }).then((modifiedSource)=>{
-        let { sheet, code } = transformStylableCSS(
-            modifiedSource,
-            this.resourcePath,
-            this.context,
-            resolver,
-            this.options.context,
-            options
-        );
-        if(options.injectBundleCss && !firstRun){
-            const rand = Math.random();
-            code+='\n+window.refreshStyleSheet('+rand+');\n'
-        }
-        code = code + createIsUsedComment(sheet.namespace);
+        let modifiedCode = '';
+        try{
+            const { sheet, code } = transformStylableCSS(
+                modifiedSource,
+                this.resourcePath,
+                this.context,
+                resolver,
+                this.options.context,
+                options
+            );
+            modifiedCode = code;
+            if(options.injectBundleCss && !firstRun){
+                const rand = Math.random();
+                modifiedCode+='\n+window.refreshStyleSheet('+rand+');\n'
+            }
+            modifiedCode = modifiedCode + createIsUsedComment(sheet.namespace);
 
-        used.push(sheet);
-        this.addDependency('stylable');
-        return code;
+            used.push(sheet);
+            this.addDependency('stylable');
+        } catch (err){
+            console.error(err.message,err.stack);
+        }
+
+        return modifiedCode;
     })
 
 };

@@ -26,7 +26,7 @@ export class FSResolver extends Resolver {
             }
             //this.fsToUse.readFileSync("C:\\projects\\stylable-integration\\node_modules\\my-lib\\sources\\comp.css")
             resolved = createStylesheetWithNamespace(
-                resolveImports(this.fs.readFileSync(path, 'utf8'), dirname(path),this.projectRoot).resolved,
+                resolveImports(this.fs.readFileSync(path, 'utf8').toString(), dirname(path),this.projectRoot).resolved,
                 path,
                 this.prefix
             );

@@ -21,7 +21,7 @@ export function build(match:string,suppliedFs:typeof fs,resolver:FSResolver,outD
             const outSrcPath = join(cwd, outDir, fullpath.replace(fullSrcDir, ''));
             const outPath = outSrcPath + '.js';
             log && log('[Build]', fullpath + ' --> ' + outPath);
-            const content = tryRun(() => suppliedFs.readFileSync(fullpath, 'utf8'), 'Read File Error');
+            const content = tryRun(() => suppliedFs.readFileSync(fullpath, 'utf8').toString(), 'Read File Error');
             const dir = dirname(fullpath);
             const outDirPath = dirname(outPath);
             const { code } = tryRun(() => transformStylableCSS(content, fullpath, dir, resolver,cwd,{...StylableIntegrationDefaults,injectFileCss:true}), 'Transform Error');

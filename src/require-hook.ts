@@ -17,7 +17,7 @@ export function attachHook({ extension, afterCompile }: Options) {
     const options:StylableIntegrationOptions = {...StylableIntegrationDefaults, ...{ injectFileCss: true ,injectBundleCss:false}};
     const resolver = new FSResolver(options.defaultPrefix,'root');
     require.extensions[extension] = function cssModulesHook(m: any, filename: string) {
-        const source = readFileSync(filename, 'utf8');
+        const source = readFileSync(filename, 'utf8').toString();
         const { code, sheet } = transformStylableCSS(source, filename, relative('.', dirname(filename)), resolver,'root', options);
         return m._compile(afterCompile ? afterCompile(code, filename) : code, filename);
     };
