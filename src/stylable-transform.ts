@@ -8,7 +8,7 @@ let currentOptions:StylableIntegrationOptions;
 //TODO: remove this regexps!!!!
 const relativeImportRegExp1 = /:import\(["']?(\.\/)(.*?)["']?\)/gm;
 const relativeImportRegExp2 = /-st-from\s*:\s*["'](\.\.?\/)(.*?)["']/gm;
-const relativeImportAsset = /url\s*\(\s*["']?(.*?)["']?\s*\)/gm;
+const relativeImportAsset = /url\s*\(\s*[^data:]["']?(.*?)["']?\s*\)/gm;
 
 export function resolveImports(source: string, context: string, projectRoot:string) {
     const importMapping: { [key: string]: string } = {};

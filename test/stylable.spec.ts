@@ -370,6 +370,22 @@ describe('plugin', function(){
             done();
         },testConfig);
     });
+    it('should not replace missing base 64 images',function(done){
+        const img:string = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjIiIHZpZXdCb3g9IjAgMCA4IDIiPiAgICA8cGF0aCBmaWxsPSIjRkZGIiBmaWxsLXJ1bGU9Im5vbnplcm8iIGQ9Ik0xIDJoNmExIDEgMCAwIDAgMC0ySDFhMSAxIDAgMCAwIDAgMnoiLz48L3N2Zz4=`
+        const files = {
+            'main.js':jsThatImports(['./main.css']),
+            'main.css':`
+                .gaga{
+                    background-image: url(${img});
+                }
+
+            `
+        }
+        testJsEntry('main.js',files,(bundle,css,memfs)=>{
+            expect(css).to.include(img);
+            done();
+        },testConfig);
+    });
     it('should move imported assets to dist/assets jpg',function(done){
         const banana = fs.readFileSync('./test/fixtures/banana.jpg');
         const files = {
