@@ -8,8 +8,8 @@ let currentOptions:StylableIntegrationOptions;
 //TODO: remove this regexps!!!!
 const relativeImportRegExp1 = /:import\(["']?(\.\/)(.*?)["']?\)/gm;
 const relativeImportRegExp2 = /-st-from\s*:\s*["'](\.\.?\/)(.*?)["']/gm;
-const relativeImportAsset = /url\s*\(\s*[^data:]["']?(.*?)["']?\s*\)/gm;
-
+const relativeImportAsset = /url\s*\(\s*["']?([^:]*?)["']?\s*\)/gm;
+const matchData = /data\s*\:/;
 export function resolveImports(source: string, context: string, projectRoot:string) {
     const importMapping: { [key: string]: string } = {};
     const resolved = source
@@ -52,6 +52,17 @@ export function replaceAssetsAsync(source:string,resolveAssetAsync:(relativeUrl:
         return modifiedSplitSource.join('');
     })
 
+}
+
+function isDataUrl(url:string){
+    const splitUrl = url.split(matchData);
+    if(splitUrl.length===1){
+        return false;
+    }
+    if(splitUrl[0].length!==0){
+        return false;
+    }
+    return true;
 }
 
 export function createStylesheetWithNamespace(source: string, path: string, prefix: string = StylableIntegrationDefaults.defaultPrefix) {
