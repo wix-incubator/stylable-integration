@@ -7,11 +7,9 @@ import * as postcss from 'postcss';
 const EnvPlugin = require('webpack/lib/web/WebEnvironmentPlugin');
 const _eval = require('node-eval');
 import {Plugin} from '../src/webpack-loader'
-import {FSResolver} from '../src/fs-resolver';
 import {fsLike} from '../src/types';
 import { dirname } from 'path';
-import { Resolver } from 'stylable'; //peer
-import {dotLess,expectRule,expectRuleOrder,findDecl,findRule,getContentPath,getDistPath,getMemFs,getRuleValue,hasNoCls,isDecl,isRule,jsThatImports,nsChunk,nsSeparator,registerMemFs,selectorClsChunk,TestFunction,testJsEntries,testJsEntry,TestMultiEntries,testRule,testComplexRule,TestConfig,getAssetPath} from '../test-kit/index';
+import {dotLess,expectRule,expectRuleOrder,findDecl,findRule,getContentPath,getDistPath,getMemFs,getRuleValue,hasNoCls,isDecl,isRule,jsThatImports,nsChunk,nsSeparator,registerMemFs,selectorClsChunk,TestFunction,testJsEntries,testJsEntry,TestMultiEntries,testRule,testComplexRule,TestConfig,getAssetPath,getAssetRegExp} from '../test-kit/index';
 import {StylableIntegrationDefaults,StylableIntegrationOptions} from '../src/options';
 const testConfig:TestConfig = {
     rootPath:process.cwd(),
@@ -21,6 +19,7 @@ const testConfig:TestConfig = {
     assetsServerUri:'serve-assets'
 }
 
+const assetRegEx = getAssetRegExp(testConfig);
 const folderPath:string = process.cwd();
 describe('plugin', function(){
     it('should create modules and target css for css files imported from js',function(done){
@@ -304,8 +303,10 @@ describe('plugin', function(){
         }
         testJsEntry('main.js',files,(bundle,css,memfs)=>{
             expect(css).to.not.include( './asset.svg');
-            expect(css.split(`url("${testConfig.assetsServerUri}/sources/asset.svg")`).length,'converted url count').to.equal(5);
-            expect(memfs.readFileSync(getAssetPath(testConfig)+'/sources/asset.svg','utf8')).to.eql(files['asset.svg'])
+            const match = css.split(assetRegEx);
+
+            expect(match!.length,'converted url count').to.equal(9);
+            expect(memfs.readFileSync(getDistPath(testConfig)+'\\'+match![1]).toString()).to.eql(files['asset.svg']);
 
             done();
         },testConfig);
@@ -348,8 +349,10 @@ describe('plugin', function(){
         }
         testJsEntry('main.js',files,(bundle,css,memfs)=>{
             expect(css).to.not.include( './banana.jpg');
-            expect(css.split(`url("${testConfig.assetsServerUri}/sources/banana.jpg")`).length,'converted url count').to.equal(2);
-            expect(memfs.readFileSync(getAssetPath(testConfig)+'\\sources\\banana.jpg')).to.eql(files['banana.jpg'])
+            const match = css.match(assetRegEx);
+
+            expect(match!.length,'converted url count').to.equal(2);
+            expect(memfs.readFileSync(getDistPath(testConfig)+'\\'+match![1])).to.eql(files['banana.jpg'])
 
             done();
         },testConfig);

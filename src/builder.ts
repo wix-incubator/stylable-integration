@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import { transformStylableCSS } from "./stylable-transform";
+import { transformStylableCSS,getUsedAssets } from "./stylable-transform";
 import { FSResolver } from "./fs-resolver";
-import { dirname, join } from "path";
+import { dirname, join ,resolve} from "path";
 import { htap } from "htap";
 import { StylableIntegrationDefaults,StylableIntegrationOptions} from "./options";
 import { ensureAssets } from "./assetor";
@@ -13,6 +13,7 @@ export type globSearcher = (match:string,options:object,callback:(er: Error | nu
 export function build(match:string,suppliedFs:typeof fs,resolver:FSResolver,outDir:string,srcDir:string,cwd:string,glob:globSearcher,log?:(...args:string[])=>void){
     const fullSrcDir = join(cwd, srcDir);
     const fullMatch = htap(srcDir, match);
+    let projectAssets: string[]= [];
     glob(fullMatch, {}, function (er: Error, files: string[]) {
         const projectAssetMapping:{[key:string]:string} = {};
         files.forEach((file) => {
@@ -23,19 +24,19 @@ export function build(match:string,suppliedFs:typeof fs,resolver:FSResolver,outD
             const content = tryRun(() => suppliedFs.readFileSync(fullpath, 'utf8'), 'Read File Error');
             const dir = dirname(fullpath);
             const outDirPath = dirname(outPath);
-            const { code ,assetMapping} = tryRun(() => transformStylableCSS(content, fullpath, dir, resolver,cwd,{...StylableIntegrationDefaults,injectFileCss:true,assetsDir:join(cwd, outDir)}), 'Transform Error');
-            Object.assign(projectAssetMapping,assetMapping);
+            const { code } = tryRun(() => transformStylableCSS(content, fullpath, dir, resolver,cwd,{...StylableIntegrationDefaults,injectFileCss:true}), 'Transform Error');
             const hasDir = suppliedFs.existsSync(outDirPath);
             if(!hasDir){
                 tryRun(() => suppliedFs.mkdirSync(outDirPath, code), 'create dir Error');
             }
             tryRun(() => suppliedFs.writeFileSync(outSrcPath, content), 'Write File Error');
             tryRun(() => suppliedFs.writeFileSync(outPath, code), 'Write File Error');
+            projectAssets = projectAssets.concat(getUsedAssets(content).map((uri:string)=>resolve(dir,uri)));
         });
-        Object.keys(projectAssetMapping).forEach((originalPath:string)=>{
+        projectAssets.forEach((originalPath:string)=>{
             projectAssetMapping[originalPath] = originalPath.replace(join(cwd, srcDir),join(cwd, outDir))
         })
-        ensureAssets(projectAssetMapping,resolver,cwd);
+        ensureAssets(projectAssetMapping,suppliedFs,cwd);
     });
 }
 

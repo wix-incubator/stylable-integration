@@ -1,6 +1,6 @@
 {
   "name": "stylable-integration",
-  "version": "3.1.2",
+  "version": "4.0.0",
   "description": "Integration utils for stylable",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -41,14 +41,16 @@
     "@types/webpack": "^3.0.4",
     "chai": "^4.0.2",
     "concurrently": "^3.5.0",
+    "file-loader": "^0.11.2",
     "memory-fs": "^0.4.1",
     "mocha": "^3.4.2",
-    "postcss": "^6.0.8",
     "mocha-loader": "^1.1.1",
-    "stylable": "^3.0.0",
     "node-eval": "^1.1.0",
+    "postcss": "^6.0.8",
+    "stylable": "^3.0.0",
     "ts-mocha": "^1.0.3",
     "typescript": "^2.4.1",
+    "url-loader": "^0.5.9",
     "webpack": "^3.4.1"
   },
   "files": [
