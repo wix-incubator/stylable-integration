@@ -123,13 +123,13 @@ describe('plugin', function(){
         }
         const entries = ['home','about'];
         testJsEntries(entries,files,(bundles,csss,memfs)=>{
-            const homeBundleStr:string = memfs.readFileSync(path.join(getDistPath(testConfig),'home.js')).toString();
-            const aboutBundleStr:string = memfs.readFileSync(path.join(getDistPath(testConfig),'about.js')).toString();
+            const homeBundleStr:string = memfs.readFileSync(path.join(getDistPath(testConfig),'home.bundle.js')).toString();
+            const aboutBundleStr:string = memfs.readFileSync(path.join(getDistPath(testConfig),'about.bundle.js')).toString();
             expect(homeBundleStr).to.include('document.createElement');
-            expect(homeBundleStr).to.include('http://localhost:8080/home.css');
-            expect(aboutBundleStr).to.include('http://localhost:8080/about.css');
+            expect(homeBundleStr).to.include('assets/home.bundle.css');
+            expect(aboutBundleStr).to.include('assets/about.bundle.css');
             done();
-        },testConfig,{injectBundleCss:true});
+        },{...testConfig,fileNameFormat:'[name].bundle.js'},{injectBundleCss:true});
     });
 
 

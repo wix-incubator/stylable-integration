@@ -109,6 +109,7 @@ export function testJsEntries(entries:string[],files:{[key:string]:string},test:
             return accum;
         },entriesRes),
 		output: {
+            publicPath:'assets/',
 			path:distPath,
 			filename: config.fileNameFormat
 		},

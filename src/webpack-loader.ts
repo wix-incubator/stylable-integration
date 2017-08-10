@@ -88,9 +88,10 @@ export class Plugin{
             Object.keys(simpleEntries).forEach(entryName=>{
                 const outputFormat = compilation.options.output.filename;
                 const bundleName = outputFormat.replace('[name]', entryName);
+                const bundleCssName  = bundleName.lastIndexOf('.js') === bundleName.length-3 ? bundleName.slice(0,bundleName.length-3)+'.css' : bundleName+'.css';
                 const entryContent = compilation.assets[bundleName].source();
                 if(this.options.injectBundleCss){
-                    const cssBundleDevLocation = "http://localhost:8080/"+entryName+".css";
+                    const cssBundleLocation = compilation.options.output.publicPath+bundleCssName;
                     const bundleAddition =  `(()=>{if (typeof document !== 'undefined') {
                         window.refreshStyleSheet = ()=>{
                             style = document.getElementById('cssBundle');
@@ -98,16 +99,16 @@ export class Plugin{
                                 style = document.createElement('link');
                                 style.id = "cssBundle";
                                 style.setAttribute('rel','stylesheet');
-                                style.setAttribute('href','${cssBundleDevLocation}');
+                                style.setAttribute('href','${cssBundleLocation}');
                                 document.head.appendChild(style);
                             }else{
-                                style.setAttribute('href','${cssBundleDevLocation}?queryBuster=${Math.random()}');
+                                style.setAttribute('href','${cssBundleLocation}?queryBuster=${Math.random()}');
                             }
                         }
                         window.refreshStyleSheet();
                     }})()`
-                    const revisedSource = bundleAddition+' ,'+compilation.assets[entryName+'.js'].source();
-                    compilation.assets[entryName+'.js'] = {
+                    const revisedSource = bundleAddition+' ,'+compilation.assets[bundleName].source();
+                    compilation.assets[bundleName] = {
                         source: function(){
                             return new Buffer(revisedSource,"utf-8")
                         },
@@ -127,7 +128,6 @@ export class Plugin{
                     }
                 })
                 const resultCssBundle = gen.buffer.join('\n');
-                const bundleCssName  = bundleName.lastIndexOf('.js') === bundleName.length-3 ? bundleName.slice(0,bundleName.length-3)+'.css' : bundleName+'.css';
                 compilation.assets[bundleCssName] = {
                     source: function(){
                         return new Buffer(resultCssBundle,"utf-8")
