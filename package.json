@@ -23,11 +23,9 @@
   "dependencies": {
     "deindent": "^0.1.0",
     "enhanced-resolve": "^3.4.1",
-    "file-loader": "0.11.2",
     "htap": "^1.0.2",
     "loader-utils": "^1.1.0",
     "murmurhash": "^0.0.2",
-    "url-loader": "0.5.9",
     "yargs": "^8.0.2"
   },
   "peerDependencies": {
@@ -43,6 +41,7 @@
     "@types/webpack": "^3.0.4",
     "chai": "^4.0.2",
     "concurrently": "^3.5.0",
+    "file-loader": "^0.11.2",
     "memory-fs": "^0.4.1",
     "mocha": "^3.4.2",
     "mocha-loader": "^1.1.1",
@@ -51,6 +50,7 @@
     "stylable": "^3.0.0",
     "ts-mocha": "^1.0.3",
     "typescript": "^2.4.1",
+    "url-loader": "^0.5.9",
     "webpack": "^3.4.1"
   },
   "files": [
