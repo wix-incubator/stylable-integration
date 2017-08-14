@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 
-
 export interface fsLike {
     readFileSync:typeof fs.readFileSync;
     readFile:typeof fs.readFile;

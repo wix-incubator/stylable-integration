@@ -13,12 +13,12 @@ export interface Options extends StylableIntegrationOptions {
 
 export function attachHook({ extension, afterCompile }: Options) {
     extension = extension || '.css';
-    const existingHook = require.extensions[extension];
-    const options:StylableIntegrationOptions = {...StylableIntegrationDefaults, ...{ injectFileCss: true ,injectBundleCss:false}};
+    const options:StylableIntegrationOptions = {...StylableIntegrationDefaults, injectFileCss: true, injectBundleCss:false};
     const resolver = new FSResolver(options.defaultPrefix,'root');
+
     require.extensions[extension] = function cssModulesHook(m: any, filename: string) {
         const source = readFileSync(filename, 'utf8').toString();
-        const { code, sheet } = transformStylableCSS(source, filename, relative('.', dirname(filename)), resolver,'root', options);
+        const { code } = transformStylableCSS(source, filename, relative('.', dirname(filename)), resolver, options);
         return m._compile(afterCompile ? afterCompile(code, filename) : code, filename);
     };
 };

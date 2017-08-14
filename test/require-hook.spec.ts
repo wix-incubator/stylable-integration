@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { attachHook } from "../src/require-hook";
-import {StylableIntegrationDefaults,StylableIntegrationOptions} from '../src/options';
+import {StylableIntegrationDefaults} from '../src/options';
 
 
 describe('require-hook', function () {
@@ -49,10 +49,9 @@ describe('require-hook', function () {
             ...StylableIntegrationDefaults
         });
 
-        const res = require('./fixtures/vars.sb.css');
+        require('./fixtures/vars.sb.css');
         expect(called).to.equal(true);
     });
-
 
     it('load stylable css with imported vars', function () {
         var called = false;
@@ -68,7 +67,7 @@ describe('require-hook', function () {
             ,...StylableIntegrationDefaults
         });
 
-        const res = require('./fixtures/imported-vars.sb.css');
+        require('./fixtures/imported-vars.sb.css');
         expect(called).to.equal(true);
     });
 

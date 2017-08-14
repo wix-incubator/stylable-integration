@@ -1,16 +1,8 @@
 import fs = require('fs');
 import path = require('path');
 import { expect } from 'chai';
-import webpack = require('webpack');
-import MemoryFileSystem = require('memory-fs');
 import * as postcss from 'postcss';
-const EnvPlugin = require('webpack/lib/web/WebEnvironmentPlugin');
-const _eval = require('node-eval');
-import {Plugin} from '../src/webpack-loader'
-import {fsLike} from '../src/types';
-import { dirname } from 'path';
-import {dotLess,expectRule,expectRuleOrder,findDecl,findRule,getContentPath,getDistPath,getMemFs,getRuleValue,hasNoCls,isDecl,isRule,jsThatImports,nsChunk,nsSeparator,registerMemFs,selectorClsChunk,TestFunction,testJsEntries,testJsEntry,TestMultiEntries,testRule,testComplexRule,TestConfig,getAssetPath,getAssetRegExp} from '../test-kit/index';
-import {StylableIntegrationDefaults,StylableIntegrationOptions} from '../src/options';
+import {expectRuleOrder,getDistPath,hasNoCls,jsThatImports,testJsEntries,testJsEntry,testRule,testComplexRule,TestConfig,getAssetRegExp} from '../test-kit/index';
 const testConfig:TestConfig = {
     rootPath:process.cwd(),
     distRelativePath:'dist',
@@ -21,7 +13,7 @@ const testConfig:TestConfig = {
 }
 
 const assetRegEx = getAssetRegExp(testConfig);
-const folderPath:string = process.cwd();
+
 describe('plugin', function(){
     it('should create modules and target css for css files imported from js',function(done){
         const files = {
@@ -58,7 +50,7 @@ describe('plugin', function(){
             `
         }
         const entries = ['home','about'];
-        testJsEntries(entries,files,(bundles,csss,memfs)=>{
+        testJsEntries(entries,files,(bundles,csss)=>{
             const homeCssAst = postcss.parse(csss[0]);
             const homeCssModule = bundles[0].home.default;
             const aboutCssAst = postcss.parse(csss[1]);
@@ -90,7 +82,7 @@ describe('plugin', function(){
             `
         }
         const entries = ['home','about'];
-        testJsEntries(entries,files,(bundles,csss,memfs)=>{
+        testJsEntries(entries,files,(bundles,csss)=>{
             const homeCssAst = postcss.parse(csss[0]);
             const homeCssModule = bundles[0].home.default;
             const aboutCssAst = postcss.parse(csss[1]);
@@ -122,7 +114,7 @@ describe('plugin', function(){
             `
         }
         const entries = ['home','about'];
-        testJsEntries(entries,files,(bundles,csss,memfs)=>{
+        testJsEntries(entries,files,(_bundles,_csss,memfs)=>{
             const homeBundleStr:string = memfs.readFileSync(path.join(getDistPath(testConfig),'home.bundle.js')).toString();
             const aboutBundleStr:string = memfs.readFileSync(path.join(getDistPath(testConfig),'about.bundle.js')).toString();
             expect(homeBundleStr).to.include('document.createElement');
@@ -151,7 +143,7 @@ describe('plugin', function(){
             `
         }
         const entries = ['home','about'];
-        testJsEntries(entries,files,(bundles,csss,memfs)=>{
+        testJsEntries(entries,files,(bundles)=>{
             const homeBundle = bundles[0].home.default;
             const homeBundleTargetAst = postcss.parse(homeBundle.targetCss);
             testRule(homeBundle,homeBundleTargetAst,'.gaga','background','green');
@@ -177,7 +169,7 @@ describe('plugin', function(){
             'about.js':jsThatImports(['./general.css'])
         }
         const entries = ['home','about'];
-        testJsEntries(entries,files,(bundles,csss,memfs)=>{
+        testJsEntries(entries,files,(bundles,csss)=>{
             const homeCssAst = postcss.parse(csss[0]);
             const homeCssModule = bundles[0].general.default;
             const aboutCssAst = postcss.parse(csss[1]);
@@ -208,7 +200,7 @@ describe('plugin', function(){
             const cssAst =  postcss.parse(css);
             const oldCssModule = bundle.main.default;
             testRule(oldCssModule,cssAst,'.gaga','color','red');
-            testJsEntry('main.js',files2,(bundle,css)=>{
+            testJsEntry('main.js',files2,(_bundle,css)=>{
                 hasNoCls(css,'gaga');
                 done();
             },testConfig);
@@ -306,7 +298,7 @@ describe('plugin', function(){
         testJsEntry('main.js',files,(bundle,css)=>{
             const cssAst =  postcss.parse(css);
             const cssModule = bundle.main.default;
-            const childCssModule = bundle.child.child.default;
+
             testRule(cssModule,cssAst,'.gaga','background','white');
             testRule(cssModule,cssAst,'.gaga','color','red');
             done();
@@ -335,7 +327,7 @@ describe('plugin', function(){
                 </svg>
             `
         }
-        testJsEntry('main.js',files,(bundle,css,memfs)=>{
+        testJsEntry('main.js',files,(_bundle,css,memfs)=>{
             expect(css).to.not.include( './asset.svg');
             const match = css.split(assetRegEx);
 
@@ -363,7 +355,7 @@ describe('plugin', function(){
                 }
             `
         }
-        testJsEntry('main.js',files,(bundle,css,memfs)=>{
+        testJsEntry('main.js',files,(_bundle,css)=>{
             expect(css.split('./asset.svg').length).to.equal(5);
             // expect(memfs.readFileSync(getAssetPath(userConfig)+'\\sources\\asset.svg','utf8')).to.eql(files['asset.svg'])
 
@@ -381,7 +373,7 @@ describe('plugin', function(){
 
             `
         }
-        testJsEntry('main.js',files,(bundle,css,memfs)=>{
+        testJsEntry('main.js',files,(_bundle,css)=>{
             expect(css).to.include(img);
             done();
         },testConfig);
@@ -397,7 +389,7 @@ describe('plugin', function(){
             `,
             'banana.jpg':banana
         }
-        testJsEntry('main.js',files,(bundle,css,memfs)=>{
+        testJsEntry('main.js',files,(_bundle,css,memfs)=>{
             expect(css).to.not.include( './banana.jpg');
             const match = css.match(assetRegEx);
 
@@ -429,9 +421,7 @@ describe('plugin', function(){
                 }
             `
         }
-        testJsEntry('main.js',files,(bundle,css)=>{
-            const cssAst =  postcss.parse(css);
-            const cssModule = bundle.main.default;
+        testJsEntry('main.js',files,(_bundle,css)=>{
             hasNoCls(css,'baga');
             hasNoCls(css,'gaga');
 

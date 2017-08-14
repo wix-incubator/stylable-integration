@@ -3,18 +3,17 @@ import { transformStylableCSS,getUsedAssets } from "./stylable-transform";
 import { FSResolver } from "./fs-resolver";
 import { dirname, join ,resolve} from "path";
 import { htap } from "htap";
-import { StylableIntegrationDefaults,StylableIntegrationOptions} from "./options";
+import { StylableIntegrationDefaults} from "./options";
 import { ensureAssets } from "./assetor";
 import * as fs from 'fs'
 
 export type globSearcher = (match:string,options:object,callback:(er: Error | null, files: string[])=>void)=>void;
 
-
 export function build(match:string,suppliedFs:typeof fs,resolver:FSResolver,outDir:string,srcDir:string,cwd:string,glob:globSearcher,log?:(...args:string[])=>void){
     const fullSrcDir = join(cwd, srcDir);
     const fullMatch = htap(srcDir, match);
     let projectAssets: string[]= [];
-    glob(fullMatch, {}, function (er: Error, files: string[]) {
+    glob(fullMatch, {}, function (_err: Error, files: string[]) {
         const projectAssetMapping:{[key:string]:string} = {};
         files.forEach((file) => {
             const fullpath = join(cwd, file);
@@ -24,7 +23,7 @@ export function build(match:string,suppliedFs:typeof fs,resolver:FSResolver,outD
             const content = tryRun(() => suppliedFs.readFileSync(fullpath, 'utf8').toString(), 'Read File Error');
             const dir = dirname(fullpath);
             const outDirPath = dirname(outPath);
-            const { code } = tryRun(() => transformStylableCSS(content, fullpath, dir, resolver,cwd,{...StylableIntegrationDefaults,injectFileCss:true}), 'Transform Error');
+            const { code } = tryRun(() => transformStylableCSS(content, fullpath, dir, resolver, {...StylableIntegrationDefaults,injectFileCss:true}), 'Transform Error');
             const hasDir = suppliedFs.existsSync(outDirPath);
             if(!hasDir){
                 tryRun(() => suppliedFs.mkdirSync(outDirPath, code), 'create dir Error');
@@ -36,10 +35,9 @@ export function build(match:string,suppliedFs:typeof fs,resolver:FSResolver,outD
         projectAssets.forEach((originalPath:string)=>{
             projectAssetMapping[originalPath] = originalPath.replace(join(cwd, srcDir),join(cwd, outDir))
         })
-        ensureAssets(projectAssetMapping,suppliedFs,cwd);
+        ensureAssets(projectAssetMapping,suppliedFs);
     });
 }
-
 
 function tryRun<T>(fn: () => T, errorMessage: string): T {
     try {

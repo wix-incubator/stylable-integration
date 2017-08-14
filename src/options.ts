@@ -1,14 +1,13 @@
-export interface StylableIntegrationOptions{
+export interface StylableIntegrationOptions {
     defaultPrefix: string
-    injectBundleCss:boolean,
-    injectFileCss:boolean,
-    nsDelimiter:string
+    injectBundleCss: boolean,
+    injectFileCss: boolean,
+    nsDelimiter: string
 }
 
-
-export const StylableIntegrationDefaults:StylableIntegrationOptions = {
-    defaultPrefix:'s',
-    injectBundleCss:false,
-    injectFileCss:false,
-    nsDelimiter:'💠'
+export const StylableIntegrationDefaults: StylableIntegrationOptions = {
+    defaultPrefix: 's',
+    injectBundleCss: false,
+    injectFileCss: false,
+    nsDelimiter: '💠'
 }

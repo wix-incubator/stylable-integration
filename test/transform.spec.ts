@@ -1,12 +1,12 @@
 import { expect } from 'chai';
 import * as transform from '../src/stylable-transform';
 import { Resolver, Stylesheet } from 'stylable';
-import {StylableIntegrationDefaults,StylableIntegrationOptions} from '../src/options';
+import { StylableIntegrationDefaults } from '../src/options';
 const _eval = require('node-eval');
-const separator:string ='💠';
+const separator: string = '💠';
 
 
-const vanillaOptions =  {assetsDir:'assets',defaultPrefix:'s',assetsServerUri:'//',injectFileCss:false,injectBundleCss:false,nsDelimiter:separator};
+const vanillaOptions = { assetsDir: 'assets', defaultPrefix: 's', assetsServerUri: '//', injectFileCss: false, injectBundleCss: false, nsDelimiter: separator };
 describe('loader', function () {
     it('should transform imports', function () {
 
@@ -18,12 +18,12 @@ describe('loader', function () {
 
             :import("./style.sb.css"){}
 
-        `, '', 'f:/', resolver,'f:/',vanillaOptions)
-        const evaledRes = _eval(res.code,process.cwd()+'/src');
+        `, '', 'f:/', resolver, vanillaOptions)
+        const evaledRes = _eval(res.code, process.cwd() + '/src');
         const expectedNs = "s0";
         const sheet = evaledRes.default.$stylesheet;
         expect(sheet.namespace).to.equal(expectedNs);
-        expect(sheet.get('root')).to.equal(expectedNs+separator+"root");
+        expect(sheet.get('root')).to.equal(expectedNs + separator + "root");
     });
 
 
@@ -39,15 +39,12 @@ describe('loader', function () {
                 -st-from: "./style.sb.css";
             }
 
-        `, '', 'f:/', resolver, 'f:/', StylableIntegrationDefaults)
-        const evaledRes = _eval(res.code,process.cwd()+'/src');
+        `, '', 'f:/', resolver, StylableIntegrationDefaults)
+        const evaledRes = _eval(res.code, process.cwd() + '/src');
 
         const expectedNs = "s0";
         const sheet = evaledRes.default.$stylesheet;
         expect(sheet.namespace).to.equal(expectedNs);
-        expect(sheet.get('root')).to.equal(expectedNs+separator+"root");
+        expect(sheet.get('root')).to.equal(expectedNs + separator + "root");
     });
-
-
-
 });

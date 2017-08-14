@@ -1,17 +1,13 @@
-import { readFileSync } from 'fs';
 import { transformStylableCSS, replaceAssetsAsync } from './stylable-transform';
-import { Stylesheet as StylableSheet, Generator, objectifyCSS, Resolver } from 'stylable';
+import { Stylesheet as StylableSheet, Generator } from 'stylable';
 import { FSResolver } from "./fs-resolver";
 import { StylableIntegrationDefaults,StylableIntegrationOptions} from './options';
 import loaderUtils = require('loader-utils');
-import { dirname , join} from 'path';
 import webpack = require('webpack');
-// const assetDir:string = '/dist/assets';
 
 let firstRun:boolean = true;
-
 let used : StylableSheet[] = [];
-let projectAssetsMap:{[key:string]:string} = {};
+
 function createIsUsedComment(ns:string){
     return '\n//*stylable*'+ns+'*stylable*';
 }
@@ -41,7 +37,6 @@ export function loader(this:webpack.loader.LoaderContext, source: string) {
                 this.resourcePath,
                 this.context,
                 resolver,
-                this.options.context,
                 options
             );
             modifiedCode = code;
@@ -69,11 +64,11 @@ function isArray(a:any): a is Array<any>{
 
 
 export class Plugin{
-    constructor(private options:StylableIntegrationOptions,private resolver?:FSResolver){
+    constructor(private options:StylableIntegrationOptions){
     };
     apply = (compiler:webpack.Compiler)=>{
 
-        compiler.plugin('run',(compilation,callback)=>{
+        compiler.plugin('run',(_compilation,callback)=>{
             firstRun = true;
             callback();
         })
@@ -124,8 +119,6 @@ export class Plugin{
                         }
                     }
                 }
-
-
 
                 const gen = new Generator({resolver, namespaceDivider:options.nsDelimiter});
                 used.reverse().forEach((sheet)=>{

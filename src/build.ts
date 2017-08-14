@@ -1,8 +1,5 @@
 #!/usr/bin/env node
-import { transformStylableCSS } from "./stylable-transform";
 import { FSResolver } from "./fs-resolver";
-import { dirname, join } from "path";
-import { htap } from "htap";
 import {build} from './builder';
 const glob = require('glob');
 const fs = require('fs');
@@ -38,8 +35,6 @@ const outDir = argv.outDir;
 const srcDir = argv.srcDir;
 const cwd = argv.cwd;
 const match = argv.match;
-const fullSrcDir = join(cwd, srcDir);
-const fullMatch = htap(srcDir, match);
 const resolver = new FSResolver('s',cwd);
 
 log('[Arguments]',argv);

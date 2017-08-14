@@ -1,19 +1,11 @@
-
-import fs = require('fs');
 import path = require('path');
 import { expect } from 'chai';
 import webpack = require('webpack');
 import MemoryFileSystem = require('memory-fs');
 import * as postcss from 'postcss';
-const EnvPlugin = require('webpack/lib/web/WebEnvironmentPlugin');
-const _eval = require('node-eval');
 import {Plugin} from '../src/webpack-loader'
-
-
-
-import {fsLike} from '../src/types';
-import { dirname } from 'path';
 import {StylableIntegrationDefaults,StylableIntegrationOptions} from '../src/options';
+const _eval = require('node-eval');
 
 export interface MockedRuntime {
     rootClass : string;
@@ -129,7 +121,7 @@ export function testJsEntries(entries:string[],files:{[key:string]:string},test:
 
     registerMemFs(compiler,memfs);
 
-    compiler.run( function (err: Error, stats: any) {
+    compiler.run( function (err: Error) {
         if (err) { throw err; }
 		const evaledBundles = entries.map((entry)=>{
             const bundleName = config.fileNameFormat.replace('[name]',entry)
@@ -190,7 +182,7 @@ export function testJsEntry(entry: string,files:{[key:string]:string | Buffer} |
 
     registerMemFs(compiler,memfs);
 
-    compiler.run( function (err: Error, stats: any) {
+    compiler.run( function (err: Error) {
         if (err) { throw err; }
 		const bundle = memfs.readFileSync(path.join(distPath,'bundle.js'), 'utf8');
         const bundleCss = memfs.readFileSync(path.join(distPath,'bundle.css'), 'utf8');
@@ -262,9 +254,10 @@ export interface selectorClsChunk{
 
 export function testCssModule(cssModule:any,selector:string){
     const nsCls = nsChunk(selector,cssModule);
-    const dotLessSelector = selector.charAt(0)
+
     expect(cssModule.rootClass).to.eql('root');
     expect(cssModule.namespaceMap[dotLess(selector)],'did not find cls  '+nsCls+'  on module, available cls: '+Object.keys(cssModule.namespaceMap)).to.eql(dotLess(nsCls));
+
     return nsCls;
 }
 

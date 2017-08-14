@@ -1,19 +1,12 @@
-import fs = require('fs');
 import path = require('path');
 import { expect } from 'chai';
-import webpack = require('webpack');
 import MemoryFileSystem = require('memory-fs');
 import * as postcss from 'postcss';
-const EnvPlugin = require('webpack/lib/web/WebEnvironmentPlugin');
-const _eval = require('node-eval');
-import { Plugin } from '../src/webpack-loader'
 import { FSResolver } from '../src/fs-resolver';
-import { fsLike } from '../src/types';
-import { dirname } from 'path';
-import { Resolver } from 'stylable'; //peer
-import { dotLess, expectRule, expectRuleOrder, findDecl, findRule, getContentPath, getDistPath, getMemFs, getRuleValue, hasNoCls, isDecl, isRule, jsThatImports, nsChunk, nsSeparator, registerMemFs, selectorClsChunk, TestFunction, testJsEntries, testJsEntry, TestMultiEntries, testRule, testComplexRule, TestConfig, getAssetPath, testCssModule, evalCommonJsCssModule ,getAssetRegExp} from '../test-kit/index';
-import { StylableIntegrationDefaults, StylableIntegrationOptions } from '../src/options';
+import { getDistPath, getMemFs, jsThatImports, testJsEntry, testRule, testComplexRule, TestConfig, evalCommonJsCssModule ,getAssetRegExp} from '../test-kit/index';
+import { StylableIntegrationDefaults } from '../src/options';
 import { build, globSearcher } from '../src/builder';
+
 const testConfig: TestConfig = {
     rootPath: process.cwd(),
     distRelativePath: 'dist',
@@ -22,6 +15,7 @@ const testConfig: TestConfig = {
     assetsServerUri: 'serve-assets',
     fileNameFormat:'[name].js'
 }
+
 const assetRegEx = getAssetRegExp(testConfig);
 
 interface recursiveFsInternals { [fileName: string]: Buffer | recursiveFsInternals };
@@ -56,7 +50,7 @@ function startsWith(str: string, prefix: string) {
 }
 
 function mockGlob(fs: MemoryFileSystem, rootPath: string): globSearcher {
-    return (match, options, cb) => {
+    return (match, _options, cb) => {
         const supportedMatchFormat = '/**/*';
         if (match.indexOf(supportedMatchFormat) === -1) {
             throw new Error('match nor support in glob mock')
@@ -92,7 +86,8 @@ describe('build stand alone', function () {
         }
         const fs = getMemFs(files, testConfig.rootPath, testConfig.contentRelativePath);
         const resolver = new FSResolver('s', testConfig.rootPath, fs as any);
-        build('**/*.css', fs as any, resolver, 'lib', testConfig.contentRelativePath, testConfig.rootPath, mockGlob(fs, testConfig.rootPath), (...args) => console.log(args));
+        build('**/*.css', fs as any, resolver, 'lib', testConfig.contentRelativePath, testConfig.rootPath, mockGlob(fs, testConfig.rootPath), () => {});
+
         const outPath = path.join(testConfig.rootPath, 'lib');
         const mainModulePath = path.join(outPath, 'main.css.js');
         const subModulePath = path.join(outPath, 'components', 'comp.css.js');
@@ -170,8 +165,8 @@ describe("lib usage with loader", () => {
         const libRelPath = 'node_modules/my-lib';
         const innerLibPath = path.join(testConfig.rootPath, libRelPath);
         const resolver = new FSResolver('s', innerLibPath, fs as any);
-        build('**/*.css', fs as any, resolver, 'lib', testConfig.contentRelativePath, innerLibPath, mockGlob(fs, innerLibPath), (...args) =>{});
-        testJsEntry('app.js', fs, (bundle, css, memfs) => {
+        build('**/*.css', fs as any, resolver, 'lib', testConfig.contentRelativePath, innerLibPath, mockGlob(fs, innerLibPath), () =>{});
+        testJsEntry('app.js', fs, (bundle, _css, memfs) => {
             const mainModule = bundle.main.default;
             const compModule = bundle['my-lib/lib/comp'].comp.default
             const subModule = bundle['my-lib/lib/comp']["components/sub"].sub.default
@@ -203,7 +198,7 @@ describe("lib usage with loader", () => {
         const resolver = new FSResolver('s', testConfig.rootPath, fs as any);
         const libRelPath = 'node_modules/my-lib';
         const innerLibPath = path.join(testConfig.rootPath, libRelPath);
-        build('**/*.css', fs as any, resolver, 'lib', testConfig.contentRelativePath, innerLibPath, mockGlob(fs, innerLibPath), (...args) => {});
+        build('**/*.css', fs as any, resolver, 'lib', testConfig.contentRelativePath, innerLibPath, mockGlob(fs, innerLibPath), () => {});
         testJsEntry('app.js', fs, (bundle, css, memfs) => {
             const mainModule = bundle.main.default;
             const compModule = bundle['my-lib/lib/comp'].comp.default

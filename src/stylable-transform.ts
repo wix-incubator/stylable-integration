@@ -3,14 +3,15 @@ import path = require('path');
 import { htap } from "htap";
 const deindent = require('deindent');
 const murmurhash = require('murmurhash');
+
 import {StylableIntegrationDefaults,StylableIntegrationOptions} from './options';
-let currentOptions:StylableIntegrationOptions;
+
 //TODO: remove this regexps!!!!
 const relativeImportRegExp1 = /:import\(["']?(\.\/)(.*?)["']?\)/gm;
 const relativeImportRegExp2 = /-st-from\s*:\s*["'](\.\.?\/)(.*?)["']/gm;
 const relativeImportAsset = /url\s*\(\s*["']?([^:]*?)["']?\s*\)/gm;
-const matchData = /data\s*\:/;
-export function resolveImports(source: string, context: string, projectRoot:string) {
+
+export function resolveImports(source: string, context: string) {
     const importMapping: { [key: string]: string } = {};
     const resolved = source
         .replace(relativeImportRegExp1, replace)
@@ -54,17 +55,6 @@ export function replaceAssetsAsync(source:string,resolveAssetAsync:(relativeUrl:
 
 }
 
-function isDataUrl(url:string){
-    const splitUrl = url.split(matchData);
-    if(splitUrl.length===1){
-        return false;
-    }
-    if(splitUrl[0].length!==0){
-        return false;
-    }
-    return true;
-}
-
 export function createStylesheetWithNamespace(source: string, path: string, prefix: string = StylableIntegrationDefaults.defaultPrefix) {
     const cssObject = objectifyCSS(source);
     const atNS = cssObject['@namespace'];
@@ -85,13 +75,9 @@ export function justImport(path: string) {
     return `require("${path}");`;
 }
 
-export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, projectRoot:string, options: StylableIntegrationOptions = StylableIntegrationDefaults) {
-    currentOptions = options;
-    const { resolved, importMapping } = resolveImports(source, context, projectRoot);
+export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, options: StylableIntegrationOptions = StylableIntegrationDefaults) {
+    const { resolved } = resolveImports(source, context);
     const sheet = createStylesheetWithNamespace(resolved, resourcePath, options.defaultPrefix);
-    const imports = sheet.imports.map((importDef) => {
-        return justImport(importMapping[importDef.from]);
-    });
 
     let css:string = '';
     const gen = new Generator({ resolver, namespaceDivider:options.nsDelimiter });
@@ -99,8 +85,6 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
     if(options.injectFileCss){
         css = JSON.stringify(gen.buffer.join('\n'))
     }
-
-
 
     const root = JSON.stringify(sheet.root);
     const namespace = JSON.stringify(sheet.namespace);
@@ -134,9 +118,5 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
         `;
     }
 
-
-
-
     return { sheet, code };
-
 }

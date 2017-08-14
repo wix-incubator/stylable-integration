@@ -1,7 +1,5 @@
-import { FSResolver } from "./fs-resolver";
 import { dirname } from 'path';
 import * as fs from 'fs'
-
 
 const ensureDir = (dir:string,_fs:typeof fs) => {
   // This will create a dir given a path such as './folder/subfolder'
@@ -21,12 +19,11 @@ const ensureDir = (dir:string,_fs:typeof fs) => {
   }, '')
 }
 
-
-export function ensureAssets(projectAssetsMap:{[key:string]:string},_fs:typeof fs,rootPath:string){
+export function ensureAssets(projectAssetsMap:{[key:string]:string},_fs:typeof fs){
     Object.keys(projectAssetsMap).map((assetOriginalPath)=>{
         if(_fs.existsSync(assetOriginalPath)){
             const content = _fs.readFileSync(assetOriginalPath);
-            const targetPath = projectAssetsMap[assetOriginalPath]//.replace(rootPath,process.cwd());
+            const targetPath = projectAssetsMap[assetOriginalPath];
             const targetDir = dirname(targetPath);
             ensureDir(targetDir,_fs);
             _fs.writeFileSync(targetPath,content);
