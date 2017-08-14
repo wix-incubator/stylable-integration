@@ -36,22 +36,23 @@ export function evalCommonJsCssModule(module:string){
 }
 
 export function getMemFs(files:{[key:string]:string | Buffer},folderPath:string,contentRelativePath:string):MemoryFileSystem{
-    const contentPath = path.join(folderPath,contentRelativePath);
     const memfs = new MemoryFileSystem();
+    const contentPath = path.join(folderPath,contentRelativePath);
+
     memfs.mkdirpSync(contentPath);
-    Object.keys(files).forEach((filename)=>{
+
+    Object.keys(files).forEach( filename =>{
         const filePath = path.join(contentPath,filename);
         const fileDir = path.dirname(filePath);
         memfs.mkdirpSync(fileDir);
         memfs.writeFileSync(filePath,files[filename]);
     })
 
-
-    memfs.mkdirpSync(path.join(folderPath,'node_modules/stylable/runtime'));
-    memfs.writeFileSync(path.join(folderPath,'node_modules/stylable/runtime/index.js'),`
+    memfs.mkdirpSync(path.join(folderPath, 'node_modules/stylable/runtime'));
+    memfs.writeFileSync(path.join(folderPath, 'node_modules/stylable/runtime/index.js'),`
         module.exports.create = ${runtimeFuncMock}
     `);
-    memfs.writeFileSync(path.join(folderPath,'/package.json'),`
+    memfs.writeFileSync(path.join(folderPath, 'package.json'),`
         {
             "name":"hello"
         }
