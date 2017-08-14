@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { transformStylableCSS,getUsedAssets } from "./stylable-transform";
 import { FSResolver } from "./fs-resolver";
 import { dirname, join ,resolve} from "path";
