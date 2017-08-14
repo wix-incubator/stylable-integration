@@ -57,12 +57,6 @@ export function loader(this:webpack.loader.LoaderContext, source: string) {
 
 };
 
-function isArray(a:any): a is Array<any>{
-    return !!a.push
-}
-
-
-
 export class Plugin{
     constructor(private options:StylableIntegrationOptions){
     };
@@ -79,7 +73,7 @@ export class Plugin{
             let simpleEntries:{[key:string]:string} = {};
             Object.keys(entries).forEach((entryName:string)=>{
                 const entry = entries[entryName];
-                if(isArray(entry)){
+                if(Array.isArray(entry)){
                     simpleEntries[entryName] = entry[entry.length-1];
                 }else{
                     simpleEntries[entryName] = entry;
