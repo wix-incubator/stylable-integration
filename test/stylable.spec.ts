@@ -332,7 +332,7 @@ describe('plugin', function(){
             const match = css.split(assetRegEx);
 
             expect(match!.length,'converted url count').to.equal(9);
-            expect(memfs.readFileSync(getDistPath(testConfig)+'\\'+match![1]).toString()).to.eql(files['asset.svg']);
+            expect(memfs.readFileSync(path.join(getDistPath(testConfig), match![1]), 'utf8')).to.eql(files['asset.svg']);
 
             done();
         },testConfig);
@@ -392,9 +392,8 @@ describe('plugin', function(){
         testJsEntry('main.js',files,(_bundle,css,memfs)=>{
             expect(css).to.not.include( './banana.jpg');
             const match = css.match(assetRegEx);
-
             expect(match!.length,'converted url count').to.equal(2);
-            expect(memfs.readFileSync(getDistPath(testConfig)+'\\'+match![1])).to.eql(files['banana.jpg'])
+            expect(memfs.readFileSync(path.join(getDistPath(testConfig), match![1]))).to.eql(files['banana.jpg'])
 
             done();
         },testConfig);
