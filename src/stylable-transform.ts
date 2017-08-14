@@ -11,6 +11,52 @@ const relativeImportRegExp1 = /:import\(["']?(\.\/)(.*?)["']?\)/gm;
 const relativeImportRegExp2 = /-st-from\s*:\s*["'](\.\.?\/)(.*?)["']/gm;
 const relativeImportAsset = /url\s*\(\s*["']?([^:]*?)["']?\s*\)/gm;
 
+export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, options: StylableIntegrationOptions = StylableIntegrationDefaults) {
+    const { resolved } = resolveImports(source, context);
+    const sheet = createStylesheetWithNamespace(resolved, resourcePath, options.defaultPrefix);
+
+    let css:string = '';
+    const gen = new Generator({ resolver, namespaceDivider:options.nsDelimiter });
+    gen.addEntry(sheet, false);
+    if(options.injectFileCss){
+        css = JSON.stringify(gen.buffer.join('\n'))
+    }
+
+    const root = JSON.stringify(sheet.root);
+    const namespace = JSON.stringify(sheet.namespace);
+    const classes = JSON.stringify(Object.assign({}, sheet.vars, sheet.classes));
+    // const runtimePath = path.join(__dirname, "runtime").replace(/\\/gm, "\\\\");
+    const runtimePath = 'stylable/runtime';
+    // ${imports.join('\n')}
+    let code:string = '';
+    if (options.injectFileCss) {
+        code = deindent`
+        Object.defineProperty(exports, "__esModule", { value: true });
+        module.exports.default = require("${runtimePath}").create(
+            ${root},
+            ${namespace},
+            ${classes},
+            ${css},
+            module.id
+        );
+        `;
+
+    } else {
+        code = deindent`
+        Object.defineProperty(exports, "__esModule", { value: true });
+        module.exports.default = module.exports.locals = require("${runtimePath}").create(
+            ${root},
+            ${namespace},
+            ${classes},
+            null,
+            module.id
+        );
+        `;
+    }
+
+    return { sheet, code };
+}
+
 export function resolveImports(source: string, context: string) {
     const importMapping: { [key: string]: string } = {};
     const resolved = source
@@ -73,50 +119,4 @@ export function createImportString(importDef: any, path: string) {
 
 export function justImport(path: string) {
     return `require("${path}");`;
-}
-
-export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, options: StylableIntegrationOptions = StylableIntegrationDefaults) {
-    const { resolved } = resolveImports(source, context);
-    const sheet = createStylesheetWithNamespace(resolved, resourcePath, options.defaultPrefix);
-
-    let css:string = '';
-    const gen = new Generator({ resolver, namespaceDivider:options.nsDelimiter });
-    gen.addEntry(sheet, false);
-    if(options.injectFileCss){
-        css = JSON.stringify(gen.buffer.join('\n'))
-    }
-
-    const root = JSON.stringify(sheet.root);
-    const namespace = JSON.stringify(sheet.namespace);
-    const classes = JSON.stringify(Object.assign({}, sheet.vars, sheet.classes));
-    // const runtimePath = path.join(__dirname, "runtime").replace(/\\/gm, "\\\\");
-    const runtimePath = 'stylable/runtime';
-    // ${imports.join('\n')}
-    let code:string = '';
-     if (options.injectFileCss) {
-        code = deindent`
-            Object.defineProperty(exports, "__esModule", { value: true });
-            module.exports.default = require("${runtimePath}").create(
-                ${root},
-                ${namespace},
-                ${classes},
-                ${css},
-                module.id
-            );
-        `;
-
-    } else {
-        code = deindent`
-            Object.defineProperty(exports, "__esModule", { value: true });
-            module.exports.default = module.exports.locals = require("${runtimePath}").create(
-                ${root},
-                ${namespace},
-                ${classes},
-                null,
-                module.id
-            );
-        `;
-    }
-
-    return { sheet, code };
 }
