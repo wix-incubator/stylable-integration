@@ -10,7 +10,8 @@
   "scripts": {
     "build": "tsc && ncp test/fixtures/ dist/test/fixtures",
     "webpack": "webpack",
-    "test": "tsc && mocha ./dist/test/index.js",
+    "pretest": "yarn build",
+    "test": "mocha ./dist/test/index.js",
     "prepublish": "npm run build",
     "start": "rimraf dist && yarn build && concurrently --kill-others --success first \"yarn build -- -w\" \"webpack-dev-server --no-info\""
   },
