@@ -1,8 +1,8 @@
 #!/usr/bin/env node
+import fs = require('fs');
 import { FSResolver } from "./fs-resolver";
 import {build} from './builder';
 const glob = require('glob');
-const fs = require('fs');
 
 const argv = require('yargs')
     .option('outDir')

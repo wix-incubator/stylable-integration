@@ -1,15 +1,15 @@
 import { dirname } from 'path';
-import * as fs from 'fs'
+import { fsLike } from "./types";
 
-const ensureDir = (dir:string,_fs:typeof fs) => {
+const ensureDir = (dir:string,fs:fsLike) => {
   // This will create a dir given a path such as './folder/subfolder'
   const splitPath = dir.split('\\');
   splitPath.reduce((path, subPath) => {
     let currentPath;
     if(subPath != '.'){
       currentPath = path ? path + '\\' + subPath : subPath;
-      if (!_fs.existsSync(currentPath)){
-        _fs.mkdirSync(currentPath);
+      if (!fs.existsSync(currentPath)){
+        fs.mkdirSync(currentPath);
       }
     }
     else{
@@ -19,14 +19,14 @@ const ensureDir = (dir:string,_fs:typeof fs) => {
   }, '')
 }
 
-export function ensureAssets(projectAssetsMap:{[key:string]:string},_fs:typeof fs){
+export function ensureAssets(projectAssetsMap:{[key:string]:string}, fs:fsLike){
     Object.keys(projectAssetsMap).map((assetOriginalPath)=>{
-        if(_fs.existsSync(assetOriginalPath)){
-            const content = _fs.readFileSync(assetOriginalPath);
+        if(fs.existsSync(assetOriginalPath)){
+            const content = fs.readFileSync(assetOriginalPath);
             const targetPath = projectAssetsMap[assetOriginalPath];
             const targetDir = dirname(targetPath);
-            ensureDir(targetDir,_fs);
-            _fs.writeFileSync(targetPath,content);
+            ensureDir(targetDir,fs);
+            fs.writeFileSync(targetPath,content);
         }
     })
 }
