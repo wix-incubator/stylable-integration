@@ -8,7 +8,7 @@
     "stc": "./dist/src/build.js"
   },
   "scripts": {
-    "build": "tsc && cp -r test/fixtures/ dist/test/fixtures",
+    "build": "tsc && ncp test/fixtures/ dist/test/fixtures",
     "webpack": "webpack",
     "test": "tsc && mocha ./dist/test/index.js",
     "prepublish": "npm run build",
@@ -45,6 +45,7 @@
     "memory-fs": "^0.4.1",
     "mocha": "^3.5.0",
     "mocha-loader": "^1.1.1",
+    "ncp": "^2.0.0",
     "node-eval": "^1.1.0",
     "postcss": "^6.0.9",
     "stylable": "^3.0.0",

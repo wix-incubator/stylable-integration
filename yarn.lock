@@ -1820,6 +1820,10 @@ nan@^2.3.0:
   version "2.6.2"
   resolved "https://registry.yarnpkg.com/nan/-/nan-2.6.2.tgz#e4ff34e6c95fdfb5aecc08de6596f43605a7db45"
 
+ncp@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/ncp/-/ncp-2.0.0.tgz#195a21d6c46e361d2fb1281ba38b91e9df7bdbb3"
+
 node-eval@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/node-eval/-/node-eval-1.1.0.tgz#9b7b0bed569baa67300ed018f2cf6890deed2654"
