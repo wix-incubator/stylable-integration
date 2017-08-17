@@ -29,7 +29,7 @@ function searchForMatch(prefix: string, suffix: string, fsInt: recursiveFsIntern
         }
         const fileOrFolder = fsInt[fileName];
         if (fileOrFolder instanceof Buffer) {
-            if (startsWith(currentPath, rootPath) && includes(currentPath, prefix) && endsWith(currentPath, suffix)) {
+            if (currentPath.startsWith(rootPath) && currentPath.includes(prefix) && currentPath.endsWith(suffix)) {
                 res.push(path.relative(rootPath.toLowerCase(), currentPath.toLowerCase()));
             }
         } else {
@@ -37,16 +37,6 @@ function searchForMatch(prefix: string, suffix: string, fsInt: recursiveFsIntern
         }
     });
     return res;
-}
-
-function endsWith(str: string, suffix: string) {
-    return str.lastIndexOf(suffix) === str.length - suffix.length;
-}
-function includes(str: string, prefix: string) {
-    return str.indexOf(prefix) !== -1;
-}
-function startsWith(str: string, prefix: string) {
-    return str.toLowerCase().indexOf(prefix.toLowerCase()) === 0;
 }
 
 function mockGlob(fs: MemoryFileSystem, rootPath: string): globSearcher {
