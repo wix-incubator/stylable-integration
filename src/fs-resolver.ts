@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { dirname } from 'path';
+import * as path from 'path';
 import { Resolver } from 'stylable'; //peer
 import { createStylesheetWithNamespace, resolveImports } from './stylable-transform';
 import { ResolverFactory} from 'enhanced-resolve';
@@ -11,25 +11,23 @@ export class FSResolver extends Resolver {
         super({});
         this.fs = _fs
     }
-    resolveModule(path: string) {
+    resolveModule(modulePath: string) {
         var resolved;
-        if (path.match(/\.css$/)) {
+        if (modulePath.match(/\.css$/)) {
             const eResolver = ResolverFactory.createResolver({
                 fileSystem:this.fs,
                 useSyncFileSystemCalls:true
             })
-
-            if(path.indexOf(':\\')==-1){
-                path = eResolver.resolveSync({},this.projectRoot,path);
+            if(!path.isAbsolute(modulePath)){
+                modulePath = eResolver.resolveSync({},this.projectRoot,modulePath);
             }
-            //this.fsToUse.readFileSync("C:\\projects\\stylable-integration\\node_modules\\my-lib\\sources\\comp.css")
             resolved = createStylesheetWithNamespace(
-                resolveImports(this.fs.readFileSync(path, 'utf8').toString(), dirname(path)).resolved,
-                path,
+                resolveImports(this.fs.readFileSync(modulePath).toString(), path.dirname(modulePath)).resolved,
+                modulePath,
                 this.prefix
             );
         } else {
-            resolved = require(path);
+            resolved = require(modulePath);
         }
 
         return resolved;
