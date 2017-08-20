@@ -24,9 +24,10 @@ export function loader(this:webpack.loader.LoaderContext, source: string) {
                 if(data && !err){
                     const mod = {exports:''};
                     Function("module","__webpack_public_path__",data)(mod,publicPath)
-                    resolve(mod.exports)
+                    resolve(mod.exports);
+                } else {
+                    resolve(relativeUrl);
                 }
-                resolve(relativeUrl)
             })
         });
     }).then((modifiedSource)=>{
@@ -87,7 +88,8 @@ export class Plugin{
                 const bundleCssName  = bundleName.lastIndexOf('.js') === bundleName.length-3 ? bundleName.slice(0,bundleName.length-3)+'.css' : bundleName+'.css';
                 const entryContent = compilation.assets[bundleName].source();
                 if(this.options.injectBundleCss){
-                    const cssBundleLocation = compilation.options.output.publicPath+bundleCssName;
+                    const publicPath = compilation.options.output.publicPath || '';
+                    const cssBundleLocation = publicPath+bundleCssName;
                     const bundleAddition =  `(()=>{if (typeof document !== 'undefined') {
                         window.refreshStyleSheet = ()=>{
                             style = document.getElementById('cssBundle');
