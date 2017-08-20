@@ -152,7 +152,7 @@ describe("lib usage with loader", () => {
             const match = subModule.targetCss.split(assetRegEx);
 
             expect(match!.length, 'converted url count').to.equal(3);
-            expect(memfs.readFileSync(getDistPath(testConfig) + '\\' + match![1]).toString()).to.eql(libFiles['components/asset.svg']);
+            expect(memfs.readFileSync(path.join(getDistPath(testConfig), match![1])).toString()).to.eql(libFiles['components/asset.svg']);
             done()
         }, testConfig, { ...StylableIntegrationDefaults, injectFileCss: true })
     });
@@ -184,7 +184,7 @@ describe("lib usage with loader", () => {
             expect(css).to.not.include('url("./asset.svg")')
             const match = css.split(assetRegEx);
             expect(match!.length, 'converted url count').to.equal(3);
-            expect(memfs.readFileSync(getDistPath(testConfig) + '\\' + match![1]).toString()).to.eql(libFiles['components/asset.svg']);
+            expect(memfs.readFileSync(path.join(getDistPath(testConfig), match![1])).toString()).to.eql(libFiles['components/asset.svg']);
             done()
         }, testConfig, { ...StylableIntegrationDefaults })
     });
