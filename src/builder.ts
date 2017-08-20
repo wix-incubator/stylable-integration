@@ -1,5 +1,5 @@
 import { transformStylableCSS, getUsedAssets } from "./stylable-transform";
-import { FSResolver } from "./fs-resolver";
+import { NewResolver } from "./fs-resolver";
 import { dirname, join, resolve } from "path";
 import { fsLike } from "./types";
 import { StylableIntegrationDefaults } from "./options";
@@ -8,7 +8,7 @@ import { ensureAssets, ensureDirectory } from "./assetor";
 export interface BuildOptions {
     extension: string;
     fs: fsLike;
-    resolver: FSResolver;
+    resolver: NewResolver;
     rootDir: string;
     srcDir: string;
     outDir: string;
@@ -29,7 +29,7 @@ export function build(buildOptions: BuildOptions) {
         const content = tryRun(() => fs.readFileSync(filePath).toString(), 'Read File Error');
         const fileDirectory = dirname(filePath);
         const outDirPath = dirname(outPath);
-        const { code } = tryRun(() => transformStylableCSS(content, filePath, fileDirectory, resolver, { ...StylableIntegrationDefaults, injectFileCss: true }), 'Transform Error');
+        const { code } = tryRun(() => transformStylableCSS(content, filePath, resolver, { ...StylableIntegrationDefaults, injectFileCss: true }), 'Transform Error');
         const hasDir = fs.existsSync(outDirPath);
         if (!hasDir) {
             tryRun(() => ensureDirectory(outDirPath, fs), 'Ensure directory');

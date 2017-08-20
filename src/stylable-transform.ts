@@ -1,41 +1,49 @@
-import { Stylesheet, Generator, objectifyCSS, Resolver } from 'stylable';
-import path = require('path');
-import { htap } from "htap";
+import { process, StylableTransformer, StylableResults, Diagnostics, safeParse, StylableMeta } from 'stylable';
+
 const deindent = require('deindent');
-const murmurhash = require('murmurhash');
 
-import {StylableIntegrationDefaults,StylableIntegrationOptions} from './options';
+import { StylableIntegrationDefaults, StylableIntegrationOptions } from './options';
+import { NewResolver } from "./fs-resolver";
 
-//TODO: remove this regexps!!!!
-const relativeImportRegExp1 = /:import\(["']?(\.\/)(.*?)["']?\)/gm;
-const relativeImportRegExp2 = /-st-from\s*:\s*["'](\.\.?\/)(.*?)["']/gm;
+
 const relativeImportAsset = /url\s*\(\s*["']?([^:]*?)["']?\s*\)/gm;
 
-export function transformStylableCSS(source: string, resourcePath: string, context: string, resolver: Resolver, options: StylableIntegrationOptions = StylableIntegrationDefaults) {
-    const { resolved } = resolveImports(source, context);
-    const sheet = createStylesheetWithNamespace(resolved, resourcePath, options.defaultPrefix);
 
-    let css:string = '';
-    const gen = new Generator({ resolver, namespaceDivider:options.nsDelimiter });
-    gen.addEntry(sheet, false);
-    if(options.injectFileCss){
-        css = JSON.stringify(gen.buffer.join('\n'))
-    }
+export function generate(source: string, resourcePath: string, delimiter: string, resolver: NewResolver): StylableResults {
+    const diagnostics = new Diagnostics();
+    const root = safeParse(source, { from: resourcePath });
+    const meta = process(root, diagnostics);
+    const transformer = new StylableTransformer({ delimiter, diagnostics, ...resolver });
+    resolver.fileProcessor.add(meta.source, meta);
+    return transformer.transform(meta);
+}
 
-    const root = JSON.stringify(sheet.root);
-    const namespace = JSON.stringify(sheet.namespace);
-    const classes = JSON.stringify(Object.assign({}, sheet.vars, sheet.classes));
-    // const runtimePath = path.join(__dirname, "runtime").replace(/\\/gm, "\\\\");
+export interface Output {
+    code: string;
+    sheet: StylableMeta;
+}
+
+export function transformStylableCSS(source: string, resourcePath: string, resolver: NewResolver, options: StylableIntegrationOptions = StylableIntegrationDefaults): Output {
+
+    const { exports, meta } = generate(source, resourcePath, options.nsDelimiter, resolver);
+
+    const root = JSON.stringify(meta.root);
+    const namespace = JSON.stringify(meta.namespace);
+    const locals = JSON.stringify(exports);
+
     const runtimePath = 'stylable/runtime';
+
     // ${imports.join('\n')}
-    let code:string = '';
+    let code: string = '';
     if (options.injectFileCss) {
+        const css = JSON.stringify(meta.ast.toString());
+
         code = deindent`
         Object.defineProperty(exports, "__esModule", { value: true });
         module.exports.default = require("${runtimePath}").create(
             ${root},
             ${namespace},
-            ${classes},
+            ${locals},
             ${css},
             module.id
         );
@@ -47,74 +55,40 @@ export function transformStylableCSS(source: string, resourcePath: string, conte
         module.exports.default = module.exports.locals = require("${runtimePath}").create(
             ${root},
             ${namespace},
-            ${classes},
+            ${locals},
             null,
             module.id
         );
         `;
     }
 
-    return { sheet, code };
-}
-
-export function resolveImports(source: string, context: string) {
-    const importMapping: { [key: string]: string } = {};
-    const resolved = source
-        .replace(relativeImportRegExp1, replace)
-        .replace(relativeImportRegExp2, replace)
-
-
-    function replace(match: string, rel: string, thing: string) {
-        const relativePath = rel + thing;
-        const fullPath = path.resolve(htap(context, relativePath));
-        importMapping[relativePath] = fullPath;
-        importMapping[fullPath] = relativePath;
-        return match.replace(relativePath, fullPath);
-    }
-
-    return { resolved, importMapping};
+    return { sheet: meta, code };
 }
 
 
-export function getUsedAssets(source:string):string[]{
+export function getUsedAssets(source: string): string[] {
     const splitSource = source.split(relativeImportAsset);
-    const res:string[] = [];
-    splitSource.forEach((chunk,idx)=>{
-        if(idx%2){
+    const res: string[] = [];
+    splitSource.forEach((chunk, idx) => {
+        if (idx % 2) {
             res.push(chunk);
         }
     })
     return res;
 }
 
-export function replaceAssetsAsync(source:string,resolveAssetAsync:(relativeUrl:string)=>Promise<string>):Promise<string>{
+export function replaceAssetsAsync(source: string, resolveAssetAsync: (relativeUrl: string) => Promise<string>): Promise<string> {
     const splitSource = source.split(relativeImportAsset);
-    return Promise.all(splitSource.map((srcChunk,idx)=>{
-        if(idx%2){
-            return resolveAssetAsync(srcChunk).then((resolved)=>`url("${resolved}")`);
-        }else{
+    return Promise.all(splitSource.map((srcChunk, idx) => {
+        if (idx % 2) {
+            return resolveAssetAsync(srcChunk).then((resolved) => `url("${resolved}")`);
+        } else {
             return srcChunk;
         }
-    })).then((modifiedSplitSource)=>{
+    })).then((modifiedSplitSource) => {
         return modifiedSplitSource.join('');
     })
 
-}
-
-export function createStylesheetWithNamespace(source: string, path: string, prefix: string = StylableIntegrationDefaults.defaultPrefix) {
-    const cssObject = objectifyCSS(source);
-    const atNS = cssObject['@namespace'];
-    const ns = Array.isArray(atNS) ? atNS[atNS.length - 1] : atNS;
-    const namespace = (ns || prefix) + murmurhash.v3(path).toString(36);
-    return new Stylesheet(cssObject, namespace, path);
-}
-
-export function createImportString(importDef: any, path: string) {
-    var imports = importDef.defaultExport ? [`var ${importDef.defaultExport} = require("${(path)}");`] : [];
-    for (var k in importDef.named) {
-        imports.push(`var ${importDef.defaultExport} = require("${(path)}")[${JSON.stringify(importDef.named[k])}];`);
-    }
-    return imports.join('\n');
 }
 
 export function justImport(path: string) {

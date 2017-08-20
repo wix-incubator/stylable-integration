@@ -1,7 +1,7 @@
 import path = require('path');
 import { expect } from 'chai';
 import * as postcss from 'postcss';
-import { FSResolver } from '../src/fs-resolver';
+import { createResolver } from '../src/fs-resolver';
 import { getDistPath, getMemFs, jsThatImports, testJsEntry, testRule, testComplexRule, TestConfig, evalCommonJsCssModule, getAssetRegExp } from '../test-kit/index';
 import { StylableIntegrationDefaults } from '../src/options';
 import { build } from '../src/builder';
@@ -40,7 +40,7 @@ describe('build stand alone', function () {
             `,
         }
         const fs = getMemFs(files, testConfig.rootPath, testConfig.contentRelativePath);
-        const resolver = new FSResolver('s', testConfig.rootPath, fs as any);
+        const resolver = createResolver(testConfig.rootPath, fs as any) //new FSResolver('s', testConfig.rootPath, fs as any);
         build({
             extension: '.css', fs: fs as any, resolver,
             outDir: 'lib', srcDir: testConfig.contentRelativePath, rootDir: testConfig.rootPath
@@ -122,7 +122,7 @@ describe("lib usage with loader", () => {
         const fs = getMemFs(files, testConfig.rootPath, testConfig.contentRelativePath);
         const libRelPath = 'node_modules/my-lib';
         const innerLibPath = path.join(testConfig.rootPath, libRelPath);
-        const resolver = new FSResolver('s', innerLibPath, fs as any);
+        const resolver = createResolver(testConfig.rootPath, fs as any)//new FSResolver('s', innerLibPath, fs as any);
 
         // build lib
         build({
@@ -159,7 +159,7 @@ describe("lib usage with loader", () => {
 
     it('should be usable as a component library in bundle mode', function (done) {
         const fs = getMemFs(files, testConfig.rootPath, testConfig.contentRelativePath);
-        const resolver = new FSResolver('s', testConfig.rootPath, fs as any);
+        const resolver = createResolver(testConfig.rootPath, fs as any)//new FSResolver('s', testConfig.rootPath, fs as any);
         const libRelPath = 'node_modules/my-lib';
         const innerLibPath = path.join(testConfig.rootPath, libRelPath);
 

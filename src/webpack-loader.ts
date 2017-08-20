@@ -1,12 +1,12 @@
 import { transformStylableCSS, replaceAssetsAsync } from './stylable-transform';
-import { Stylesheet as StylableSheet, Generator } from 'stylable';
-import { FSResolver } from "./fs-resolver";
+import { StylableMeta } from 'stylable';
+import { createResolver } from "./fs-resolver";
 import { StylableIntegrationDefaults,StylableIntegrationOptions} from './options';
 import loaderUtils = require('loader-utils');
 import webpack = require('webpack');
 
 let firstRun:boolean = true;
-let used : StylableSheet[] = [];
+let used : StylableMeta[] = [];
 
 function createIsUsedComment(ns:string){
     return '\n//*stylable*'+ns+'*stylable*';
@@ -14,7 +14,7 @@ function createIsUsedComment(ns:string){
 
 export function loader(this:webpack.loader.LoaderContext, source: string) {
     const options = { ...StylableIntegrationDefaults, ...loaderUtils.getOptions(this) };
-    const resolver = new FSResolver(options.defaultPrefix,this.options.context,this.fs);
+    const resolver = createResolver(this.options.context, this.fs); //new FSResolver(options.defaultPrefix,this.options.context,this.fs);
     const publicPath  = this.options.output.publicPath || '//assets';
     return replaceAssetsAsync(source,(relativeUrl:string)=>{
         return new Promise<string>((resolve)=>{
@@ -36,7 +36,6 @@ export function loader(this:webpack.loader.LoaderContext, source: string) {
             const { sheet, code } = transformStylableCSS(
                 modifiedSource,
                 this.resourcePath,
-                this.context,
                 resolver,
                 options
             );
@@ -80,8 +79,8 @@ export class Plugin{
                     simpleEntries[entryName] = entry;
                 }
             })
-            const options = { ...StylableIntegrationDefaults, ...this.options };
-            const resolver = new FSResolver(options.defaultPrefix,compilation.options.context,compilation.inputFileSystem);
+            // const options = { ...StylableIntegrationDefaults, ...this.options };
+            // const resolver = createResolver(compilation.options.context, compilation.inputFileSystem);// new FSResolver(options.defaultPrefix,compilation.options.context,compilation.inputFileSystem);
             Object.keys(simpleEntries).forEach(entryName=>{
                 const outputFormat = compilation.options.output.filename;
                 const bundleName = outputFormat.replace('[name]', entryName);
@@ -116,14 +115,20 @@ export class Plugin{
                     }
                 }
 
-                const gen = new Generator({resolver, namespaceDivider:options.nsDelimiter});
+                  
+                // resolver.fileProcessor.add(meta.source, meta);
+                // return transformer.transform(meta);
+                
+                // const gen = new Generator({resolver, namespaceDivider:options.nsDelimiter});
+                const out: string[] = [];
+
                 used.reverse().forEach((sheet)=>{
                     const idComment = createIsUsedComment(sheet.namespace);
                     if(entryContent.indexOf(idComment)!==-1){
-                        gen.addEntry(sheet, false);
+                        out.push(sheet.ast.toString())
                     }
                 })
-                const resultCssBundle = gen.buffer.join('\n');
+                const resultCssBundle = out.join('\n');
                 compilation.assets[bundleCssName] = {
                     source: function(){
                         return new Buffer(resultCssBundle,"utf-8")

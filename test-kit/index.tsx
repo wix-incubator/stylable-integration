@@ -196,7 +196,7 @@ export function isDecl(n:postcss.NodeBase | undefined):n is postcss.Declaration{
     return !!n && (n as any).type === 'decl';
 }
 export function findRule(css:postcss.Root,selector:string):{idx:number,rule:postcss.Rule} | undefined{
-    const nodeIdx =  css.nodes!.findIndex((node)=>isRule(node) && node.selector===selector);
+    const nodeIdx =  css.nodes!.findIndex((node)=>isRule(node) && node.selector.indexOf(selector) !== -1);
     const node = css.nodes![nodeIdx];
     return isRule(node) ? {idx:nodeIdx,rule:node} : undefined;
 }
