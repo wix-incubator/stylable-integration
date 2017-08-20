@@ -97,6 +97,7 @@ export function testJsEntries(entries:string[],files:{[key:string]:string},test:
     const memfs = getMemFs(files,config.rootPath,config.contentRelativePath);
     let entriesRes : {[key:string]:string} = {};
 	const compiler = webpack({
+        context: config.rootPath,
         entry: entries.reduce((accum,entry)=>{
             accum[entry] = path.join(contentPath,entry+'.js')
             return accum;
@@ -126,12 +127,12 @@ export function testJsEntries(entries:string[],files:{[key:string]:string},test:
         if (err) { throw err; }
 		const evaledBundles = entries.map((entry)=>{
             const bundleName = config.fileNameFormat.replace('[name]',entry)
-            return _eval(memfs.readFileSync(path.join(distPath,bundleName), 'utf8'))
+            return _eval(memfs.readFileSync(path.join(distPath,bundleName)).toString())
         });
 		const bundlesCss = entries.map((entry)=>{
             const bundleName = config.fileNameFormat.replace('[name]',entry);
             const bundleCssName  = bundleName.lastIndexOf('.js') === bundleName.length-3 ? bundleName.slice(0,bundleName.length-3)+'.css' : bundleName+'.css';
-            return memfs.readFileSync(path.join(distPath,bundleCssName), 'utf8')
+            return memfs.readFileSync(path.join(distPath,bundleCssName)).toString()
         });
 
         test(evaledBundles,bundlesCss, memfs);
@@ -139,16 +140,13 @@ export function testJsEntries(entries:string[],files:{[key:string]:string},test:
     })
 }
 
-
-
-
-
 export function testJsEntry(entry: string,files:{[key:string]:string | Buffer} | MemoryFileSystem, test: TestFunction,config:TestConfig, options:StylableIntegrationOptions = {...StylableIntegrationDefaults}) {
 
     const memfs = files instanceof MemoryFileSystem ? files : getMemFs(files,config.rootPath,config.contentRelativePath);
     const contentPath = getContentPath(config);
     const distPath = getDistPath(config);
 	const compiler = webpack({
+        context: config.rootPath,
         entry: path.join(contentPath,entry),
 		output: {
             publicPath:config.assetsServerUri+'/',
@@ -170,7 +168,7 @@ export function testJsEntry(entry: string,files:{[key:string]:string | Buffer} |
                     test: /\.(png|jpg|gif|svg)$/,
                     use: [
                     {
-                        loader: 'url-loader',
+                        loader: path.join(process.cwd(), 'node_modules', 'url-loader'),
                         options: {
                             limit: 1
                         }
@@ -185,8 +183,8 @@ export function testJsEntry(entry: string,files:{[key:string]:string | Buffer} |
 
     compiler.run( function (err: Error) {
         if (err) { throw err; }
-		const bundle = memfs.readFileSync(path.join(distPath,'bundle.js'), 'utf8');
-        const bundleCss = memfs.readFileSync(path.join(distPath,'bundle.css'), 'utf8');
+		const bundle = memfs.readFileSync(path.join(distPath,'bundle.js')).toString();
+        const bundleCss = memfs.readFileSync(path.join(distPath,'bundle.css')).toString();
         test(_eval(bundle),bundleCss, memfs);
     })
 }
