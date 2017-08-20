@@ -1,4 +1,5 @@
 # Stylable Integration
+[![Build Status](https://travis-ci.com/wixplosives/stylable-integration.svg?token=JxepjChyzQB66ehAYhtG&branch=master)](https://travis-ci.com/wixplosives/stylable-integration)
 
 Contains:
 - A webpack loader for stylable css (stylable-integration/webpack)
