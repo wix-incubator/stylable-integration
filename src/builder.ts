@@ -1,41 +1,67 @@
-import { transformStylableCSS,getUsedAssets } from "./stylable-transform";
+import { transformStylableCSS, getUsedAssets } from "./stylable-transform";
 import { FSResolver } from "./fs-resolver";
-import { dirname, join ,resolve} from "path";
-import { htap } from "htap";
+import { dirname, join, resolve } from "path";
 import { fsLike } from "./types";
-import { StylableIntegrationDefaults} from "./options";
-import { ensureAssets } from "./assetor";
+import { StylableIntegrationDefaults } from "./options";
+import { ensureAssets, ensureDirectory } from "./assetor";
 
-export type globSearcher = (match:string,options:object,callback:(er: Error | null, files: string[])=>void)=>void;
+export interface BuildOptions {
+    extension: string;
+    fs: fsLike;
+    resolver: FSResolver;
+    rootDir: string;
+    srcDir: string;
+    outDir: string;
+    log?: (...args: string[]) => void;
+}
 
-export function build(match:string,fs:fsLike,resolver:FSResolver,outDir:string,srcDir:string,cwd:string,glob:globSearcher,log?:(...args:string[])=>void){
-    const fullSrcDir = join(cwd, srcDir);
-    const fullMatch = htap(srcDir, match);
-    let projectAssets: string[]= [];
-    glob(fullMatch, {}, function (_err: Error, files: string[]) {
-        const projectAssetMapping:{[key:string]:string} = {};
-        files.forEach((file) => {
-            const fullpath = join(cwd, file);
-            const outSrcPath = join(cwd, outDir, fullpath.replace(fullSrcDir, ''));
-            const outPath = outSrcPath + '.js';
-            log && log('[Build]', fullpath + ' --> ' + outPath);
-            const content = tryRun(() => fs.readFileSync(fullpath, 'utf8'), 'Read File Error');
-            const dir = dirname(fullpath);
-            const outDirPath = dirname(outPath);
-            const { code } = tryRun(() => transformStylableCSS(content, fullpath, dir, resolver, {...StylableIntegrationDefaults,injectFileCss:true}), 'Transform Error');
-            const hasDir = fs.existsSync(outDirPath);
-            if(!hasDir){
-                tryRun(() => fs.mkdirSync(outDirPath), 'create dir Error');
-            }
-            tryRun(() => fs.writeFileSync(outSrcPath, content), 'Write File Error');
-            tryRun(() => fs.writeFileSync(outPath, code), 'Write File Error');
-            projectAssets = projectAssets.concat(getUsedAssets(content).map((uri:string)=>resolve(dir,uri)));
-        });
-        projectAssets.forEach((originalPath:string)=>{
-            projectAssetMapping[originalPath] = originalPath.replace(join(cwd, srcDir),join(cwd, outDir))
-        })
-        ensureAssets(projectAssetMapping,fs);
+export function build(buildOptions: BuildOptions) {
+    const {extension, fs, resolver, rootDir, srcDir, outDir, log} = buildOptions;
+
+    const fullSrcDir = join(rootDir, srcDir);
+    let projectAssets: string[] = [];
+    const filesToBuild = findFilesRecursive(fs, fullSrcDir, extension);
+    const projectAssetMapping: { [key: string]: string } = {};
+    filesToBuild.forEach(filePath => {
+        const outSrcPath = join(rootDir, outDir, filePath.replace(fullSrcDir, ''));
+        const outPath = outSrcPath + '.js';
+        log && log('[Build]', filePath + ' --> ' + outPath);
+        const content = tryRun(() => fs.readFileSync(filePath).toString(), 'Read File Error');
+        const fileDirectory = dirname(filePath);
+        const outDirPath = dirname(outPath);
+        const { code } = tryRun(() => transformStylableCSS(content, filePath, fileDirectory, resolver, { ...StylableIntegrationDefaults, injectFileCss: true }), 'Transform Error');
+        const hasDir = fs.existsSync(outDirPath);
+        if (!hasDir) {
+            tryRun(() => ensureDirectory(outDirPath, fs), 'Ensure directory');
+        }
+        tryRun(() => fs.writeFileSync(outSrcPath, content), 'Write File Error');
+        tryRun(() => fs.writeFileSync(outPath, code), 'Write File Error');
+        projectAssets = projectAssets.concat(getUsedAssets(content).map((uri: string) => resolve(fileDirectory, uri)));
     });
+    projectAssets.forEach((originalPath: string) => {
+        projectAssetMapping[originalPath] = originalPath.replace(join(rootDir, srcDir), join(rootDir, outDir))
+    })
+    ensureAssets(projectAssetMapping, fs);
+}
+
+const blacklist = new Set<string>(['node_modules']);
+
+function findFilesRecursive(fs: fsLike, rootDirectory: string, ext: string, resultArr: string[] = []) {
+    try {
+        fs.readdirSync(rootDirectory).forEach(item => {
+            if (blacklist.has(item)) { return; }
+            const itemFullPath = join(rootDirectory, item);
+            try {
+                const status = fs.statSync(itemFullPath)
+                if (status.isDirectory()) {
+                    findFilesRecursive(fs, itemFullPath, ext, resultArr);
+                } else if (status.isFile() && itemFullPath.endsWith(ext)) {
+                    resultArr.push(itemFullPath);
+                }
+            } catch (e) { }
+        });
+    } catch (e) { }
+    return resultArr;
 }
 
 function tryRun<T>(fn: () => T, errorMessage: string): T {

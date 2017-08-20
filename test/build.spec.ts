@@ -1,57 +1,22 @@
 import path = require('path');
 import { expect } from 'chai';
-import MemoryFileSystem = require('memory-fs');
 import * as postcss from 'postcss';
 import { FSResolver } from '../src/fs-resolver';
-import { getDistPath, getMemFs, jsThatImports, testJsEntry, testRule, testComplexRule, TestConfig, evalCommonJsCssModule ,getAssetRegExp} from '../test-kit/index';
+import { getDistPath, getMemFs, jsThatImports, testJsEntry, testRule, testComplexRule, TestConfig, evalCommonJsCssModule, getAssetRegExp } from '../test-kit/index';
 import { StylableIntegrationDefaults } from '../src/options';
-import { build, globSearcher } from '../src/builder';
+import { build } from '../src/builder';
 
 const testConfig: TestConfig = {
-    rootPath: process.cwd(),
+    // 'c:\\project' on Windows; '/project' on posix
+    rootPath: path.resolve('/project'),
     distRelativePath: 'dist',
     assetsRelativePath: 'assets',
     contentRelativePath: 'sources',
     assetsServerUri: 'serve-assets',
-    fileNameFormat:'[name].js'
+    fileNameFormat: '[name].js'
 }
 
 const assetRegEx = getAssetRegExp(testConfig);
-
-interface recursiveFsInternals { [fileName: string]: Buffer | recursiveFsInternals };
-
-function searchForMatch(prefix: string, suffix: string, fsInt: recursiveFsInternals, rootPath: string, startPath: string = ''): string[] {
-    let res: string[] = [];
-    Object.keys(fsInt).forEach((fileName: string) => {
-        let currentPath = path.join(startPath, fileName);
-        if (currentPath === 'C:.') {
-            currentPath = "C:";
-        }
-        const fileOrFolder = fsInt[fileName];
-        if (fileOrFolder instanceof Buffer) {
-            if (currentPath.startsWith(rootPath) && currentPath.includes(prefix) && currentPath.endsWith(suffix)) {
-                res.push(path.relative(rootPath.toLowerCase(), currentPath.toLowerCase()));
-            }
-        } else {
-            res = res.concat(searchForMatch(prefix, suffix, fileOrFolder, rootPath, currentPath));
-        }
-    });
-    return res;
-}
-
-function mockGlob(fs: MemoryFileSystem, rootPath: string): globSearcher {
-    return (match, _options, cb) => {
-        const supportedMatchFormat = '/**/*';
-        if (match.indexOf(supportedMatchFormat) === -1) {
-            throw new Error('match nor support in glob mock')
-        } else {
-            const splitMatch = match.split(supportedMatchFormat);
-            const res = searchForMatch(splitMatch[0], splitMatch[1], fs.data, rootPath);
-            cb(null, res)
-
-        }
-    }
-}
 
 type StringMap = { [key: string]: string };
 
@@ -60,7 +25,7 @@ describe('build stand alone', function () {
         const files = {
             'main.css': `
                 :import{
-                    -st-from:"./components/comp.css";
+                    -st-from: "./components/comp.css";
                     -st-default:Comp;
                 }
                 .gaga{
@@ -76,7 +41,10 @@ describe('build stand alone', function () {
         }
         const fs = getMemFs(files, testConfig.rootPath, testConfig.contentRelativePath);
         const resolver = new FSResolver('s', testConfig.rootPath, fs as any);
-        build('**/*.css', fs as any, resolver, 'lib', testConfig.contentRelativePath, testConfig.rootPath, mockGlob(fs, testConfig.rootPath), () => {});
+        build({
+            extension: '.css', fs: fs as any, resolver,
+            outDir: 'lib', srcDir: testConfig.contentRelativePath, rootDir: testConfig.rootPath
+        });
 
         const outPath = path.join(testConfig.rootPath, 'lib');
         const mainModulePath = path.join(outPath, 'main.css.js');
@@ -122,13 +90,13 @@ describe("lib usage with loader", () => {
                 background: url("./asset.svg");
             }
         `,
-        'components/asset.svg':`
+        'components/asset.svg': `
                 <svg height="100" width="100">
                     <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
                 </svg>
         `,
-        'package.json': `{
-                name:"my-lib"
+        '../package.json': `{
+                "name":"my-lib"
         }`
     }
     const files: StringMap = {
@@ -155,7 +123,13 @@ describe("lib usage with loader", () => {
         const libRelPath = 'node_modules/my-lib';
         const innerLibPath = path.join(testConfig.rootPath, libRelPath);
         const resolver = new FSResolver('s', innerLibPath, fs as any);
-        build('**/*.css', fs as any, resolver, 'lib', testConfig.contentRelativePath, innerLibPath, mockGlob(fs, innerLibPath), () =>{});
+
+        // build lib
+        build({
+            rootDir: innerLibPath, srcDir: testConfig.contentRelativePath, outDir: 'lib',
+            extension: '.css', fs: fs as any, resolver
+        });
+
         testJsEntry('app.js', fs, (bundle, _css, memfs) => {
             const mainModule = bundle.main.default;
             const compModule = bundle['my-lib/lib/comp'].comp.default
@@ -177,8 +151,8 @@ describe("lib usage with loader", () => {
             expect(subModule.targetCss).to.not.include('url("./asset.svg")')
             const match = subModule.targetCss.split(assetRegEx);
 
-            expect(match!.length,'converted url count').to.equal(3);
-            expect(memfs.readFileSync(getDistPath(testConfig)+'\\'+match![1]).toString()).to.eql(libFiles['components/asset.svg']);
+            expect(match!.length, 'converted url count').to.equal(3);
+            expect(memfs.readFileSync(getDistPath(testConfig) + '\\' + match![1]).toString()).to.eql(libFiles['components/asset.svg']);
             done()
         }, testConfig, { ...StylableIntegrationDefaults, injectFileCss: true })
     });
@@ -188,7 +162,12 @@ describe("lib usage with loader", () => {
         const resolver = new FSResolver('s', testConfig.rootPath, fs as any);
         const libRelPath = 'node_modules/my-lib';
         const innerLibPath = path.join(testConfig.rootPath, libRelPath);
-        build('**/*.css', fs as any, resolver, 'lib', testConfig.contentRelativePath, innerLibPath, mockGlob(fs, innerLibPath), () => {});
+
+        build({
+            rootDir: innerLibPath, srcDir: testConfig.contentRelativePath, outDir: 'lib',
+            extension: '.css', fs: fs as any, resolver
+        });
+
         testJsEntry('app.js', fs, (bundle, css, memfs) => {
             const mainModule = bundle.main.default;
             const compModule = bundle['my-lib/lib/comp'].comp.default
@@ -204,8 +183,8 @@ describe("lib usage with loader", () => {
 
             expect(css).to.not.include('url("./asset.svg")')
             const match = css.split(assetRegEx);
-            expect(match!.length,'converted url count').to.equal(3);
-            expect(memfs.readFileSync(getDistPath(testConfig)+'\\'+match![1]).toString()).to.eql(libFiles['components/asset.svg']);
+            expect(match!.length, 'converted url count').to.equal(3);
+            expect(memfs.readFileSync(getDistPath(testConfig) + '\\' + match![1]).toString()).to.eql(libFiles['components/asset.svg']);
             done()
         }, testConfig, { ...StylableIntegrationDefaults })
     });
