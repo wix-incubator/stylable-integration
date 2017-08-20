@@ -30,7 +30,7 @@
     "yargs": "^8.0.2"
   },
   "peerDependencies": {
-    "stylable": ">=2.0.4"
+    "stylable": ">=4.0.0"
   },
   "devDependencies": {
     "@types/chai": "^4.0.3",
@@ -49,7 +49,7 @@
     "ncp": "^2.0.0",
     "node-eval": "^1.1.0",
     "postcss": "^6.0.9",
-    "stylable": "^3.0.0",
+    "stylable": "^4.0.0",
     "ts-mocha": "^1.0.3",
     "typescript": "^2.4.2",
     "url-loader": "^0.5.9",
