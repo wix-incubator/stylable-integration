@@ -58,7 +58,7 @@ If your project uses transpilation into an output directory, then `srcDir` and `
 
 A common use case of this utility is running it via an `npm` script in the project's `package.json`:
 
-```json
+```js
 {
     "name": "my-project",
     ...
