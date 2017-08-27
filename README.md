@@ -71,7 +71,7 @@ A common use case of this utility is running it via an `npm` script in the proje
 
 ## Webpack
 
-Both a webpack loader and a plugin are exported via special entry points.
+Both a webpack loader and a plugin are exported via two special entry points.
 
 The loader, exported via `stylable-integration/webpack-loader`, can be used in a  webpack configuration as follows:
 
@@ -79,11 +79,15 @@ The loader, exported via `stylable-integration/webpack-loader`, can be used in a
 
 {
     module: {
-        rules: [{
-            test: /\.st.css$/,
-            loader: "stylable-integration/webpack-loader",
-            options: { /* transformation options */ }
-        }]
+        rules: [
+        ...
+            {
+                test: /\.st.css$/,
+                loader: "stylable-integration/webpack-loader",
+                options: { /* transformation options */ }
+            }
+        ...
+        ]
     }
 }
 
@@ -101,7 +105,49 @@ const StylablePlugin = require('stylable-integration/webpack-plugin');
 }
 
 ```
+The transformation options is an object, with the following default values:
+```ts
+{
+    // prefix used for class names
+    defaultPrefix: 's',
 
+    // should a bundle CSS file be generated
+    injectBundleCss: false,
 
+    // should each built .js file include code that injects the raw CSS to the page (when loaded in the browser)
+    injectFileCss: false,
+
+    // delimiter used when namespacing selectors
+    nsDelimiter: '💠'
+}
+```
 
 ## Node.js require hook
+
+When running code directly in Node.js, any `require(...)` calls are handled by Node's own module system.
+
+By default, Node supports `require()`ing `.js` and `.json` files, but allows hooks to attach to additional file extension.
+
+This package exposes a special entry point that registers `.css` file handling, transpiling it for Node.js on-the-fly.
+
+In order to register the hook, use the dedicated entry point:
+
+```ts
+import 'stylable-integration/require';
+```
+
+or, if using CommonJS:
+
+```js
+require('stylable-integration/require');
+```
+
+The require hook can also be used to register the handling in tools like Mocha, as such:
+
+```bash
+$ mocha --compilers css:stylable-integration/require [test file]
+```
+
+## CSS bundling
+
+// TODO: implement and write.
