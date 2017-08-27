@@ -5,24 +5,24 @@ import { build } from './builder';
 
 const argv = require('yargs')
     .option('rootDir')
-    .describe('rootDir', 'root project directory')
-    .default('rootDir', process.cwd(), 'process.cwd()')
+    .describe('rootDir', 'root directory of project')
+    .default('rootDir', process.cwd(), 'cwd')
 
     .option('srcDir')
-    .describe('srcDir', 'source directory in working directory')
-    .default('srcDir', '.', 'same as root directory')
+    .describe('srcDir', 'source directory relative to root')
+    .default('srcDir', '.')
 
     .option('outDir')
-    .describe('outDir', 'output directory')
-    .default('outDir', '.', 'same as root directory')
+    .describe('outDir', 'target directory relative to root')
+    .default('outDir', '.')
 
     .option('ext')
     .describe('ext', 'extension of stylable css files')
-    .default('ext', '.st.css', '.st.css files')
+    .default('ext', '.st.css')
 
     .option('log')
-    .describe('log', 'should log to console')
-    .default('log', true, 'silent')
+    .describe('log', 'verbose log')
+    .default('log', false)
 
     .alias('h', 'help')
     .help()
