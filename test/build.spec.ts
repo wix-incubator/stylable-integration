@@ -4,7 +4,7 @@ import * as postcss from 'postcss';
 import { createResolver } from '../src/fs-resolver';
 import { getDistPath, getMemFs, jsThatImports, testJsEntry, testRule, testComplexRule, TestConfig, evalCommonJsCssModule, getAssetRegExp } from '../test-kit/index';
 import { StylableIntegrationDefaults } from '../src/options';
-import { build } from '../src/builder';
+import { build } from '../src/build';
 
 const testConfig: TestConfig = {
     // 'c:\\project' on Windows; '/project' on posix
