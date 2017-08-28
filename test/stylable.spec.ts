@@ -32,7 +32,7 @@ describe('plugin', function(){
         },testConfig);
     });
 
-    it('should work with multiple webpack entries',function(done){
+    it.only('should work with multiple webpack entries',function(done){
         const files = {
             'home.js':jsThatImports(['./home.css']),
             'home.css':`
@@ -398,7 +398,7 @@ describe('plugin', function(){
             done();
         },testConfig);
     });
-    xit('should not generate css for files imported only through css',function(done){
+    it('should not generate css for files imported only through css',function(done){
         const files = {
             'main.js':jsThatImports(['./main.css']),
             'main.css':`

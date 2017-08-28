@@ -1,7 +1,7 @@
 import path = require('path');
 import { expect } from 'chai';
 import * as postcss from 'postcss';
-import { createResolver } from '../src/fs-resolver';
+import { Stylable } from '../src/fs-resolver';
 import { getDistPath, getMemFs, jsThatImports, testJsEntry, testRule, testComplexRule, TestConfig, evalCommonJsCssModule, getAssetRegExp } from '../test-kit/index';
 import { StylableIntegrationDefaults } from '../src/options';
 import { build } from '../src/builder';
@@ -40,9 +40,11 @@ describe('build stand alone', function () {
             `,
         }
         const fs = getMemFs(files, testConfig.rootPath, testConfig.contentRelativePath);
-        const resolver = createResolver(testConfig.rootPath, fs as any) //new FSResolver('s', testConfig.rootPath, fs as any);
+        
+        const stylable = new Stylable(testConfig.rootPath, fs as any, ()=>({}));
+
         build({
-            extension: '.css', fs: fs as any, resolver,
+            extension: '.css', fs: fs as any, stylable,
             outDir: 'lib', srcDir: testConfig.contentRelativePath, rootDir: testConfig.rootPath
         });
 
@@ -122,12 +124,14 @@ describe("lib usage with loader", () => {
         const fs = getMemFs(files, testConfig.rootPath, testConfig.contentRelativePath);
         const libRelPath = 'node_modules/my-lib';
         const innerLibPath = path.join(testConfig.rootPath, libRelPath);
-        const resolver = createResolver(testConfig.rootPath, fs as any)//new FSResolver('s', innerLibPath, fs as any);
+        
 
+           
+        const stylable = new Stylable(testConfig.rootPath, fs as any, ()=>({}));
         // build lib
         build({
             rootDir: innerLibPath, srcDir: testConfig.contentRelativePath, outDir: 'lib',
-            extension: '.css', fs: fs as any, resolver
+            extension: '.css', fs: fs as any, stylable
         });
 
         testJsEntry('app.js', fs, (bundle, _css, memfs) => {
@@ -159,13 +163,13 @@ describe("lib usage with loader", () => {
 
     it('should be usable as a component library in bundle mode', function (done) {
         const fs = getMemFs(files, testConfig.rootPath, testConfig.contentRelativePath);
-        const resolver = createResolver(testConfig.rootPath, fs as any)//new FSResolver('s', testConfig.rootPath, fs as any);
+        
         const libRelPath = 'node_modules/my-lib';
         const innerLibPath = path.join(testConfig.rootPath, libRelPath);
-
+        const stylable = new Stylable(testConfig.rootPath, fs as any, ()=>({}));
         build({
             rootDir: innerLibPath, srcDir: testConfig.contentRelativePath, outDir: 'lib',
-            extension: '.css', fs: fs as any, resolver
+            extension: '.css', fs: fs as any, stylable
         });
 
         testJsEntry('app.js', fs, (bundle, css, memfs) => {

@@ -1,32 +1,10 @@
-import { process, StylableTransformer, StylableResults, Diagnostics, safeParse, StylableMeta } from 'stylable';
-
+import { StylableMeta } from 'stylable';
 const deindent = require('deindent');
-
 import { StylableIntegrationDefaults, StylableIntegrationOptions } from './options';
-import { NewResolver } from "./fs-resolver";
 
 
-const relativeImportAsset = /url\s*\(\s*["']?([^:]*?)["']?\s*\)/gm;
-
-
-export function generate(source: string, resourcePath: string, delimiter: string, resolver: NewResolver): StylableResults {
-    const diagnostics = new Diagnostics();
-    const root = safeParse(source, { from: resourcePath });
-    const meta = process(root, diagnostics);
-    const transformer = new StylableTransformer({ delimiter, diagnostics, ...resolver });
-    resolver.fileProcessor.add(meta.source, meta);
-    return transformer.transform(meta);
-}
-
-export interface Output {
-    code: string;
-    sheet: StylableMeta;
-}
-
-export function transformStylableCSS(source: string, resourcePath: string, resolver: NewResolver, options: StylableIntegrationOptions = StylableIntegrationDefaults): Output {
-
-    const { exports, meta } = generate(source, resourcePath, options.nsDelimiter, resolver);
-
+export function createCSSModuleString(exports: any, meta: StylableMeta, options: StylableIntegrationOptions = StylableIntegrationDefaults): string {
+    
     const root = JSON.stringify(meta.root);
     const namespace = JSON.stringify(meta.namespace);
     const locals = JSON.stringify(exports);
@@ -62,8 +40,12 @@ export function transformStylableCSS(source: string, resourcePath: string, resol
         `;
     }
 
-    return { sheet: meta, code };
+    return code;
 }
+
+
+
+const relativeImportAsset = /url\s*\(\s*["']?([^:]*?)["']?\s*\)/gm;
 
 
 export function getUsedAssets(source: string): string[] {

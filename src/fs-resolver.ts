@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { cachedProcessFile, StylableMeta, process, safeParse, FileProcessor } from 'stylable';
+import { cachedProcessFile, StylableMeta, process, safeParse, FileProcessor, StylableResults, Diagnostics, StylableTransformer, StylableResolver, Bundler } from 'stylable';
 
 import { ResolverFactory } from 'enhanced-resolve';
 import { fsLike } from "./types";
@@ -36,13 +36,57 @@ import { fsLike } from "./types";
 // }
 
 
+export class Stylable {
+    fileProcessor: FileProcessor<StylableMeta>;
+    resolver: StylableResolver;
+    resolvePath: (ctx: string, path: string) => string;
+    constructor(
+        protected projectRoot: string,
+        protected fileSystem: fsLike,
+        protected requireModule: (path: string) => any = require,
+        protected delimiter?: string,
+        protected transformCSSContent?: (path: string, content: string) => string) {
+        const { fileProcessor, resolvePath } = createInfrastructure(projectRoot, fileSystem, transformCSSContent)
+        this.resolvePath = resolvePath;
+        this.fileProcessor = fileProcessor;
+        this.resolver = new StylableResolver(this.fileProcessor, this.requireModule);
+    }
+    createBundler() {
+        return new Bundler(
+            this.resolver,
+            (path: string) => ({ meta: this.fileProcessor.process(path), exports: {} })
+        );
+    }
+    transform(source: string, resourcePath: string): StylableResults {
 
-export interface NewResolver {
-    fileProcessor: FileProcessor<StylableMeta>,
-    requireModule: (path: string) => any
+        const diagnostics = new Diagnostics();
+
+        const root = safeParse(source, { from: resourcePath });
+
+        const meta = process(root, diagnostics);
+
+        const transformer = new StylableTransformer({
+            delimiter: this.delimiter,
+            diagnostics,
+            fileProcessor: this.fileProcessor,
+            requireModule: this.requireModule
+        });
+
+        this.fileProcessor.add(meta.source, meta);
+
+        return transformer.transform(meta);
+
+    }
+    generate() { }
+    process() { }
 }
 
-export function createResolver(projectRoot: string, fileSystem: fsLike = fs, requireModule = require): NewResolver {
+export interface StylableInfrastructure {
+    fileProcessor: FileProcessor<StylableMeta>,
+    resolvePath: (context: string, path: string) => string
+}
+
+export function createInfrastructure(projectRoot: string, fileSystem: fsLike = fs, transformSrc?: (path: string, content: string) => string): StylableInfrastructure {
 
     const eResolver = ResolverFactory.createResolver({
         fileSystem,
@@ -53,31 +97,37 @@ export function createResolver(projectRoot: string, fileSystem: fsLike = fs, req
         if (!path.isAbsolute(from)) {
             from = eResolver.resolveSync({}, projectRoot, from);
         }
+        content = transformSrc ? transformSrc(from, content) : content;
         return process(safeParse(content, { from }));
     }, {
-        readFileSync(moduleId: string) {
-            if (!path.isAbsolute(moduleId)) {
-                moduleId = eResolver.resolveSync({}, projectRoot, moduleId);
-            }
-            return fileSystem.readFileSync(moduleId, 'utf8');
-        },
-        statSync(moduleId: string) {
-            if (!path.isAbsolute(moduleId)) {
-                moduleId = eResolver.resolveSync({}, projectRoot, moduleId);
-            }
-            const stat = fileSystem.statSync(moduleId);
-            if(!stat.mtime){
-                return {
-                    mtime: new Date(0)
+            readFileSync(moduleId: string) {
+                if (!path.isAbsolute(moduleId)) {
+                    moduleId = eResolver.resolveSync({}, projectRoot, moduleId);
                 }
-            }
+                return fileSystem.readFileSync(moduleId, 'utf8');
+            },
+            statSync(moduleId: string) {
+                if (!path.isAbsolute(moduleId)) {
+                    moduleId = eResolver.resolveSync({}, projectRoot, moduleId);
+                }
+                const stat = fileSystem.statSync(moduleId);
+                if (!stat.mtime) {
+                    return {
+                        mtime: new Date(0)
+                    }
+                }
 
-            return stat;
-        }
-    });
+                return stat;
+            }
+        });
 
     return {
-        requireModule,
+        resolvePath(context: string, moduleId: string) {
+            if (!path.isAbsolute(moduleId)) {
+                moduleId = eResolver.resolveSync({}, context, moduleId);
+            }
+            return moduleId;
+        },
         fileProcessor
     };
 }

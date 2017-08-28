@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import fs = require('fs');
-import { createResolver } from "./fs-resolver";
+import { Stylable } from "./fs-resolver";
 import { build } from './builder';
 
 const argv = require('yargs')
@@ -32,11 +32,11 @@ const argv = require('yargs')
 const log = createLogger("[Stylable]", argv.log);
 const { outDir, srcDir, rootDir, ext } = argv;
 
-const resolver = createResolver(rootDir);
-
 log('[Arguments]', argv);
 
-build({ extension: ext, fs, resolver, outDir, srcDir, rootDir, log });
+const stylable = new Stylable(rootDir, fs, require);
+
+build({ extension: ext, fs, stylable, outDir, srcDir, rootDir, log });
 
 function createLogger(prefix: string, shouldLog: boolean) {
     return function log(...messages: string[]) {
