@@ -161,7 +161,7 @@ describe("lib usage with loader", () => {
         }, testConfig, { ...StylableIntegrationDefaults, injectFileCss: true })
     });
 
-    it.only('should be usable as a component library in bundle mode', function (done) {
+    it('should be usable as a component library in bundle mode', function (done) {
         const fs = getMemFs(files, testConfig.rootPath, testConfig.contentRelativePath);
         
         const libRelPath = 'node_modules/my-lib';
