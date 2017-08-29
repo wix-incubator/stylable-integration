@@ -14,7 +14,7 @@ export function createCSSModuleString(exports: any, meta: StylableMeta, options:
     // ${imports.join('\n')}
     let code: string = '';
     if (options.injectFileCss) {
-        const css = JSON.stringify(meta.ast.toString());
+        const css = JSON.stringify(meta.outputAst!.toString());
 
         code = deindent`
         Object.defineProperty(exports, "__esModule", { value: true });

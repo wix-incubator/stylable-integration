@@ -1,5 +1,5 @@
 import { createCSSModuleString, getUsedAssets } from "./stylable-transform";
-import { Stylable } from "./fs-resolver";
+import { Stylable } from "stylable";
 import { dirname, join, resolve } from "path";
 import { fsLike } from "./types";
 import { StylableIntegrationDefaults } from "./options";

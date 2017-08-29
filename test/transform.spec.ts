@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import * as path from 'path';
 import {createCSSModuleString} from '../src/stylable-transform';
 
-import { Stylable } from "../src/fs-resolver";
+import { Stylable } from "stylable";
 import { getMemFs } from "../test-kit/index";
 const _eval = require('node-eval');
 const separator: string = '💠';
@@ -21,7 +21,7 @@ describe('loader', function () {
 
         const stylable = new Stylable(process.cwd(), fs as any, ()=>({}), separator);
         const entryPath = path.join(process.cwd() + '/entry.st.css');
-        const {exports, meta} = stylable.transform(fs.readFileSync(entryPath), entryPath)
+        const {exports, meta} = stylable.transform(fs.readFileSync(entryPath).toString(), entryPath)
         const code = createCSSModuleString(exports, meta, vanillaOptions);
 
         const evaledRes = _eval(code, path.join(process.cwd(), 'src', 'style.st.css'));

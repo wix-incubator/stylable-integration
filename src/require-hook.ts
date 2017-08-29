@@ -1,7 +1,7 @@
 import * as fs from "fs";
 
 import { createCSSModuleString } from "./stylable-transform";
-import { Stylable } from "./fs-resolver";
+import { Stylable } from "stylable";
 import {StylableIntegrationOptions,StylableIntegrationDefaults} from './options';
 
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import fs = require('fs');
-import { Stylable } from "./fs-resolver";
+import { Stylable } from "stylable";
 import { build } from './builder';
 
 const argv = require('yargs')

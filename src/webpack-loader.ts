@@ -1,6 +1,5 @@
 import { createCSSModuleString, replaceAssetsAsync } from './stylable-transform';
-import { Bundler, StylableResults } from 'stylable';
-import { Stylable } from "./fs-resolver";
+import { Stylable, Bundler, StylableResults } from 'stylable';
 import { StylableIntegrationDefaults, StylableIntegrationOptions } from './options';
 import loaderUtils = require('loader-utils');
 import webpack = require('webpack');
@@ -49,7 +48,7 @@ export function loader(this: webpack.loader.LoaderContext, _source: string) {
         })
             .then(modifiedSource => {
                 const res = stylable.transform(modifiedSource, newSheetPath);
-                stylable.fileProcessor.add(newSheetPath, {...res.meta, ast:(res.meta as any).astSource});
+                stylable.fileProcessor.add(newSheetPath, res.meta);
                 if (newSheetPath === this.resourcePath) {
                     results = res;
                 }
@@ -144,7 +143,7 @@ export class Plugin {
                     return acc;
                 }, []);
 
-
+                console.log('compilationBundler.generateCSS')
                 const resultCssBundle = compilationBundler.generateCSS(usedSheetPaths);
 
                 compilation.assets[bundleCssName] = {

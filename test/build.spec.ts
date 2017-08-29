@@ -1,7 +1,7 @@
 import path = require('path');
 import { expect } from 'chai';
 import * as postcss from 'postcss';
-import { Stylable } from '../src/fs-resolver';
+import { Stylable } from 'stylable';
 import { getDistPath, getMemFs, jsThatImports, testJsEntry, testRule, testComplexRule, TestConfig, evalCommonJsCssModule, getAssetRegExp } from '../test-kit/index';
 import { StylableIntegrationDefaults } from '../src/options';
 import { build } from '../src/builder';
@@ -41,7 +41,7 @@ describe('build stand alone', function () {
         }
         const fs = getMemFs(files, testConfig.rootPath, testConfig.contentRelativePath);
         
-        const stylable = new Stylable(testConfig.rootPath, fs as any, ()=>({}));
+        const stylable = new Stylable(testConfig.rootPath, fs as any, ()=>({}), StylableIntegrationDefaults.nsDelimiter);
 
         build({
             extension: '.css', fs: fs as any, stylable,
@@ -161,18 +161,24 @@ describe("lib usage with loader", () => {
         }, testConfig, { ...StylableIntegrationDefaults, injectFileCss: true })
     });
 
-    it('should be usable as a component library in bundle mode', function (done) {
+    it.only('should be usable as a component library in bundle mode', function (done) {
         const fs = getMemFs(files, testConfig.rootPath, testConfig.contentRelativePath);
         
         const libRelPath = 'node_modules/my-lib';
         const innerLibPath = path.join(testConfig.rootPath, libRelPath);
         const stylable = new Stylable(testConfig.rootPath, fs as any, ()=>({}));
         build({
-            rootDir: innerLibPath, srcDir: testConfig.contentRelativePath, outDir: 'lib',
-            extension: '.css', fs: fs as any, stylable
+            rootDir: innerLibPath, 
+            srcDir: testConfig.contentRelativePath, 
+            outDir: 'lib',
+            extension: '.css', 
+            fs: fs as any, 
+            stylable
         });
 
+        debugger;
         testJsEntry('app.js', fs, (bundle, css, memfs) => {
+            debugger;
             const mainModule = bundle.main.default;
             const compModule = bundle['my-lib/lib/comp'].comp.default
             const subModule = bundle['my-lib/lib/comp']["components/sub"].sub.default
