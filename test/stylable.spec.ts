@@ -507,7 +507,7 @@ describe('plugin', function(){
             const themeRulesetOriginal = <postcss.Rule>cssAst.nodes![0]!;
             const themeRulesetOverride = <postcss.Rule>cssAst.nodes![1]!;
             expect(themeRulesetOriginal.selector, 'theme selector original').to.match(/\.theme.+root\s.theme.+baga/);
-            expect(themeRulesetOverride.selector, 'theme selector override').to.match(/\.theme.+root\s.theme.+baga/);
+            expect(themeRulesetOverride.selector, 'theme selector override').to.match(/\.main.+root\s.theme.+baga/);
             expect(themeRulesetOriginal.nodes![0].toString(), 'original declarations').to.equal('background:purple');
             expect(themeRulesetOverride.nodes![0].toString(), 'override declarations').to.equal('background:black');
 
