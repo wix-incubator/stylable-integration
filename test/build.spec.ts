@@ -176,9 +176,7 @@ describe("lib usage with loader", () => {
             stylable
         });
 
-        debugger;
         testJsEntry('app.js', fs, (bundle, css, memfs) => {
-            debugger;
             const mainModule = bundle.main.default;
             const compModule = bundle['my-lib/lib/comp'].comp.default
             const subModule = bundle['my-lib/lib/comp']["components/sub"].sub.default
