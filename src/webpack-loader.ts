@@ -143,7 +143,6 @@ export class Plugin {
                     return acc;
                 }, []);
 
-                console.log('compilationBundler.generateCSS')
                 const resultCssBundle = compilationBundler.generateCSS(usedSheetPaths);
 
                 compilation.assets[bundleCssName] = {
