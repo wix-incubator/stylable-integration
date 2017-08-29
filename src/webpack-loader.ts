@@ -9,10 +9,6 @@ let bundler: Bundler | null = null;
 let stylable: Stylable | null = null;
 
 
-function createIsUsedComment(ns: string) {
-    return '\n//*stylable*' + ns + '*stylable*';
-}
-
 export function loader(this: webpack.loader.LoaderContext, _source: string) {
     let results:StylableResults;
     const options = { ...StylableIntegrationDefaults, ...loaderUtils.getOptions(this) };
@@ -67,7 +63,6 @@ export function loader(this: webpack.loader.LoaderContext, _source: string) {
                     const rand = Math.random();
                     code += '\nwindow.refreshStyleSheet(' + rand + ');\n'
                 }
-                code = code + createIsUsedComment(this.resourcePath);
                 this.addDependency('stylable');
             } catch (err) {
                 console.error(err.message, err.stack);
@@ -99,13 +94,13 @@ export class Plugin {
                     simpleEntries[entryName] = entry;
                 }
             })
-            // const options = { ...StylableIntegrationDefaults, ...this.options };
-            // const resolver = createResolver(compilation.options.context, compilation.inputFileSystem);// new FSResolver(options.defaultPrefix,compilation.options.context,compilation.inputFileSystem);
-            Object.keys(simpleEntries).forEach(entryName => {
+            
+            const chunkNames = compilation.chunks.map((chunk:any) => chunk.name);
+
+            Object.keys(simpleEntries).forEach(chunkName => {
                 const outputFormat = compilation.options.output.filename;
-                const bundleName = outputFormat.replace('[name]', entryName);
+                const bundleName = outputFormat.replace('[name]', chunkName);
                 const bundleCssName = bundleName.lastIndexOf('.js') === bundleName.length - 3 ? bundleName.slice(0, bundleName.length - 3) + '.css' : bundleName + '.css';
-                const entryContent = compilation.assets[bundleName].source();
                 if (this.options.injectBundleCss) {
                     const publicPath = compilation.options.output.publicPath || '';
                     const cssBundleLocation = publicPath + bundleCssName;
@@ -137,15 +132,17 @@ export class Plugin {
 
                 let compilationBundler = <Bundler>bundler;
 
-                const usedSheetPaths = compilationBundler.getUsedFilePaths().reduce<string[]>((acc, path) => {
-                    const idComment = createIsUsedComment(path);
-                    if (entryContent.indexOf(idComment) !== -1) {
-                        acc.push(path);
+                // get chunk used css order
+                const usedSheetPaths:string[] = [];
+                const chunkIndex = compilation.chunks.length > 1 ? chunkNames.indexOf(chunkName) : 0;
+                compilation.chunks[chunkIndex].modules.forEach(function ({resource}:{resource:string}){
+                    if(resource && resource.match(/.css$/)){
+                        usedSheetPaths.push(resource);
                     }
-                    return acc;
-                }, []);
+                });
 
-                const resultCssBundle = compilationBundler.generateCSS(usedSheetPaths);
+                // bundle css
+                const resultCssBundle = compilationBundler.generateCSS(usedSheetPaths.reverse());
 
                 compilation.assets[bundleCssName] = {
                     source: function () {

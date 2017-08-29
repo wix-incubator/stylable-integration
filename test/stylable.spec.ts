@@ -272,6 +272,33 @@ describe('plugin', function(){
             done();
         },testConfig);
     });
+    it('should put common CSS at the top according to JS dependency tree(weaker)',function(done){
+        const files = {
+            'entry.js':jsThatImports(['./common.css', './child.js', './entry.css']),
+            'child.js':jsThatImports(['./child.css', './common.css']),
+            'entry.css':`
+                .a { color:red; }
+            `,
+            'common.css':`
+                .c { color:blue; }
+            `,
+            'child.css':`
+                .b { color:green; }
+            `
+        }
+        testJsEntry('entry.js',files,(_bundle,css)=>{
+            const cssAst =  postcss.parse(css);
+            const cRule = <postcss.Rule>cssAst.nodes![0];
+            const bRule = <postcss.Rule>cssAst.nodes![1];
+            const aRule = <postcss.Rule>cssAst.nodes![2];
+
+            expect(cRule.nodes![0].toString(), 'common').to.equal(`color:blue`);
+            expect(bRule.nodes![0].toString(), 'child').to.equal(`color:green`);
+            expect(aRule.nodes![0].toString(), 'entry').to.equal(`color:red`);
+
+            done();
+        },testConfig);
+    });
     it('should resolve variables',function(done){
         const files = {
             'main.js':jsThatImports(['./child.js','./main.css']),
