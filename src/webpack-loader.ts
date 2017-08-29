@@ -32,7 +32,7 @@ export function loader(this: webpack.loader.LoaderContext, _source: string) {
     const publicPath = this.options.output.publicPath || '//assets';
     const addedSheetList = bundler.getDependencyPaths().filter(path => !oldSheets[path]);
     return Promise.all(addedSheetList.map(newSheetPath => {
-        const newSheetSrc = this.fs.readFileSync(newSheetPath, 'utf8');
+        const newSheetSrc = this.fs.readFileSync(newSheetPath).toString();
         return replaceAssetsAsync(newSheetSrc, (relativeUrl: string) => {
             return new Promise<string>((resolve) => {
                 this.addDependency(relativeUrl);
