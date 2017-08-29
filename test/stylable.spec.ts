@@ -2,6 +2,7 @@ import fs = require('fs');
 import path = require('path');
 import { expect } from 'chai';
 import * as postcss from 'postcss';
+const _eval = require('node-eval');
 import { expectRuleOrder, getDistPath, hasNoCls, jsThatImports, testJsEntries, testJsEntry, testRule, testComplexRule, TestConfig, getAssetRegExp, getRuleValue } from '../test-kit/index';
 const testConfig:TestConfig = {
     rootPath:process.cwd(),
@@ -490,7 +491,7 @@ describe('plugin', function(){
             done();
         },testConfig);
     });
-    it.skip('should generate css from JS mixin',function(done){
+    it('should generate css from JS mixin',function(done){
         const files = {
             'main.js':jsThatImports(['./main.css']),
             'main.css':`
@@ -508,7 +509,7 @@ describe('plugin', function(){
                     mixStuff:function(){
                         return {
                             "background":"green",
-                            "child":{
+                            ".child":{
                                 "color": "yellow"
                             }
                         }
@@ -516,14 +517,28 @@ describe('plugin', function(){
                 };
             `
         }
+        
         testJsEntry('main.js',files,(bundle,css)=>{
+        
             const cssAst =  postcss.parse(css);
             const cssModule = bundle.main.default;
+            const locals = cssModule.namespaceMap;
+
             testRule(cssModule, cssAst, '.gaga', 'color', 'red');
             testRule(cssModule, cssAst, '.gaga', 'background', 'green');
-            testComplexRule(cssAst,[{m:cssModule,cls:'.gaga'}, {m:cssModule,cls:'.child'}], 'color', 'yellow'),
+            
+
+            const rule = <postcss.Rule>cssAst.nodes![1];
+
+            expect(rule.selector).to.equal(`.${locals.root} .${locals.gaga} .${locals.child}`)
+            expect(rule.nodes![0].toString()).to.equal(`color:yellow`);
+            
             done();
-        },testConfig);
+        }, testConfig, {
+            requireModule: function(_path: string) {
+                return _eval(files['jsmixin.js'])
+            }
+        });
     });
 
 });

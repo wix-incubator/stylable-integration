@@ -23,7 +23,7 @@ export function loader(this: webpack.loader.LoaderContext, _source: string) {
     }, {}) : {};
 
     if (!bundler) {
-        stylable = new Stylable(this.options.context, this.fs, require, options.nsDelimiter);
+        stylable = new Stylable(this.options.context, this.fs, options.requireModule || require, options.nsDelimiter);
         bundler = stylable.createBundler();
     }
 
