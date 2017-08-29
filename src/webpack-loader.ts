@@ -49,7 +49,7 @@ export function loader(this: webpack.loader.LoaderContext, _source: string) {
         })
             .then(modifiedSource => {
                 const res = stylable.transform(modifiedSource, newSheetPath);
-                stylable.fileProcessor.add(newSheetPath, res.meta);
+                stylable.fileProcessor.add(newSheetPath, {...res.meta, ast:(res.meta as any).astSource});
                 if (newSheetPath === this.resourcePath) {
                     results = res;
                 }
@@ -136,7 +136,7 @@ export class Plugin {
 
                 let compilationBundler = <Bundler>bundler;
 
-                const usedSheetPaths = compilationBundler.getDependencyPaths(false).reduce<string[]>((acc, path) => {
+                const usedSheetPaths = compilationBundler.getUsedFilePaths().reduce<string[]>((acc, path) => {
                     const idComment = createIsUsedComment(path);
                     if (entryContent.indexOf(idComment) !== -1) {
                         acc.push(path);

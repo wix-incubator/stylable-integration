@@ -51,23 +51,46 @@ export class Stylable {
         this.fileProcessor = fileProcessor;
         this.resolver = new StylableResolver(this.fileProcessor, this.requireModule);
     }
-    createBundler() {
+    createBundler():Bundler {
         return new Bundler(
             this.resolver,
-            (path: string) => ({ meta: this.fileProcessor.process(path), exports: {} })
+            (path: string) => ({ meta: this.fileProcessor.process(path), exports: {} }),
+            (meta:StylableMeta) => this.transform(meta).meta
         );
     }
-    transform(source: string, resourcePath: string): StylableResults {
+    // transform(source: string, resourcePath: string): StylableResults {
 
+    //     const diagnostics = new Diagnostics();
+
+    //     const root = safeParse(source, { from: resourcePath });
+
+    //     const meta = process(root, diagnostics);
+
+    //     const transformer = new StylableTransformer({
+    //         delimiter: this.delimiter,
+    //         diagnostics,
+    //         fileProcessor: this.fileProcessor,
+    //         requireModule: this.requireModule
+    //     });
+
+    //     this.fileProcessor.add(meta.source, meta);
+
+    //     return transformer.transform(meta);
+    // }
+
+    transform(meta:StylableMeta): StylableResults
+    transform(source: string, resourcePath: string): StylableResults
+    transform(meta: string|StylableMeta, resourcePath?: string): StylableResults {
         const diagnostics = new Diagnostics();
-
-        const root = safeParse(source, { from: resourcePath });
-
-        const meta = process(root, diagnostics);
+        if(typeof meta === 'string') {
+            const root = safeParse(meta, { from: resourcePath });
+            meta = process(root, diagnostics);
+        }
+        (meta as any).astSource = meta.ast.clone();
 
         const transformer = new StylableTransformer({
             delimiter: this.delimiter,
-            diagnostics,
+            diagnostics: new Diagnostics(),
             fileProcessor: this.fileProcessor,
             requireModule: this.requireModule
         });
@@ -75,10 +98,9 @@ export class Stylable {
         this.fileProcessor.add(meta.source, meta);
 
         return transformer.transform(meta);
-
     }
     generate() { }
-    process() { }
+    process() {}
 }
 
 export interface StylableInfrastructure {

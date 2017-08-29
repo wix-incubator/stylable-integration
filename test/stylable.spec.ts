@@ -32,7 +32,7 @@ describe('plugin', function(){
         },testConfig);
     });
 
-    it.only('should work with multiple webpack entries',function(done){
+    it('should work with multiple webpack entries',function(done){
         const files = {
             'home.js':jsThatImports(['./home.css']),
             'home.css':`
