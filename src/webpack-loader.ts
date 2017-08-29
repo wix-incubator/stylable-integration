@@ -6,6 +6,7 @@ import webpack = require('webpack');
 
 let firstRun: boolean = true;
 let bundler: Bundler | null = null;
+let stylable: Stylable | null = null;
 
 
 function createIsUsedComment(ns: string) {
@@ -15,13 +16,14 @@ function createIsUsedComment(ns: string) {
 export function loader(this: webpack.loader.LoaderContext, _source: string) {
     let results:StylableResults;
     const options = { ...StylableIntegrationDefaults, ...loaderUtils.getOptions(this) };
-    const stylable = new Stylable(this.options.context, this.fs, require, options.nsDelimiter);
+    
     const oldSheets = bundler ? bundler.getDependencyPaths().reduce<{ [s: string]: boolean }>((acc, path) => {
         acc[path] = true;
         return acc;
     }, {}) : {};
 
     if (!bundler) {
+        stylable = new Stylable(this.options.context, this.fs, require, options.nsDelimiter);
         bundler = stylable.createBundler();
     }
 
@@ -47,8 +49,8 @@ export function loader(this: webpack.loader.LoaderContext, _source: string) {
             });
         })
             .then(modifiedSource => {
-                const res = stylable.transform(modifiedSource, newSheetPath);
-                stylable.fileProcessor.add(newSheetPath, res.meta);
+                const res = stylable!.transform(modifiedSource, newSheetPath);
+                stylable!.fileProcessor.add(newSheetPath, res.meta);
                 if (newSheetPath === this.resourcePath) {
                     results = res;
                 }
@@ -155,8 +157,7 @@ export class Plugin {
                 }
 
             });
-            bundler = null;
-            // bundler = undefined;
+            bundler = stylable = null;
             callback();
         });
     }
