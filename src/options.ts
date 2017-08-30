@@ -2,7 +2,8 @@ export interface StylableIntegrationOptions {
     defaultPrefix: string
     injectBundleCss: boolean,
     injectFileCss: boolean,
-    nsDelimiter: string
+    nsDelimiter: string,
+    requireModule?: (moduleId: string) => any
 }
 
 export const StylableIntegrationDefaults: StylableIntegrationOptions = {

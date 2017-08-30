@@ -16,7 +16,7 @@ export interface BuildOptions {
 }
 
 export function build(buildOptions: BuildOptions) {
-    const {extension, fs, stylable, rootDir, srcDir, outDir, log} = buildOptions;
+    const { extension, fs, stylable, rootDir, srcDir, outDir, log } = buildOptions;
 
     const fullSrcDir = join(rootDir, srcDir);
     let projectAssets: string[] = [];
@@ -30,12 +30,11 @@ export function build(buildOptions: BuildOptions) {
         const content = tryRun(() => fs.readFileSync(filePath).toString(), 'Read File Error');
         const fileDirectory = dirname(filePath);
         const outDirPath = dirname(outPath);
-        const { exports, meta } = stylable.transform(content, filePath);
+        const { exports, meta } = stylable.transform(content, filePath)
         const code = tryRun(() => createCSSModuleString(exports, meta, { ...StylableIntegrationDefaults, injectFileCss: true }), 'Transform Error');
-        // const { code, sheet } = tryRun(() => transformStylableCSS(content, filePath, resolver, { ...StylableIntegrationDefaults, injectFileCss: true }), 'Transform Error');
-        if(log && meta.diagnostics.reports.length){
+        if (log && meta.diagnostics.reports.length) {
             diagnosticsMsg.push(`Errors in file: ${filePath}`);
-            meta.diagnostics.reports.forEach((report)=>{
+            meta.diagnostics.reports.forEach((report) => {
                 const err = report.node.error(report.message, report.options);
                 diagnosticsMsg.push([
                     report.message,
@@ -52,7 +51,7 @@ export function build(buildOptions: BuildOptions) {
         projectAssets = projectAssets.concat(getUsedAssets(content).map((uri: string) => resolve(fileDirectory, uri)));
     });
 
-    if(log && diagnosticsMsg.length){
+    if (log && diagnosticsMsg.length) {
         log('[Diagnostics]\n', diagnosticsMsg.join('\n\n'));
     }
 

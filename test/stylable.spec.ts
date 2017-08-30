@@ -2,7 +2,8 @@ import fs = require('fs');
 import path = require('path');
 import { expect } from 'chai';
 import * as postcss from 'postcss';
-import {expectRuleOrder,getDistPath,hasNoCls,jsThatImports,testJsEntries,testJsEntry,testRule,testComplexRule,TestConfig,getAssetRegExp} from '../test-kit/index';
+const _eval = require('node-eval');
+import { expectRuleOrder, getDistPath, hasNoCls, jsThatImports, testJsEntries, testJsEntry, testRule, testComplexRule, TestConfig, getAssetRegExp, getRuleValue } from '../test-kit/index';
 const testConfig:TestConfig = {
     rootPath:process.cwd(),
     distRelativePath:'dist',
@@ -271,6 +272,33 @@ describe('plugin', function(){
             done();
         },testConfig);
     });
+    it('should put common CSS at the top according to JS dependency tree(weaker)',function(done){
+        const files = {
+            'entry.js':jsThatImports(['./common.css', './child.js', './entry.css']),
+            'child.js':jsThatImports(['./child.css', './common.css']),
+            'entry.css':`
+                .a { color:red; }
+            `,
+            'common.css':`
+                .c { color:blue; }
+            `,
+            'child.css':`
+                .b { color:green; }
+            `
+        }
+        testJsEntry('entry.js',files,(_bundle,css)=>{
+            const cssAst =  postcss.parse(css);
+            const cRule = <postcss.Rule>cssAst.nodes![0];
+            const bRule = <postcss.Rule>cssAst.nodes![1];
+            const aRule = <postcss.Rule>cssAst.nodes![2];
+
+            expect(cRule.nodes![0].toString(), 'common').to.equal(`color:blue`);
+            expect(bRule.nodes![0].toString(), 'child').to.equal(`color:green`);
+            expect(aRule.nodes![0].toString(), 'entry').to.equal(`color:red`);
+
+            done();
+        },testConfig);
+    });
     it('should resolve variables',function(done){
         const files = {
             'main.js':jsThatImports(['./child.js','./main.css']),
@@ -398,7 +426,7 @@ describe('plugin', function(){
             done();
         },testConfig);
     });
-    xit('should not generate css for files imported only through css',function(done){
+    it('should not generate css for files imported only through css',function(done){
         const files = {
             'main.js':jsThatImports(['./main.css']),
             'main.css':`
@@ -427,4 +455,117 @@ describe('plugin', function(){
             done();
         },testConfig);
     });
+    it('should generate css for theme imports (imported only through css)',function(done){
+        const files = {
+            'main.js':jsThatImports(['./main.css']),
+            'main.css':`
+                :import{
+                    -st-theme: true;
+                    -st-from:'./theme.css';
+                }
+                .gaga{
+                    color:red;
+                }
+            `,
+            'theme.css':`
+                .baga{
+                    background:green;
+                }
+            `
+        }
+        testJsEntry('main.js',files,(bundle,css)=>{
+            const cssAst =  postcss.parse(css);
+            const cssModule = bundle.main.default;
+            const themeRuleset = <postcss.Rule>cssAst.nodes![0]!;
+            testRule(cssModule, cssAst,'.gaga','color','red');
+            expect(themeRuleset.selector, 'theme selector').to.match(/\.theme.+root\s.theme.+baga/);
+            expect(getRuleValue(cssAst, themeRuleset.selector, 'background')).to.eql('green');
+            done();
+        },testConfig);
+    });
+    it('should generate css for theme overrides',function(done){
+        const files = {
+            'main.js':jsThatImports(['./main.css']),
+            'main.css':`
+                :import{
+                    -st-theme: true;
+                    -st-from:'./theme.css';
+                    color1: black;
+                }
+            `,
+            'theme.css':`
+                :vars {
+                    color1: purple;
+                }
+                .baga{
+                    background:value(color1);
+                }
+            `
+        }
+        testJsEntry('main.js',files,(_bundle, css)=>{
+            const cssAst =  postcss.parse(css);
+            const themeRulesetOriginal = <postcss.Rule>cssAst.nodes![0]!;
+            const themeRulesetOverride = <postcss.Rule>cssAst.nodes![1]!;
+            expect(themeRulesetOriginal.selector, 'theme selector original').to.match(/\.theme.+root\s.theme.+baga/);
+            expect(themeRulesetOverride.selector, 'theme selector override').to.match(/\.main.+root\s.theme.+baga/);
+            expect(themeRulesetOriginal.nodes![0].toString(), 'original declarations').to.equal('background:purple');
+            expect(themeRulesetOverride.nodes![0].toString(), 'override declarations').to.equal('background:black');
+
+            // expectRuleOrder(cssAst,[ // ToDo: find out what this should do...
+                // expect(getRuleValue(cssAst, themeRuleset.selector, 'background')).to.eql('purple');
+                // expect(getRuleValue(cssAst, themeRuleset.selector, 'background')).to.eql('black');
+            // ]);
+            done();
+        },testConfig);
+    });
+    it('should generate css from JS mixin',function(done){
+        const files = {
+            'main.js':jsThatImports(['./main.css']),
+            'main.css':`
+                :import{
+                    -st-from:'./jsmixin.js';
+                    -st-named: mixStuff;
+                }
+                .gaga{
+                    color:red;
+                    -st-mixin: mixStuff;
+                }
+            `,
+            'jsmixin.js':`
+                module.exports = {
+                    mixStuff:function(){
+                        return {
+                            "background":"green",
+                            ".child":{
+                                "color": "yellow"
+                            }
+                        }
+                    }
+                };
+            `
+        }
+        
+        testJsEntry('main.js',files,(bundle,css)=>{
+        
+            const cssAst =  postcss.parse(css);
+            const cssModule = bundle.main.default;
+            const locals = cssModule.namespaceMap;
+
+            testRule(cssModule, cssAst, '.gaga', 'color', 'red');
+            testRule(cssModule, cssAst, '.gaga', 'background', 'green');
+            
+
+            const rule = <postcss.Rule>cssAst.nodes![1];
+
+            expect(rule.selector).to.equal(`.${locals.root} .${locals.gaga} .${locals.child}`)
+            expect(rule.nodes![0].toString()).to.equal(`color:yellow`);
+            
+            done();
+        }, testConfig, {
+            requireModule: function(_path: string) {
+                return _eval(files['jsmixin.js'])
+            }
+        });
+    });
+
 });
