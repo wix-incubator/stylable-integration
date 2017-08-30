@@ -58,7 +58,6 @@
     "src",
     "webpack-loader.js",
     "webpack-plugin.js",
-    "require.js",
-    "tsconfig.json"
+    "require.js"
   ]
 }
