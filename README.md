@@ -13,8 +13,6 @@ The following are included:
 
 Install `stylable-integration` as a dev dependency in your local project.
 
-> **Note** This `stylable-integration` requires **Stylable** (it is a peer dependency). Your project must have a compatible **Stylable** version installed for the integration to work properly.
-
 Install using `npm`:
 
 ```bash
@@ -126,7 +124,7 @@ The transformation options is an object, with the following default values:
 
 When running code directly in Node.js, any `require(...)` calls are handled by Node's own module system.
 
-By default, Node supports `require()`ing `.js` and `.json` files, but allows hooks to attach to additional file extensions.
+By default, Node supports the `require()` function for `.js` and `.json` files, but allows hooks to attach to additional file extensions.
 
 This package exposes a special entry point that registers `.css` file handling, transpiling it for Node.js on-the-fly.
 
