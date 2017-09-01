@@ -83,6 +83,7 @@ describe('plugin', function(){
             `
         }
         const entries = ['home','about'];
+
         testJsEntries(entries,files,(bundles,csss)=>{
             const homeCssAst = postcss.parse(csss[0]);
             const homeCssModule = bundles[0].home.default;
@@ -94,7 +95,7 @@ describe('plugin', function(){
             hasNoCls(csss[0],
                 testRule(aboutCssModule,aboutCssAst,'.baga','background','red'))
             done();
-        },{...testConfig,fileNameFormat:'[name].bundle.js'});
+        },{...testConfig,fileNameFormat:'[name].bundle.js'}, {filename: '[name].bundle.css'});
     });
 
     it('should add script for appending to html',function(done){
@@ -122,7 +123,7 @@ describe('plugin', function(){
             expect(homeBundleStr).to.include('assets/home.bundle.css');
             expect(aboutBundleStr).to.include('assets/about.bundle.css');
             done();
-        },{...testConfig,fileNameFormat:'[name].bundle.js'},{injectBundleCss:true});
+        },{...testConfig,fileNameFormat:'[name].bundle.js'},{injectBundleCss:true, filename: '[name].bundle.css'}, );
     });
 
 

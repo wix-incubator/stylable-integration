@@ -108,9 +108,6 @@ const StylablePlugin = require('stylable-integration/webpack-plugin');
 The transformation options is an object, with the following default values:
 ```ts
 {
-    // prefix used for class names
-    defaultPrefix: 's',
-
     // should a bundle CSS file be generated
     injectBundleCss: false,
 

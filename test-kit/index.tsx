@@ -95,13 +95,12 @@ export function testJsEntries(entries: string[], files: { [key: string]: string 
     const contentPath = getContentPath(config)
     const distPath = getDistPath(config);
     const memfs = getMemFs(files, config.rootPath, config.contentRelativePath);
-    let entriesRes: { [key: string]: string } = {};
     const compiler = webpack({
         context: config.rootPath,
-        entry: entries.reduce((accum, entry) => {
-            accum[entry] = path.join(contentPath, entry + '.js')
-            return accum;
-        }, entriesRes),
+        entry: entries.reduce<{ [key: string]: string }>((acc, entry) => {
+            acc[entry] = path.join(contentPath, entry + '.js')
+            return acc;
+        }, {}),
         output: {
             publicPath: 'assets/',
             path: distPath,
@@ -183,7 +182,7 @@ export function testJsEntry(entry: string, files: { [key: string]: string | Buff
     compiler.run(function (err: Error) {
         if (err) { throw err; }
         const bundle = memfs.readFileSync(path.join(distPath, 'bundle.js')).toString();
-        const bundleCss = memfs.readFileSync(path.join(distPath, 'bundle.css')).toString();
+        const bundleCss = memfs.readFileSync(path.join(distPath, 'main.css')).toString();
         test(_eval(bundle), bundleCss, memfs);
     })
 }

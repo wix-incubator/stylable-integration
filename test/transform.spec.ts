@@ -8,7 +8,7 @@ const _eval = require('node-eval');
 const separator: string = '💠';
 
 
-const vanillaOptions = { assetsDir: 'assets', defaultPrefix: 's', assetsServerUri: '//', injectFileCss: false, injectBundleCss: false, nsDelimiter: separator };
+const vanillaOptions = { filename: 'bundle.css', assetsDir: 'assets', assetsServerUri: '//', injectFileCss: false, injectBundleCss: false, nsDelimiter: separator };
 
 describe('loader', function () {
 
