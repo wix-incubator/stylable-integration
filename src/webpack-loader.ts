@@ -17,7 +17,9 @@ export function loader(this: webpack.loader.LoaderContext, _source: string) {
     const options = { ...StylableIntegrationDefaults, ...loaderUtils.getOptions(this) };
 
     const oldSheets = bundler ? bundler.getDependencyPaths().reduce<{ [s: string]: boolean }>((acc, path) => {
-        acc[path] = true;
+        if(this.resourcePath !== path){
+            acc[path] = true;
+        }
         return acc;
     }, {}) : {};
 
@@ -50,10 +52,12 @@ export function loader(this: webpack.loader.LoaderContext, _source: string) {
             const res = stylable!.transform(modifiedSource, newSheetPath);
             stylable!.fileProcessor.add(newSheetPath, res.meta);
             if (newSheetPath === this.resourcePath) {
+                res.meta.imports.forEach((_import) => {
+                    this.addDependency(_import.from);
+                });
                 results = res;
             }
         });
-
     })).then(() => {
         let code = `throw new Error('Cannot load module: "${this.resourcePath}"')`;
         if (!results) { throw new Error(`There is no results for ${this.resourcePath}`); }
@@ -75,34 +79,24 @@ export class Plugin {
     constructor(options: Partial<StylableIntegrationOptions>) {
         this.options = { ...StylableIntegrationDefaults, ...options };
     };
-    apply = (compiler: webpack.Compiler) => {
+    apply(compiler: webpack.Compiler) {
+
         compiler.plugin('run', (_compilation, callback) => {
             firstRun = true;
             callback();
         });
-        compiler.plugin('emit', (compilation, callback) => {
 
+        compiler.plugin('emit', (compilation, callback) => {
             firstRun = false;
 
             compilation.chunks.forEach((chunk: any) => {
-
-                const bundleName = compilation.getPath(compilation.options.output.filename, {
-                    hash: compilation.hash,
-                    chunk
-                });
-
-                const bundleCssName = compilation.getPath(this.options.filename, {
-                    hash: compilation.hash,
-                    chunk
-                });
-
-                if (this.options.injectBundleCss) {
-                    this.addBundleInjectionCode(compilation, bundleName, bundleCssName);
-                }
-
-                // bundle css
+                const pathContext = { chunk, hash: compilation.hash };
+                const bundleName = compilation.getPath(compilation.options.output.filename, pathContext);
+                const bundleCssName = compilation.getPath(this.options.filename, pathContext);
                 const resultCssBundle = bundler!.generateCSS(this.getSortedStylableModulesList(chunk));
-
+                if (this.options.injectBundleCss) {
+                    this.addBundleInjectionCode(compilation, bundleName, bundleCssName, resultCssBundle);
+                }
                 compilation.assets[bundleCssName] = new RawSource(resultCssBundle);
             });
 
@@ -110,24 +104,25 @@ export class Plugin {
             callback();
         });
     }
-    getSortedStylableModulesList(chunk: any){
+    getSortedStylableModulesList(chunk: any) {
         const usedSheetPaths: string[] = [];
-        chunk.forEachModule(({ resource }: { resource: string }) => {
+        chunk.modules.forEach(({ resource }: { resource: string }) => {
             //TODO: replace the regexp with option
-            resource && resource.match(/\.css$/) && usedSheetPaths.push(resource);
+            resource && resource.match(/\.st\.css$/) && usedSheetPaths.push(resource);
         });
         return usedSheetPaths.reverse();
     }
-    addBundleInjectionCode(compilation: any, bundleName: string, bundleCssName: string) {
+    addBundleInjectionCode(compilation: any, bundleName: string, bundleCssName: string, _css: string) {
         const publicPath = compilation.options.output.publicPath || '';
         const cssBundleLocation = publicPath + bundleCssName;
+        const id = 'stylable-css-bundle-' + compilation.hash;
         const bundleAddition = `(function() {
             if (typeof document !== 'undefined') {
                 window.refreshStyleSheet = function(queryBuster) {
-                    var style = document.getElementById('cssBundle');
+                    var style = document.getElementById('${id}');
                     if(!style){
                         style = document.createElement('link');
-                        style.id = "cssBundle";
+                        style.id = '${id}';
                         style.setAttribute('rel','stylesheet');
                         style.setAttribute('href','${cssBundleLocation}');
                         document.head.appendChild(style);
@@ -139,7 +134,7 @@ export class Plugin {
             }
         })()`;
 
-        compilation.assets[bundleName] = new ConcatSource(bundleAddition, ' ,', compilation.assets[bundleName]);
+        compilation.assets[bundleName] = new ConcatSource(bundleAddition, ' ,', compilation.assets[bundleName].source());
 
     }
 }

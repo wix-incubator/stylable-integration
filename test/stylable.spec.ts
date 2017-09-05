@@ -18,8 +18,8 @@ const assetRegEx = getAssetRegExp(testConfig);
 describe('plugin', function(){
     it('should create modules and target css for css files imported from js',function(done){
         const files = {
-            'main.js':jsThatImports(['./main.css']),
-            'main.css':`
+            'main.js':jsThatImports(['./main.st.css']),
+            'main.st.css':`
                 .gaga{
                     color:red;
                 }
@@ -35,15 +35,15 @@ describe('plugin', function(){
 
     it('should work with multiple webpack entries',function(done){
         const files = {
-            'home.js':jsThatImports(['./home.css']),
-            'home.css':`
+            'home.js':jsThatImports(['./home.st.css']),
+            'home.st.css':`
                 .gaga{
                     background:green;
                 }
 
             `,
-            'about.js':jsThatImports(['./about.css']),
-            'about.css':`
+            'about.js':jsThatImports(['./about.st.css']),
+            'about.st.css':`
                 .baga{
                     background:red;
                 }
@@ -67,15 +67,15 @@ describe('plugin', function(){
 
     it('should support fileName webpack format',function(done){
         const files = {
-            'home.js':jsThatImports(['./home.css']),
-            'home.css':`
+            'home.js':jsThatImports(['./home.st.css']),
+            'home.st.css':`
                 .gaga{
                     background:green;
                 }
 
             `,
-            'about.js':jsThatImports(['./about.css']),
-            'about.css':`
+            'about.js':jsThatImports(['./about.st.css']),
+            'about.st.css':`
                 .baga{
                     background:red;
                 }
@@ -100,15 +100,15 @@ describe('plugin', function(){
 
     it('should add script for appending to html',function(done){
         const files = {
-            'home.js':jsThatImports(['./home.css']),
-            'home.css':`
+            'home.js':jsThatImports(['./home.st.css']),
+            'home.st.css':`
                 .gaga{
                     background:green;
                 }
 
             `,
-            'about.js':jsThatImports(['./about.css']),
-            'about.css':`
+            'about.js':jsThatImports(['./about.st.css']),
+            'about.st.css':`
                 .baga{
                     background:red;
                 }
@@ -129,15 +129,15 @@ describe('plugin', function(){
 
      it('should include css in modules in injectFileCss mode',function(done){
         const files = {
-            'home.js':jsThatImports(['./home.css']),
-            'home.css':`
+            'home.js':jsThatImports(['./home.st.css']),
+            'home.st.css':`
                 .gaga{
                     background:green;
                 }
 
             `,
-            'about.js':jsThatImports(['./about.css']),
-            'about.css':`
+            'about.js':jsThatImports(['./about.st.css']),
+            'about.st.css':`
                 .baga{
                     background:red;
                 }
@@ -161,14 +161,14 @@ describe('plugin', function(){
 
     it('should work with multiple webpack entries importing same css',function(done){
         const files = {
-            'home.js':jsThatImports(['./general.css']),
-            'general.css':`
+            'home.js':jsThatImports(['./general.st.css']),
+            'general.st.css':`
                 .gaga{
                     background:green;
                 }
 
             `,
-            'about.js':jsThatImports(['./general.css'])
+            'about.js':jsThatImports(['./general.st.css'])
         }
         const entries = ['home','about'];
         testJsEntries(entries,files,(bundles,csss)=>{
@@ -183,16 +183,16 @@ describe('plugin', function(){
     });
     it('should not keep output css across multiple runs',function(done){
         const files = {
-            'main.js':jsThatImports(['./main.css']),
-            'main.css':`
+            'main.js':jsThatImports(['./main.st.css']),
+            'main.st.css':`
                 .gaga{
                     color:red;
                 }
             `,
         }
         const files2 = {
-            'main.js':jsThatImports(['./zagzag.css']),
-            'zagzag.css':`
+            'main.js':jsThatImports(['./zagzag.st.css']),
+            'zagzag.st.css':`
                 .baga{
                     color:red;
                 }
@@ -210,14 +210,14 @@ describe('plugin', function(){
     });
     it('should work for many files',function(done){
         const files = {
-            'main.js':jsThatImports(['./child.js','./main.css']),
-            'child.js':jsThatImports(['./child.css']),
-            'main.css':`
+            'main.js':jsThatImports(['./child.js','./main.st.css']),
+            'child.js':jsThatImports(['./child.st.css']),
+            'main.st.css':`
                 .gaga{
                     color:red;
                 }
             `,
-            'child.css':`
+            'child.st.css':`
                 .baga{
                     background:green;
                 }
@@ -238,11 +238,11 @@ describe('plugin', function(){
     });
     it('should generate css for imported files',function(done){
         const files = {
-            'main.js':jsThatImports(['./child.js','./main.css']),
-            'child.js':jsThatImports(['./child.css']),
-            'main.css':`
+            'main.js':jsThatImports(['./child.js','./main.st.css']),
+            'child.js':jsThatImports(['./child.st.css']),
+            'main.st.css':`
                 :import{
-                    -st-from:'./child.css';
+                    -st-from:'./child.st.css';
                     -st-default:Child;
                 }
                 .gaga{
@@ -253,7 +253,7 @@ describe('plugin', function(){
                     color:blue;
                 }
             `,
-            'child.css':`
+            'child.st.css':`
                 .baga{
                     background:green;
                 }
@@ -275,15 +275,15 @@ describe('plugin', function(){
     });
     it('should put common CSS at the top according to JS dependency tree(weaker)',function(done){
         const files = {
-            'entry.js':jsThatImports(['./common.css', './child.js', './entry.css']),
-            'child.js':jsThatImports(['./child.css', './common.css']),
-            'entry.css':`
+            'entry.js':jsThatImports(['./common.st.css', './child.js', './entry.st.css']),
+            'child.js':jsThatImports(['./child.st.css', './common.st.css']),
+            'entry.st.css':`
                 .a { color:red; }
             `,
-            'common.css':`
+            'common.st.css':`
                 .c { color:blue; }
             `,
-            'child.css':`
+            'child.st.css':`
                 .b { color:green; }
             `
         }
@@ -302,11 +302,11 @@ describe('plugin', function(){
     });
     it('should resolve variables',function(done){
         const files = {
-            'main.js':jsThatImports(['./child.js','./main.css']),
-            'child.js':jsThatImports(['./child.css']),
-            'main.css':`
+            'main.js':jsThatImports(['./child.js','./main.st.css']),
+            'child.js':jsThatImports(['./child.st.css']),
+            'main.st.css':`
                 :import{
-                    -st-from:'./child.css';
+                    -st-from:'./child.st.css';
                     -st-named:zag;
                 }
                 :vars{
@@ -317,7 +317,7 @@ describe('plugin', function(){
                     background:value(zig);
                 }
             `,
-            'child.css':`
+            'child.st.css':`
                 :vars{
                     zag:red;
                 }
@@ -335,8 +335,8 @@ describe('plugin', function(){
     });
     it('should move imported assets to dist/assets svg',function(done){
         const files = {
-            'main.js':jsThatImports(['./main.css']),
-            'main.css':`
+            'main.js':jsThatImports(['./main.st.css']),
+            'main.st.css':`
                 .gaga{
                     background:url( ./asset.svg);
                 }
@@ -368,8 +368,8 @@ describe('plugin', function(){
     });
     it('should not replace missing asset',function(done){
         const files = {
-            'main.js':jsThatImports(['./main.css']),
-            'main.css':`
+            'main.js':jsThatImports(['./main.st.css']),
+            'main.st.css':`
                 .gaga{
                     background:url( ./asset.svg);
                 }
@@ -394,8 +394,8 @@ describe('plugin', function(){
     it('should not replace missing base 64 images',function(done){
         const img:string = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjIiIHZpZXdCb3g9IjAgMCA4IDIiPiAgICA8cGF0aCBmaWxsPSIjRkZGIiBmaWxsLXJ1bGU9Im5vbnplcm8iIGQ9Ik0xIDJoNmExIDEgMCAwIDAgMC0ySDFhMSAxIDAgMCAwIDAgMnoiLz48L3N2Zz4=`
         const files = {
-            'main.js':jsThatImports(['./main.css']),
-            'main.css':`
+            'main.js':jsThatImports(['./main.st.css']),
+            'main.st.css':`
                 .gaga{
                     background-image: url(${img});
                 }
@@ -410,8 +410,8 @@ describe('plugin', function(){
     it('should move imported assets to dist/assets jpg',function(done){
         const banana = fs.readFileSync('./test/fixtures/banana.jpg');
         const files = {
-            'main.js':jsThatImports(['./main.css']),
-            'main.css':`
+            'main.js':jsThatImports(['./main.st.css']),
+            'main.st.css':`
                 .daga{
                     background:url("./banana.jpg");
                 }
@@ -429,10 +429,10 @@ describe('plugin', function(){
     });
     it('should not generate css for files imported only through css',function(done){
         const files = {
-            'main.js':jsThatImports(['./main.css']),
-            'main.css':`
+            'main.js':jsThatImports(['./main.st.css']),
+            'main.st.css':`
                 :import{
-                    -st-from:'./child.css';
+                    -st-from:'./child.st.css';
                     -st-default:Child;
                 }
                 .gaga{
@@ -443,7 +443,7 @@ describe('plugin', function(){
                     color:blue;
                 }
             `,
-            'child.css':`
+            'child.st.css':`
                 .baga{
                     background:green;
                 }
@@ -458,17 +458,17 @@ describe('plugin', function(){
     });
     it('should generate css for theme imports (imported only through css)',function(done){
         const files = {
-            'main.js':jsThatImports(['./main.css']),
-            'main.css':`
+            'main.js':jsThatImports(['./main.st.css']),
+            'main.st.css':`
                 :import{
                     -st-theme: true;
-                    -st-from:'./theme.css';
+                    -st-from:'./theme.st.css';
                 }
                 .gaga{
                     color:red;
                 }
             `,
-            'theme.css':`
+            'theme.st.css':`
                 .baga{
                     background:green;
                 }
@@ -486,15 +486,15 @@ describe('plugin', function(){
     });
     it('should generate css for theme overrides',function(done){
         const files = {
-            'main.js':jsThatImports(['./main.css']),
-            'main.css':`
+            'main.js':jsThatImports(['./main.st.css']),
+            'main.st.css':`
                 :import{
                     -st-theme: true;
-                    -st-from:'./theme.css';
+                    -st-from:'./theme.st.css';
                     color1: black;
                 }
             `,
-            'theme.css':`
+            'theme.st.css':`
                 :vars {
                     color1: purple;
                 }
@@ -521,8 +521,8 @@ describe('plugin', function(){
     });
     it('should generate css from JS mixin',function(done){
         const files = {
-            'main.js':jsThatImports(['./main.css']),
-            'main.css':`
+            'main.js':jsThatImports(['./main.st.css']),
+            'main.st.css':`
                 :import{
                     -st-from:'./jsmixin.js';
                     -st-named: mixStuff;
