@@ -13,13 +13,14 @@ let stylable: Stylable | null = null;
 export function loader(this: webpack.loader.LoaderContext, _source: string) {
     this.addDependency('stylable');
 
-    let results: StylableResults;
     const options = { ...StylableIntegrationDefaults, ...loaderUtils.getOptions(this) };
+    const resourcePathJS = JSON.stringify(this.resourcePath);
+    
+    let results: StylableResults;
+    let code = `throw new Error('Cannot load module: ${resourcePathJS}')`;
 
     const oldSheets = bundler ? bundler.getDependencyPaths().reduce<{ [s: string]: boolean }>((acc, path) => {
-        if(this.resourcePath !== path){
-            acc[path] = true;
-        }
+        if(this.resourcePath !== path){ acc[path] = true; }
         return acc;
     }, {}) : {};
 
@@ -27,11 +28,11 @@ export function loader(this: webpack.loader.LoaderContext, _source: string) {
         stylable = new Stylable(this.options.context, this.fs, options.requireModule || require, options.nsDelimiter);
         bundler = stylable.createBundler();
     }
+
     try {
         bundler.addUsedFile(this.resourcePath);
     } catch(error) {        
-        // this.emitError(error);
-        return Promise.resolve(`throw new Error('Cannot load module: "${this.resourcePath}"')`);
+        return Promise.resolve(code);
     }
 
     const publicPath = this.options.output.publicPath || '//assets';
@@ -63,8 +64,6 @@ export function loader(this: webpack.loader.LoaderContext, _source: string) {
             }
         });
     })).then(() => {
-        let code = `throw new Error('Cannot load module: "${this.resourcePath}"')`;
-        if (!results) { throw new Error(`There is no results for ${this.resourcePath}`); }
         try {
             code = createCSSModuleString(results.exports, results.meta, options);
             if (options.injectBundleCss && !firstRun) {
