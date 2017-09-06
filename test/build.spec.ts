@@ -23,9 +23,9 @@ type StringMap = { [key: string]: string };
 describe('build stand alone', function () {
     it('should create modules and copy source css files', function () {
         const files = {
-            'main.css': `
+            'main.st.css': `
                 :import{
-                    -st-from: "./components/comp.css";
+                    -st-from: "./components/comp.st.css";
                     -st-default:Comp;
                 }
                 .gaga{
@@ -33,7 +33,7 @@ describe('build stand alone', function () {
                     color:blue;
                 }
             `,
-            'components/comp.css': `
+            'components/comp.st.css': `
                 .baga{
                     color:red;
                 }
@@ -44,13 +44,13 @@ describe('build stand alone', function () {
         const stylable = new Stylable(testConfig.rootPath, fs as any, ()=>({}), StylableIntegrationDefaults.nsDelimiter);
 
         build({
-            extension: '.css', fs: fs as any, stylable,
+            extension: '.st.css', fs: fs as any, stylable,
             outDir: 'lib', srcDir: testConfig.contentRelativePath, rootDir: testConfig.rootPath
         });
 
         const outPath = path.join(testConfig.rootPath, 'lib');
-        const mainModulePath = path.join(outPath, 'main.css.js');
-        const subModulePath = path.join(outPath, 'components', 'comp.css.js');
+        const mainModulePath = path.join(outPath, 'main.st.css.js');
+        const subModulePath = path.join(outPath, 'components', 'comp.st.css.js');
         const mainModuleContent = fs.readFileSync(mainModulePath).toString();
         const subModuleContent = fs.readFileSync(subModulePath).toString();
         const evaledMain = evalCommonJsCssModule(mainModuleContent).default;
@@ -61,24 +61,24 @@ describe('build stand alone', function () {
         testComplexRule(mainCssAst, [{ m: evaledMain, cls: '.gaga' }, { m: evaledSub, cls: '.root' }], 'color', 'blue');
 
 
-        const mainCssPath = path.join(outPath, 'main.css');
-        const subCssPath = path.join(outPath, 'components', 'comp.css');
+        const mainCssPath = path.join(outPath, 'main.st.css');
+        const subCssPath = path.join(outPath, 'components', 'comp.st.css');
 
         const mainCssContent = fs.readFileSync(mainCssPath).toString();
         const subCssContent = fs.readFileSync(subCssPath).toString();
 
-        expect(mainCssContent).to.equal(files["main.css"]);
-        expect(subCssContent).to.equal(files["components/comp.css"]);
+        expect(mainCssContent).to.equal(files["main.st.css"]);
+        expect(subCssContent).to.equal(files["components/comp.st.css"]);
     });
 
 })
 describe("lib usage with loader", () => {
     const libFiles: StringMap = {
-        '../lib/comp.js': jsThatImports(['./comp.css', './components/sub.js']),
-        '../lib/components/sub.js': jsThatImports(['./sub.css']),
-        'comp.css': `
+        '../lib/comp.js': jsThatImports(['./comp.st.css', './components/sub.js']),
+        '../lib/components/sub.js': jsThatImports(['./sub.st.css']),
+        'comp.st.css': `
             :import{
-                -st-from:"./components/sub.css";
+                -st-from:"./components/sub.st.css";
                 -st-default:Sub;
             }
             .sub-comp{
@@ -86,7 +86,7 @@ describe("lib usage with loader", () => {
                 color:blue;
             }
         `,
-        'components/sub.css': `
+        'components/sub.st.css': `
             .title{
                 color:red;
                 background: url("./asset.svg");
@@ -102,10 +102,10 @@ describe("lib usage with loader", () => {
         }`
     }
     const files: StringMap = {
-        'app.js': jsThatImports(['./main.css', 'my-lib/lib/comp.js']),
-        'main.css': `
+        'app.js': jsThatImports(['./main.st.css', 'my-lib/lib/comp.js']),
+        'main.st.css': `
             :import{
-                -st-from:"my-lib/lib/comp.css"
+                -st-from:"my-lib/lib/comp.st.css"
                 -st-default:Comp;
             }
             .gaga{
@@ -131,7 +131,7 @@ describe("lib usage with loader", () => {
         // build lib
         build({
             rootDir: innerLibPath, srcDir: testConfig.contentRelativePath, outDir: 'lib',
-            extension: '.css', fs: fs as any, stylable
+            extension: '.st.css', fs: fs as any, stylable
         });
 
         testJsEntry('app.js', fs, (bundle, _css, memfs) => {
@@ -171,7 +171,7 @@ describe("lib usage with loader", () => {
             rootDir: innerLibPath, 
             srcDir: testConfig.contentRelativePath, 
             outDir: 'lib',
-            extension: '.css', 
+            extension: '.st.css', 
             fs: fs as any, 
             stylable
         });

@@ -2,14 +2,13 @@ import { StylableMeta } from 'stylable';
 const deindent = require('deindent');
 import { StylableIntegrationDefaults, StylableIntegrationOptions } from './options';
 
+const runtimePath = 'stylable/runtime';
 
-export function createCSSModuleString(exports: any, meta: StylableMeta, options: StylableIntegrationOptions = StylableIntegrationDefaults): string {
+export function createCSSModuleString(locals: any, meta: StylableMeta, options: StylableIntegrationOptions = StylableIntegrationDefaults): string {
     
+    locals = JSON.stringify(locals);
     const root = JSON.stringify(meta.root);
     const namespace = JSON.stringify(meta.namespace);
-    const locals = JSON.stringify(exports);
-
-    const runtimePath = 'stylable/runtime';
 
     // ${imports.join('\n')}
     let code: string = '';
@@ -59,7 +58,7 @@ export function getUsedAssets(source: string): string[] {
     return res;
 }
 
-export function replaceAssetsAsync(source: string, resolveAssetAsync: (relativeUrl: string) => Promise<string>): Promise<string> {
+export async function replaceAssetsAsync(source: string, resolveAssetAsync: (relativeUrl: string) => Promise<string>): Promise<string> {
     const splitSource = source.split(relativeImportAsset);
     return Promise.all(splitSource.map((srcChunk, idx) => {
         if (idx % 2) {

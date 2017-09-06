@@ -32,7 +32,6 @@ const runtimeFuncMock = `function(rootClass,namespace,namespaceMap,targetCss){
 export function evalCommonJsCssModule(module: string) {
     const modified = module.replace('require("stylable/runtime").create', `(${runtimeFuncMock})`);
     return _eval(modified);
-
 }
 
 export function getMemFs(files: { [key: string]: string | Buffer }, folderPath: string, contentRelativePath: string): MemoryFileSystem {
@@ -91,17 +90,50 @@ export function getContentPath(config: TestConfig) {
     return path.join(config.rootPath, config.contentRelativePath);
 }
 
+
+// function createTestCompiler(webpackConfig: webpack.Configuration, files: { [key: string]: string }, config: TestConfig, options: Partial<StylableIntegrationOptions> = StylableIntegrationDefaults){
+    
+//     const contentPath = getContentPath(config);
+//     const distPath = getDistPath(config);
+//     const memfs = getMemFs(files, config.rootPath, config.contentRelativePath);
+
+//     const compiler = webpack({
+//         context: config.rootPath,
+//         entry: '',
+//         output: {
+//             publicPath: 'assets/',
+//             path: distPath,
+//             filename: config.fileNameFormat
+//         },
+//         plugins: [
+//             new Plugin(options)
+//         ],
+//         module: {
+//             rules: [
+//                 {
+//                     test: /\.css$/,
+//                     loader: path.join(process.cwd(), 'webpack-loader'),
+//                     options: options
+//                 }
+//             ]
+//         }
+//     });
+
+//     registerMemFs(compiler, memfs);
+
+//     return compiler;
+// }
+
 export function testJsEntries(entries: string[], files: { [key: string]: string }, test: TestMultiEntries, config: TestConfig, options: Partial<StylableIntegrationOptions> = StylableIntegrationDefaults) {
     const contentPath = getContentPath(config)
     const distPath = getDistPath(config);
     const memfs = getMemFs(files, config.rootPath, config.contentRelativePath);
-    let entriesRes: { [key: string]: string } = {};
     const compiler = webpack({
         context: config.rootPath,
-        entry: entries.reduce((accum, entry) => {
-            accum[entry] = path.join(contentPath, entry + '.js')
-            return accum;
-        }, entriesRes),
+        entry: entries.reduce<{ [key: string]: string }>((acc, entry) => {
+            acc[entry] = path.join(contentPath, entry + '.js')
+            return acc;
+        }, {}),
         output: {
             publicPath: 'assets/',
             path: distPath,
@@ -113,7 +145,7 @@ export function testJsEntries(entries: string[], files: { [key: string]: string 
         module: {
             rules: [
                 {
-                    test: /\.css$/,
+                    test: /\.st\.css$/,
                     loader: path.join(process.cwd(), 'webpack-loader'),
                     options: options
                 }
@@ -122,7 +154,7 @@ export function testJsEntries(entries: string[], files: { [key: string]: string 
     });
 
     registerMemFs(compiler, memfs);
-
+    
     compiler.run(function (err: Error) {
         if (err) { throw err; }
         const evaledBundles = entries.map((entry) => {
@@ -159,7 +191,7 @@ export function testJsEntry(entry: string, files: { [key: string]: string | Buff
         module: {
             rules: [
                 {
-                    test: /\.css$/,
+                    test: /\.st\.css$/,
                     loader: path.join(process.cwd(), 'webpack-loader'),
                     options
                 },
@@ -178,12 +210,12 @@ export function testJsEntry(entry: string, files: { [key: string]: string | Buff
         }
     });
 
+    
     registerMemFs(compiler, memfs);
-
     compiler.run(function (err: Error) {
         if (err) { throw err; }
         const bundle = memfs.readFileSync(path.join(distPath, 'bundle.js')).toString();
-        const bundleCss = memfs.readFileSync(path.join(distPath, 'bundle.css')).toString();
+        const bundleCss = memfs.readFileSync(path.join(distPath, 'main.css')).toString();
         test(_eval(bundle), bundleCss, memfs);
     })
 }
@@ -297,7 +329,9 @@ export function jsThatImports(fileList: string[]) {
         if (noExt.indexOf('./') == 0) {
             noExt = noExt.slice(2);
         }
-        noExt = noExt.split('.').slice(0, -1).join('');
+
+        
+        noExt = noExt.replace(/\.st\.css$/, '').replace(/\.js$/, '');
 
         return ` "${noExt}" : require("${fileName}"),
             `
