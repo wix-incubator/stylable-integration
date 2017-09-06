@@ -4,6 +4,7 @@ import webpack = require('webpack');
 import MemoryFileSystem = require('memory-fs');
 import * as postcss from 'postcss';
 import { Plugin } from '../src/webpack-loader'
+const runtime =  require('stylable/runtime');
 import { StylableIntegrationDefaults, StylableIntegrationOptions } from '../src/options';
 const _eval = require('node-eval');
 
@@ -91,39 +92,6 @@ export function getContentPath(config: TestConfig) {
 }
 
 
-// function createTestCompiler(webpackConfig: webpack.Configuration, files: { [key: string]: string }, config: TestConfig, options: Partial<StylableIntegrationOptions> = StylableIntegrationDefaults){
-    
-//     const contentPath = getContentPath(config);
-//     const distPath = getDistPath(config);
-//     const memfs = getMemFs(files, config.rootPath, config.contentRelativePath);
-
-//     const compiler = webpack({
-//         context: config.rootPath,
-//         entry: '',
-//         output: {
-//             publicPath: 'assets/',
-//             path: distPath,
-//             filename: config.fileNameFormat
-//         },
-//         plugins: [
-//             new Plugin(options)
-//         ],
-//         module: {
-//             rules: [
-//                 {
-//                     test: /\.css$/,
-//                     loader: path.join(process.cwd(), 'webpack-loader'),
-//                     options: options
-//                 }
-//             ]
-//         }
-//     });
-
-//     registerMemFs(compiler, memfs);
-
-//     return compiler;
-// }
-
 export function testJsEntries(entries: string[], files: { [key: string]: string }, test: TestMultiEntries, config: TestConfig, options: Partial<StylableIntegrationOptions> = StylableIntegrationDefaults) {
     const contentPath = getContentPath(config)
     const distPath = getDistPath(config);
@@ -154,7 +122,7 @@ export function testJsEntries(entries: string[], files: { [key: string]: string 
     });
 
     registerMemFs(compiler, memfs);
-    
+
     compiler.run(function (err: Error) {
         if (err) { throw err; }
         const evaledBundles = entries.map((entry) => {
@@ -210,7 +178,7 @@ export function testJsEntry(entry: string, files: { [key: string]: string | Buff
         }
     });
 
-    
+
     registerMemFs(compiler, memfs);
     compiler.run(function (err: Error) {
         if (err) { throw err; }
@@ -330,7 +298,6 @@ export function jsThatImports(fileList: string[]) {
             noExt = noExt.slice(2);
         }
 
-        
         noExt = noExt.replace(/\.st\.css$/, '').replace(/\.js$/, '');
 
         return ` "${noExt}" : require("${fileName}"),
@@ -346,3 +313,89 @@ export function hasNoCls(css: string, cls: string) {
     startIdx = startIdx === -1 ? 0 : startIdx;
     expect(foundIdx, `expected to not find class:\n ${cls}\nbut found: \n ${css.substr(startIdx, endIdx)}\n`).to.equal(-1);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+/* this is the way we test */
+
+export interface fileMap {
+    [fullpath: string]: string;
+}
+
+export function createFS(files: { [k: string]: string }) {
+    const memfs = new MemoryFileSystem();
+
+    const defaults: fileMap = {
+        '/node_modules/stylable/runtime/index.js': `
+            module.exports.create = ${runtime.create.toString()}
+        `,
+        '/package.json': `
+
+            {
+                "name": "test"
+            }
+
+        ` 
+    }
+    for (var k in defaults) {
+        var r = path.resolve(k);
+        memfs.mkdirpSync(path.dirname(r));
+        memfs.writeFileSync(r, defaults[k] || '\n');
+    }
+
+    for (var k in files) {
+        var r = path.resolve(k);
+        memfs.mkdirpSync(path.dirname(r));
+        memfs.writeFileSync(r, files[k] || '\n');
+    }
+
+    return memfs;
+}
+
+
+export function createWebpackCompiler(webpackConfig: webpack.Configuration, fs: MemoryFileSystem, stylableConfig: Partial<StylableIntegrationOptions> = {}) {
+
+    webpackConfig = { ...webpackConfig };
+    const output = webpackConfig.output;
+    delete webpackConfig.output;
+
+    const compiler = webpack({
+        context: path.resolve('/'),
+        entry: '',
+        output: {
+            publicPath: '/',
+            path: '/dist',
+            filename: '[name].js',
+            ...output
+        },
+        plugins: [
+            new Plugin(stylableConfig)
+        ],
+        module: {
+            rules: [
+                {
+                    test: /\.st\.css$/,
+                    loader: path.join(process.cwd(), 'webpack-loader'),
+                    options: stylableConfig
+                }
+            ]
+        },
+        ...webpackConfig
+    });
+
+    registerMemFs(compiler, fs);
+
+    return compiler;
+}
+
+
+

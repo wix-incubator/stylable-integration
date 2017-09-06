@@ -9,7 +9,7 @@
             "-u", "tdd",
             "--timeout", "999999",
             "--colors",
-            "${workspaceRoot}/dist/test/index.js"
+            "${workspaceRoot}/dist/test/**/*.spec.js"
         ],
         "address": "localhost",
         "runtimeArgs": [

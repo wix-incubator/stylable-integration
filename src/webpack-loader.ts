@@ -27,8 +27,12 @@ export function loader(this: webpack.loader.LoaderContext, _source: string) {
         stylable = new Stylable(this.options.context, this.fs, options.requireModule || require, options.nsDelimiter);
         bundler = stylable.createBundler();
     }
-
-    bundler.addUsedFile(this.resourcePath);
+    try {
+        bundler.addUsedFile(this.resourcePath);
+    } catch(error) {        
+        // this.emitError(error);
+        return Promise.resolve(`throw new Error('Cannot load module: "${this.resourcePath}"')`);
+    }
 
     const publicPath = this.options.output.publicPath || '//assets';
     const addedSheetList = bundler.getDependencyPaths().filter(path => !oldSheets[path]);
@@ -88,16 +92,31 @@ export class Plugin {
 
         compiler.plugin('emit', (compilation, callback) => {
             firstRun = false;
+            if(!bundler){
+                callback();
+                return;
+            }
 
             compilation.chunks.forEach((chunk: any) => {
                 const pathContext = { chunk, hash: compilation.hash };
                 const bundleName = compilation.getPath(compilation.options.output.filename, pathContext);
                 const bundleCssName = compilation.getPath(this.options.filename, pathContext);
-                const resultCssBundle = bundler!.generateCSS(this.getSortedStylableModulesList(chunk));
+                const bundleFiles = this.getSortedStylableModulesList(chunk);
+                let resultCssBundle = '';
+                try {
+                    resultCssBundle = bundler!.generateCSS(bundleFiles);
+                } catch(error){
+                    if(error.path){
+                        compilation.errors.push(`${error} "${error.path}"`);
+                    } else {
+                        compilation.errors.push(error);
+                    }
+                }
                 if (this.options.injectBundleCss) {
                     this.addBundleInjectionCode(compilation, bundleName, bundleCssName, resultCssBundle);
                 }
                 compilation.assets[bundleCssName] = new RawSource(resultCssBundle);
+                compilation.assets[bundleCssName].fromFiles = bundleFiles;
             });
 
             bundler = stylable = null;

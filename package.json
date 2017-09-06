@@ -11,7 +11,7 @@
     "build": "tsc && ncp test/fixtures/ dist/test/fixtures",
     "webpack": "webpack",
     "pretest": "yarn build",
-    "test": "mocha ./dist/test/index.js",
+    "test": "mocha ./dist/test/**/*.spec.js",
     "prepublish": "npm run build",
     "start": "rimraf dist && yarn build && concurrently --kill-others --success first \"yarn build -- -w\" \"webpack-dev-server --no-info\""
   },
@@ -42,6 +42,7 @@
     "@types/webpack-sources": "^0.1.3",
     "chai": "^4.1.1",
     "concurrently": "^3.5.0",
+    "css-loader": "^0.28.7",
     "file-loader": "^0.11.2",
     "memory-fs": "^0.4.1",
     "mocha": "^3.5.0",
