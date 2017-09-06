@@ -24,20 +24,24 @@ const argv = require('yargs')
     .describe('log', 'verbose log')
     .default('log', false)
 
+    .option('diagnostics')
+    .describe('diagnostics', 'verbose diagnostics')
+    .default('diagnostics', false)
+
     .alias('h', 'help')
     .help()
     .argv;
 
 
 const log = createLogger("[Stylable]", argv.log);
+const diagnostics = createLogger("[Stylable Diagnostics]\n", argv.diagnostics);
 const { outDir, srcDir, rootDir, ext } = argv;
 
 log('[Arguments]', argv);
 
 const stylable = new Stylable(rootDir, fs, require);
 
-build({ extension: ext, fs, stylable, outDir, srcDir, rootDir, log });
-
+build({ extension: ext, fs, stylable, outDir, srcDir, rootDir, log, diagnostics });
 
 
 function createLogger(prefix: string, shouldLog: boolean) {
