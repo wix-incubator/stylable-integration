@@ -34,12 +34,13 @@ Use the `stc` command to enable compiling `.st.css` files to their matching `.js
 ```bash
 $ stc --help
 Options:
-  --rootDir   root directory of project                           [default: cwd]
-  --srcDir    source directory relative to root                   [default: "."]
-  --outDir    target directory relative to root                   [default: "."]
-  --ext       extension of stylable CSS files               [default: ".st.css"]
-  --log       verbose log                                       [default: false]
-  -h, --help  Show help                                                [boolean]
+  --rootDir      root directory of project                        [default: cwd]
+  --srcDir       source directory relative to root                [default: "."]
+  --outDir       target directory relative to root                [default: "."]
+  --ext          extension of stylable css files            [default: ".st.css"]
+  --log          verbose log                                    [default: false]
+  --diagnostics  verbose diagnostics                            [default: false]
+  -h, --help     Show help                                             [boolean]
 ```
 
 By default, `stc` runs on the current working directory, compiling each `.st.css` source file to a `.js` file in the same directory.
@@ -61,7 +62,7 @@ A common use case of this utility is running it via an `npm` script in the proje
     "name": "my-project",
     ...
     "scripts": {
-        "build:style": "stc --srcDir=src --outDir=lib",
+        "build:style": "stc --srcDir=src --outDir=lib --diagnostics",
         ...
     }
 }
@@ -109,8 +110,8 @@ The transformation options is an object, with the following default values:
     // should inject css bundle to head
     injectBundleCss: false,
 
-    // whether each built .js file should include code that injects the raw CSS into the page (when loaded in the browser)
-    injectFileCss: false,
+    // the name of the css bundle
+    filename: '[name].css',
 
     // delimiter used when namespacing selectors
     nsDelimiter: '💠'
