@@ -1,6 +1,6 @@
 # Stylable Integration
 [![npm version](https://badge.fury.io/js/stylable-integration.svg)](https://www.npmjs.com/package/stylable-integration)
-[![Build Status](https://travis-ci.com/wixplosives/stylable-integration.svg?token=JxepjChyzQB66ehAYhtG&branch=master)](https://travis-ci.com/wixplosives/stylable-integration)
+[![Build Status](https://travis-ci.org/wix/stylable-integration.svg?branch=master)](https://travis-ci.org/wix/stylable-integration)
 
 This package contains build-time utilities for integrating **Stylable** into your project.
 
