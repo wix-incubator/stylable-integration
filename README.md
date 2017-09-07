@@ -25,6 +25,52 @@ Or install using `yarn`:
 yarn add stylable-integration --dev
 ```
 
+## Webpack
+
+Both a webpack loader and a plugin are exported via two special entry points.
+
+The loader, exported via `stylable-integration/webpack-loader`.
+
+The plugin, exported via `stylable-integration/webpack-plugin`.
+
+Both must be used in the webpack config with the same transformation options as follows:
+
+```js
+const StylablePlugin = require('stylable-integration/webpack-plugin');
+const transformationOptions = { injectBundleCss: true };
+...
+{
+    module: {
+        rules: [
+            {
+                test: /\.st\.css$/,
+                loader: "stylable-integration/webpack-loader",
+                options: transformationOptions
+            }
+        ]
+    },
+    plugins: [
+        new StylablePlugin(transformationOptions)
+    ]
+}
+
+```
+
+
+The transformation options is an object, with the following default values:
+```ts
+{
+    // should inject css bundle to the document head when run browsers
+    injectBundleCss: false,
+
+    // the name of the css bundle
+    filename: '[name].css',
+
+    // delimiter used when namespacing selectors
+    nsDelimiter: '💠'
+}
+```
+
 ## CLI
 
 Once this package is installed, you can use a local CLI command to run the **Stylable** compiler.
@@ -68,55 +114,6 @@ A common use case of this utility is running it via an `npm` script in the proje
 }
 ```
 
-## Webpack
-
-Both a webpack loader and a plugin are exported via two special entry points.
-
-The loader, exported via `stylable-integration/webpack-loader`, can be used in a webpack configuration as follows:
-
-```js
-
-{
-    module: {
-        rules: [
-        ...
-            {
-                test: /\.st.css$/,
-                loader: "stylable-integration/webpack-loader",
-                options: { /* transformation options */ }
-            }
-        ...
-        ]
-    }
-}
-
-```
-
-The plugin, exported via `stylable-integration/webpack-plugin`, can be used in a webpack configuration as follows:
-
-```js
-const StylablePlugin = require('stylable-integration/webpack-plugin');
-
-{
-    plugins: [
-        new StylablePlugin({ /* transformation options */ })
-    ]
-}
-
-```
-The transformation options is an object, with the following default values:
-```ts
-{
-    // should inject css bundle to head
-    injectBundleCss: false,
-
-    // the name of the css bundle
-    filename: '[name].css',
-
-    // delimiter used when namespacing selectors
-    nsDelimiter: '💠'
-}
-```
 
 ## Node.js require hook
 
@@ -143,7 +140,3 @@ The require hook can also be used to register the handling in tools like Mocha:
 ```bash
 $ mocha --compilers css:stylable-integration/require [test file]
 ```
-
-## CSS bundling
-
-// TODO: implement and write.
