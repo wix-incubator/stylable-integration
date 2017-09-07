@@ -33,7 +33,7 @@ The loader, exported via `stylable-integration/webpack-loader`.
 
 The plugin, exported via `stylable-integration/webpack-plugin`.
 
-Both must be used in the webpack config with the same transformation options as follows:
+Both must be used in the webpack configuration with the same transformation options as follows:
 
 ```js
 const StylablePlugin = require('stylable-integration/webpack-plugin');
@@ -55,7 +55,6 @@ const transformationOptions = { injectBundleCss: true };
 }
 
 ```
-
 
 The transformation options is an object, with the following default values:
 ```ts
