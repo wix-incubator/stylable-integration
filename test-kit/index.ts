@@ -3,9 +3,10 @@ import { expect } from 'chai';
 import webpack = require('webpack');
 import MemoryFileSystem = require('memory-fs');
 import * as postcss from 'postcss';
-import { Plugin } from '../src/webpack-loader'
-const runtime =  require('stylable/runtime');
+import { Plugin } from '../src/webpack-loader';
+const runtime = require('stylable/runtime');
 import { StylableIntegrationDefaults, StylableIntegrationOptions } from '../src/options';
+import { memoryFS } from "../src/mem-fs";
 const _eval = require('node-eval');
 
 export interface MockedRuntime {
@@ -30,10 +31,6 @@ const runtimeFuncMock = `function(rootClass,namespace,namespaceMap,targetCss){
         }`
 
 
-export function evalCommonJsCssModule(module: string) {
-    const modified = module.replace('require("stylable/runtime").create', `(${runtimeFuncMock})`);
-    return _eval(modified);
-}
 
 export function getMemFs(files: { [key: string]: string | Buffer }, folderPath: string, contentRelativePath: string): MemoryFileSystem {
     const memfs = new MemoryFileSystem();
@@ -179,9 +176,17 @@ export function testJsEntry(entry: string, files: { [key: string]: string | Buff
     });
 
 
-    registerMemFs(compiler, memfs);
-    compiler.run(function (err: Error) {
-        if (err) { throw err; }
+
+    compiler.run(function (err: Error, stats: any) {
+        if (err || stats.hasErrors()) {
+            if (err) { console.error(err) } else {
+                stats.compilation.errors.forEach((err: any) => {
+                    console.error(err)
+                })
+            }
+
+            throw new Error('Webpack error in test. see console');
+        }
         const bundle = memfs.readFileSync(path.join(distPath, 'bundle.js')).toString();
         const bundleCss = memfs.readFileSync(path.join(distPath, 'main.css')).toString();
         test(_eval(bundle), bundleCss, memfs);
@@ -327,12 +332,53 @@ export function hasNoCls(css: string, cls: string) {
 
 /* this is the way we test */
 
+export function getAssetSource(stats: any, asset: string) {
+    return stats.compilation.assets[asset].source();
+}
+
+export function haveExportsSorted(cssModule: any, _exports: string[]) {
+    expect(Object.keys(cssModule).filter((s) => s !== '$stylesheet').sort()).to.eql(_exports)
+}
+
+export function matchRules(css: string, tests: Array<string | RegExp>) {
+    tests = tests.slice();
+    let msg: string | boolean = false;
+    postcss.parse(css).walkRules((rule) => {
+        const testSelector = tests.shift()!;
+        if (typeof testSelector === 'string') {
+            if (rule.selector !== testSelector && !msg) {
+                msg = `${rule.selector} is not match to ${testSelector}`
+            }
+        } else {
+            if (!rule.selector.match(testSelector) && !msg) {
+                msg = `${rule.selector} is not match to ${testSelector}`
+            }
+        }
+    });
+    if (msg === false) {
+        msg = true;
+    }
+    expect(msg, 'rules matches selectors').to.equal(true)
+    return true;
+}
+
+export function evalCssJSModule(source: string, filename: string = 'file.js') {
+    return _eval(source, filename, {
+        require(id: string) {
+            if (id === "stylable/runtime") {
+                return runtime;
+            }
+            return '';
+        }
+    });
+}
+
 export interface fileMap {
     [fullpath: string]: string;
 }
 
 export function createFS(files: { [k: string]: string }) {
-    const memfs = new MemoryFileSystem();
+    const memfs = memoryFS();
 
     const defaults: fileMap = {
         '/node_modules/stylable/runtime/index.js': `
@@ -344,7 +390,7 @@ export function createFS(files: { [k: string]: string }) {
                 "name": "test"
             }
 
-        ` 
+        `
     }
     for (var k in defaults) {
         var r = path.resolve(k);
@@ -378,14 +424,33 @@ export function createWebpackCompiler(webpackConfig: webpack.Configuration, fs: 
             ...output
         },
         plugins: [
-            new Plugin(stylableConfig)
+            // {
+            //     apply(compiler: any){
+            //         compiler.inputFileSystem = fs;
+            //         compiler.outputFileSystem = fs;
+            //     }
+            // },
+            new Plugin({ requireModule() { throw new Error('Implement require in test') }, ...stylableConfig })
         ],
         module: {
             rules: [
                 {
                     test: /\.st\.css$/,
-                    loader: path.join(process.cwd(), 'webpack-loader'),
-                    options: stylableConfig
+                    use: [
+                        {
+                            loader: path.join(process.cwd(), 'webpack-loader')
+                        }
+                    ]
+                }, {
+                    test: /\.(png|jpg|gif|svg)$/,
+                    use: [
+                        {
+                            loader: path.join(process.cwd(), 'node_modules', 'url-loader'),
+                            options: {
+                                limit: 1
+                            }
+                        }
+                    ]
                 }
             ]
         },
@@ -397,5 +462,50 @@ export function createWebpackCompiler(webpackConfig: webpack.Configuration, fs: 
     return compiler;
 }
 
+export interface WebpackTestConfig {
+    files: fileMap;
+    config: webpack.Configuration;
+    allowErrors?: boolean;
+    stylableConfig?: Partial<StylableIntegrationOptions>;
+}
+
+export interface WebpackTestResults {
+    stats: webpack.Stats & { compilation: any };
+    compiler: webpack.Compiler;
+    fs: MemoryFileSystem
+}
 
 
+
+export function webpackTest({ files, config, stylableConfig, allowErrors }: WebpackTestConfig) {
+
+    const fs = createFS(files);
+
+    const compiler = createWebpackCompiler(config, fs, stylableConfig);
+
+    return {
+        compiler,
+        fs,
+        evalCssJSModule,
+        resolve(paths: string[]) {
+            return paths.map((p) => path.resolve(p));
+        },
+        async run(): Promise<WebpackTestResults> {
+            return new Promise<WebpackTestResults>((resolve, reject) => {
+
+                compiler.run((error: Error, stats: webpack.Stats & { compilation: any }) => {
+                    if (error || (stats.hasErrors() && !allowErrors)) {
+                        if (!error) {
+                            error = new Error(stats.compilation.errors.map((err: any) => err.message).join('\n'))
+                        }
+                        reject(error);
+                    } else {
+                        resolve({ stats, compiler, fs });
+                    }
+                });
+
+            })
+        }
+    }
+
+}

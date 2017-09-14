@@ -13,7 +13,7 @@ const vanillaOptions = { filename: 'bundle.css', assetsDir: 'assets', assetsServ
 describe('loader', function () {
 
 
-    it('should transform imports', function () {
+    it.only('should transform imports', function () {
         const fs = getMemFs({
             "style.st.css": `@namespace "Style";`,
             "entry.st.css": `:import { -st-from: "./style.st.css"; }`

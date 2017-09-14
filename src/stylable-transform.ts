@@ -4,19 +4,23 @@ import { StylableIntegrationDefaults, StylableIntegrationOptions } from './optio
 
 const runtimePath = 'stylable/runtime';
 
-export function createCSSModuleString(locals: any, meta: StylableMeta, options: StylableIntegrationOptions = StylableIntegrationDefaults): string {
+export function createCSSModuleString(locals: any, meta: StylableMeta, options: Partial<StylableIntegrationOptions> = StylableIntegrationDefaults): string {
     
     locals = JSON.stringify(locals);
     const root = JSON.stringify(meta.root);
     const namespace = JSON.stringify(meta.namespace);
 
-    // ${imports.join('\n')}
+    const imports: string[] = meta.imports.map((i)=>{
+        return justImport(i.fromRelative, i.theme ? '' : '');
+    });
+
     let code: string = '';
     if (options.injectFileCss) {
         const css = JSON.stringify(meta.outputAst!.toString());
-
+        
         code = deindent`
         Object.defineProperty(exports, "__esModule", { value: true });
+        ${imports.join('\n')}
         module.exports.default = require("${runtimePath}").create(
             ${root},
             ${namespace},
@@ -25,10 +29,11 @@ export function createCSSModuleString(locals: any, meta: StylableMeta, options: 
             module.id
         );
         `;
-
+        
     } else {
         code = deindent`
         Object.defineProperty(exports, "__esModule", { value: true });
+        ${imports.join('\n')}
         module.exports.default = module.exports.locals = require("${runtimePath}").create(
             ${root},
             ${namespace},
@@ -44,7 +49,7 @@ export function createCSSModuleString(locals: any, meta: StylableMeta, options: 
 
 
 
-const relativeImportAsset = /url\s*\(\s*["']?([^:]*?)["']?\s*\)/gm;
+export const relativeImportAsset = /url\s*\(\s*["']?([^:]*?)["']?\s*\)/gm;
 
 
 export function getUsedAssets(source: string): string[] {
@@ -72,6 +77,6 @@ export async function replaceAssetsAsync(source: string, resolveAssetAsync: (rel
 
 }
 
-export function justImport(path: string) {
-    return `require("${path}");`;
+export function justImport(path: string, query: string = '') {
+    return `require("${path}${query}");`;
 }

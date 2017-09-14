@@ -1,29 +1,17 @@
 import path = require('path');
 import { expect } from 'chai';
-import * as postcss from 'postcss';
 import { Stylable } from 'stylable';
-import { getDistPath, getMemFs, jsThatImports, testJsEntry, testRule, testComplexRule, TestConfig, evalCommonJsCssModule, getAssetRegExp } from '../test-kit/index';
-import { StylableIntegrationDefaults } from '../src/options';
+import { createFS, jsThatImports, webpackTest } from '../test-kit/index';
 import { build } from '../src/build';
 
-const testConfig: TestConfig = {
-    // 'c:\\project' on Windows; '/project' on posix
-    rootPath: path.resolve('/project'),
-    distRelativePath: 'dist',
-    assetsRelativePath: 'assets',
-    contentRelativePath: 'sources',
-    assetsServerUri: 'serve-assets',
-    fileNameFormat: '[name].js'
-}
 
-const assetRegEx = getAssetRegExp(testConfig);
-
-type StringMap = { [key: string]: string };
 
 describe('build stand alone', function () {
+
     it('should create modules and copy source css files', function () {
-        const files = {
-            'main.st.css': `
+
+        const fs = createFS({
+            '/main.st.css': `
                 :import{
                     -st-from: "./components/comp.st.css";
                     -st-default:Comp;
@@ -33,167 +21,115 @@ describe('build stand alone', function () {
                     color:blue;
                 }
             `,
-            'components/comp.st.css': `
+            '/components/comp.st.css': `
                 .baga{
                     color:red;
                 }
             `,
-        }
-        const fs = getMemFs(files, testConfig.rootPath, testConfig.contentRelativePath);
-        
-        const stylable = new Stylable(testConfig.rootPath, fs as any, ()=>({}), StylableIntegrationDefaults.nsDelimiter);
+        });      
+
+        const stylable = new Stylable('/', fs as any, () => ({}));
 
         build({
-            extension: '.st.css', fs: fs as any, stylable,
-            outDir: 'lib', srcDir: testConfig.contentRelativePath, rootDir: testConfig.rootPath
-        });
-
-        const outPath = path.join(testConfig.rootPath, 'lib');
-        const mainModulePath = path.join(outPath, 'main.st.css.js');
-        const subModulePath = path.join(outPath, 'components', 'comp.st.css.js');
-        const mainModuleContent = fs.readFileSync(mainModulePath).toString();
-        const subModuleContent = fs.readFileSync(subModulePath).toString();
-        const evaledMain = evalCommonJsCssModule(mainModuleContent).default;
-        const evaledSub = evalCommonJsCssModule(subModuleContent).default;
-        const mainCssAst = postcss.parse(evaledMain.targetCss);
-        const subCssAst = postcss.parse(evaledSub.targetCss);
-        testRule(evaledSub, subCssAst, '.baga', 'color', 'red');
-        testComplexRule(mainCssAst, [{ m: evaledMain, cls: '.gaga' }, { m: evaledSub, cls: '.root' }], 'color', 'blue');
-
-
-        const mainCssPath = path.join(outPath, 'main.st.css');
-        const subCssPath = path.join(outPath, 'components', 'comp.st.css');
-
-        const mainCssContent = fs.readFileSync(mainCssPath).toString();
-        const subCssContent = fs.readFileSync(subCssPath).toString();
-
-        expect(mainCssContent).to.equal(files["main.st.css"]);
-        expect(subCssContent).to.equal(files["components/comp.st.css"]);
-    });
-
-})
-describe("lib usage with loader", () => {
-    const libFiles: StringMap = {
-        '../lib/comp.js': jsThatImports(['./comp.st.css', './components/sub.js']),
-        '../lib/components/sub.js': jsThatImports(['./sub.st.css']),
-        'comp.st.css': `
-            :import{
-                -st-from:"./components/sub.st.css";
-                -st-default:Sub;
-            }
-            .sub-comp{
-                -st-extends:Sub;
-                color:blue;
-            }
-        `,
-        'components/sub.st.css': `
-            .title{
-                color:red;
-                background: url("./asset.svg");
-            }
-        `,
-        'components/asset.svg': `
-                <svg height="100" width="100">
-                    <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
-                </svg>
-        `,
-        '../package.json': `{
-                "name":"my-lib"
-        }`
-    }
-    const files: StringMap = {
-        'app.js': jsThatImports(['./main.st.css', 'my-lib/lib/comp.js']),
-        'main.st.css': `
-            :import{
-                -st-from:"my-lib/lib/comp.st.css"
-                -st-default:Comp;
-            }
-            .gaga{
-                -st-extends:Comp;
-                background:blue;
-            }
-            .gaga::sub-comp{
-                outline:pink;
-            }
-        `
-    };
-    Object.keys(libFiles).forEach((filePath) => {
-        files[path.join('../', 'node_modules', 'my-lib', 'sources', filePath)] = libFiles[filePath];
-    });
-    it('should be usable as a component library with injectFileCss mode', function (done) {
-        const fs = getMemFs(files, testConfig.rootPath, testConfig.contentRelativePath);
-        const libRelPath = 'node_modules/my-lib';
-        const innerLibPath = path.join(testConfig.rootPath, libRelPath);
-        
-
-           
-        const stylable = new Stylable(testConfig.rootPath, fs as any, ()=>({}));
-        // build lib
-        build({
-            rootDir: innerLibPath, srcDir: testConfig.contentRelativePath, outDir: 'lib',
-            extension: '.st.css', fs: fs as any, stylable
-        });
-
-        testJsEntry('app.js', fs, (bundle, _css, memfs) => {
-            const mainModule = bundle.main.default;
-            const compModule = bundle['my-lib/lib/comp'].comp.default
-            const subModule = bundle['my-lib/lib/comp']["components/sub"].sub.default
-
-            const mainModuleTargetAst = postcss.parse(mainModule.targetCss);
-            const compModuleTargetAst = postcss.parse(compModule.targetCss);
-            const subModuleTargetAst = postcss.parse(subModule.targetCss);
-
-
-
-            testRule(subModule, subModuleTargetAst, '.title', 'color', 'red');
-            testComplexRule(compModuleTargetAst, [{ m: compModule, cls: '.sub-comp' }, { m: subModule, cls: '.root' }], 'color', 'blue');
-            testComplexRule(mainModuleTargetAst, [{ m: mainModule, cls: '.gaga' }, { m: compModule, cls: '.root' }], 'background', 'blue');
-            testComplexRule(mainModuleTargetAst, [{ m: mainModule, cls: '.gaga' }, { m: compModule, cls: '.sub-comp' }], 'outline', 'pink');
-
-
-
-            expect(subModule.targetCss).to.not.include('url("./asset.svg")')
-            const match = subModule.targetCss.split(assetRegEx);
-
-            expect(match!.length, 'converted url count').to.equal(3);
-            expect(memfs.readFileSync(path.join(getDistPath(testConfig), match![1])).toString()).to.eql(libFiles['components/asset.svg']);
-            done()
-        }, testConfig, { ...StylableIntegrationDefaults, injectFileCss: true })
-    });
-
-    it('should be usable as a component library in bundle mode', function (done) {
-        const fs = getMemFs(files, testConfig.rootPath, testConfig.contentRelativePath);
-        
-        const libRelPath = 'node_modules/my-lib';
-        const innerLibPath = path.join(testConfig.rootPath, libRelPath);
-        const stylable = new Stylable(testConfig.rootPath, fs as any, ()=>({}));
-        build({
-            rootDir: innerLibPath, 
-            srcDir: testConfig.contentRelativePath, 
-            outDir: 'lib',
             extension: '.st.css', 
             fs: fs as any, 
-            stylable
+            stylable,
+            outDir: 'lib', 
+            srcDir: '.', 
+            rootDir: path.resolve('/')
         });
 
-        testJsEntry('app.js', fs, (bundle, css, memfs) => {
-            const mainModule = bundle.main.default;
-            const compModule = bundle['my-lib/lib/comp'].comp.default
-            const subModule = bundle['my-lib/lib/comp']["components/sub"].sub.default
+        [
+            '/lib/main.st.css', 
+            '/lib/main.st.css.js',
+            '/lib/components/comp.st.css',
+            '/lib/components/comp.st.css.js'
+        ].forEach((p)=>{
+            expect(fs.existsSync(path.resolve(p)), p).to.equal(true)
+        });
 
-            const cssAst = postcss.parse(css);
-            testRule(subModule, cssAst, '.title', 'color', 'red');
-            testComplexRule(cssAst, [{ m: compModule, cls: '.sub-comp' }, { m: subModule, cls: '.root' }], 'color', 'blue');
-            testComplexRule(cssAst, [{ m: mainModule, cls: '.gaga' }, { m: compModule, cls: '.root' }], 'background', 'blue');
-            testComplexRule(cssAst, [{ m: mainModule, cls: '.gaga' }, { m: compModule, cls: '.sub-comp' }], 'outline', 'pink');
+    });
+
+    //TODO: add content tests
+
+})
+
+describe("lib usage with loader", () => {
+
+    it('should bundle 3rd party stylable project (project contain .st.css source files)', function () {
 
 
+        const { run, resolve, evalCssJSModule } = webpackTest({
+            files: {
+                '/app.js': jsThatImports(['./main.st.css', 'my-lib/comp.js']),
+                '/main.st.css': `
+                    :import{
+                        -st-from: "my-lib/comp.st.css";
+                        -st-default:Comp;
+                    }
+                    .myClass{
+                        -st-extends:Comp;
+                        background:blue;
+                    }
+                    .myClass::sub-comp{
+                        outline:pink;
+                    }
+                `,
+                /* my-lib */
+                '/node_modules/my-lib/package.json': `
+                    {
+                        "name":"my-lib"
+                    }
+                `,
+                '/node_modules/my-lib/comp.js': jsThatImports(['./comp.st.css', './components/sub.js']),
+                '/node_modules/my-lib/comp.st.css': `
+                    :import{
+                        -st-from:"./components/sub.st.css";
+                        -st-default:Sub;
+                    }
+                    .sub-comp{
+                        -st-extends:Sub;
+                        color:blue;
+                    }
+                `,
+                '/node_modules/my-lib/components/sub.js': jsThatImports(['./sub.st.css']),
+                '/node_modules/my-lib/components/sub.st.css': `
+                    .title{
+                        color:red;
+                        background: url("./asset.svg");
+                    }
+                `,
+                '/node_modules/my-lib/components/asset.svg': `
+                    <svg height="100" width="100">
+                        <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
+                    </svg>
+                `
 
-            expect(css).to.not.include('url("./asset.svg")')
-            const match = css.split(assetRegEx);
-            expect(match!.length, 'converted url count').to.equal(3);
-            expect(memfs.readFileSync(path.join(getDistPath(testConfig), match![1])).toString()).to.eql(libFiles['components/asset.svg']);
-            done()
-        }, testConfig, { ...StylableIntegrationDefaults })
+            },
+            config: {
+                entry: './app.js'
+            }
+        });
+
+        return run().then(({ stats }) => {
+            const rawSource = stats.compilation.assets['main.css'];
+            const bundleFiles = resolve([
+                "/main.st.css", 
+                "/node_modules/my-lib/comp.st.css", 
+                "/node_modules/my-lib/components/sub.st.css"
+            ]);
+            expect(rawSource.fromFiles).to.eql(bundleFiles);
+
+            const cssJSModules = bundleFiles
+            .map((resource)=>stats.compilation.modules.find((m:any)=>m.resource === resource))
+            .map((normalModule)=>evalCssJSModule(normalModule.originalSource().source()).default)
+
+            expect(Object.keys(cssJSModules[0])).to.contain('myClass');
+            expect(Object.keys(cssJSModules[0])).to.contain('root');
+            expect(Object.keys(cssJSModules[0])).to.contain('$stylesheet');
+            
+            expect(rawSource.source()).to.not.include('/asset.svg')
+        });
+
     });
 })
