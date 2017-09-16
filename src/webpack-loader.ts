@@ -16,7 +16,9 @@ export function loader(this: StylableLoaderContext, source: string) {
     if (this.cacheable) { this.cacheable() };
 
     const stylable = this.stylable;
-
+    if (!stylable) {
+        throw new Error('Stylable Loader: Stylable plugin must be provided in the webpack configuration');
+    }
     return cssLoader.call(this, source).then((s: any) => {
 
         try {

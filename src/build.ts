@@ -2,7 +2,6 @@ import { createCSSModuleString, getUsedAssets } from "./stylable-transform";
 import { Stylable } from "stylable";
 import { dirname, join, resolve } from "path";
 import { fsLike } from "./types";
-import { StylableIntegrationDefaults } from "./options";
 import { ensureAssets, ensureDirectory } from "./assetor";
 
 export interface BuildOptions {
@@ -32,8 +31,7 @@ export function build(buildOptions: BuildOptions) {
         const fileDirectory = dirname(filePath);
         const outDirPath = dirname(outPath);
         const { exports, meta } = stylable.transform(content, filePath);
-        const code = tryRun(() => createCSSModuleString(exports, meta, { ...StylableIntegrationDefaults, injectFileCss: true }), 'Transform Error');
-        // const { code, sheet } = tryRun(() => transformStylableCSS(content, filePath, resolver, { ...StylableIntegrationDefaults, injectFileCss: true }), 'Transform Error');
+        const code = tryRun(() => createCSSModuleString(exports, meta, { injectFileCss: true }), 'Transform Error');
         if(diagnostics && meta.diagnostics.reports.length){
             diagnosticsMsg.push(`Errors in file: ${filePath}`);
             meta.diagnostics.reports.forEach((report)=>{

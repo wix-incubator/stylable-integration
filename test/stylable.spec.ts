@@ -1,16 +1,7 @@
 import { expect } from 'chai';
 import * as postcss from 'postcss';
 const _eval = require('node-eval');
-import { hasNoCls, jsThatImports, testJsEntries, testJsEntry, testRule, TestConfig, webpackTest, matchRules, getAssetSource, evalCssJSModule } from '../test-kit/index';
-
-const testConfig: TestConfig = {
-    rootPath: process.cwd(),
-    distRelativePath: 'dist',
-    fileNameFormat: '[name].js',
-    assetsRelativePath: 'assets',
-    contentRelativePath: 'sources',
-    assetsServerUri: 'serve-assets'
-}
+import { jsThatImports, webpackTest, matchRules, getAssetSource, evalCssJSModule } from '../test-kit/index';
 
 
 describe('plugin', function () {
@@ -154,66 +145,86 @@ describe('plugin', function () {
     });
 
 
-    xit('TODO: revisit - should include css in modules in injectFileCss mode', function (done) {
-        const files = {
-            'home.js': jsThatImports(['./home.st.css']),
-            'home.st.css': `
-                .gaga{
-                    background:green;
-                }
+    // xit('TODO: revisit - should include css in modules in injectFileCss mode', function (done) {
+    
+    // const testConfig: TestConfig = {
+    //     rootPath: process.cwd(),
+    //     distRelativePath: 'dist',
+    //     fileNameFormat: '[name].js',
+    //     assetsRelativePath: 'assets',
+    //     contentRelativePath: 'sources',
+    //     assetsServerUri: 'serve-assets'
+    // }
 
-            `,
-            'about.js': jsThatImports(['./about.st.css']),
-            'about.st.css': `
-                .baga{
-                    background:red;
-                }
+    //     const files = {
+    //         'home.js': jsThatImports(['./home.st.css']),
+    //         'home.st.css': `
+    //             .gaga{
+    //                 background:green;
+    //             }
 
-            `
-        }
-        const entries = ['home', 'about'];
-        testJsEntries(entries, files, (bundles) => {
-            const homeBundle = bundles[0].home.default;
-            const homeBundleTargetAst = postcss.parse(homeBundle.targetCss);
-            testRule(homeBundle, homeBundleTargetAst, '.gaga', 'background', 'green');
+    //         `,
+    //         'about.js': jsThatImports(['./about.st.css']),
+    //         'about.st.css': `
+    //             .baga{
+    //                 background:red;
+    //             }
 
-
-            const aboutBundle = bundles[1].about.default;
-            const aboutBundleTargetAst = postcss.parse(aboutBundle.targetCss);
-            testRule(aboutBundle, aboutBundleTargetAst, '.baga', 'background', 'red');
-            done();
-        }, testConfig, { injectFileCss: true });
-    });
-
+    //         `
+    //     }
+    //     const entries = ['home', 'about'];
+    //     testJsEntries(entries, files, (bundles) => {
+    //         const homeBundle = bundles[0].home.default;
+    //         const homeBundleTargetAst = postcss.parse(homeBundle.targetCss);
+    //         testRule(homeBundle, homeBundleTargetAst, '.gaga', 'background', 'green');
 
 
-    xit('TODO: revisit - should not keep output css across multiple runs', function (done) {
-        const files = {
-            'main.js': jsThatImports(['./main.st.css']),
-            'main.st.css': `
-                .gaga{
-                    color:red;
-                }
-            `,
-        }
-        const files2 = {
-            'main.js': jsThatImports(['./zagzag.st.css']),
-            'zagzag.st.css': `
-                .baga{
-                    color:red;
-                }
-            `,
-        }
-        testJsEntry('main.js', files, (bundle, css) => {
-            const cssAst = postcss.parse(css);
-            const oldCssModule = bundle.main.default;
-            testRule(oldCssModule, cssAst, '.gaga', 'color', 'red');
-            testJsEntry('main.js', files2, (_bundle, css) => {
-                hasNoCls(css, 'gaga');
-                done();
-            }, testConfig);
-        }, testConfig);
-    });
+    //         const aboutBundle = bundles[1].about.default;
+    //         const aboutBundleTargetAst = postcss.parse(aboutBundle.targetCss);
+    //         testRule(aboutBundle, aboutBundleTargetAst, '.baga', 'background', 'red');
+    //         done();
+    //     }, testConfig, { injectFileCss: true });
+    // });
+
+
+
+    // xit('TODO: revisit - should not keep output css across multiple runs', function (done) {
+
+    // const testConfig: TestConfig = {
+    //     rootPath: process.cwd(),
+    //     distRelativePath: 'dist',
+    //     fileNameFormat: '[name].js',
+    //     assetsRelativePath: 'assets',
+    //     contentRelativePath: 'sources',
+    //     assetsServerUri: 'serve-assets'
+    // }
+        
+    //     const files = {
+    //         'main.js': jsThatImports(['./main.st.css']),
+    //         'main.st.css': `
+    //             .gaga{
+    //                 color:red;
+    //             }
+    //         `,
+    //     }
+    //     const files2 = {
+    //         'main.js': jsThatImports(['./zagzag.st.css']),
+    //         'zagzag.st.css': `
+    //             .baga{
+    //                 color:red;
+    //             }
+    //         `,
+    //     }
+    //     testJsEntry('main.js', files, (bundle, css) => {
+    //         const cssAst = postcss.parse(css);
+    //         const oldCssModule = bundle.main.default;
+    //         testRule(oldCssModule, cssAst, '.gaga', 'color', 'red');
+    //         testJsEntry('main.js', files2, (_bundle, css) => {
+    //             hasNoCls(css, 'gaga');
+    //             done();
+    //         }, testConfig);
+    //     }, testConfig);
+    // });
 
 
     it('should order bundle from js imports order', function () {
@@ -333,39 +344,39 @@ describe('plugin', function () {
 
     });
 
-    xit('should resolve variables', function (done) {
-        const files = {
-            'main.js': jsThatImports(['./child.js', './main.st.css']),
-            'child.js': jsThatImports(['./child.st.css']),
-            'main.st.css': `
-                :import{
-                    -st-from:'./child.st.css';
-                    -st-named:zag;
-                }
-                :vars{
-                    zig:white;
-                }
-                .gaga{
-                    color:value(zag);
-                    background:value(zig);
-                }
-            `,
-            'child.st.css': `
-                :vars{
-                    zag:red;
-                }
+    // xit('should resolve variables', function (done) {
+    //     const files = {
+    //         'main.js': jsThatImports(['./child.js', './main.st.css']),
+    //         'child.js': jsThatImports(['./child.st.css']),
+    //         'main.st.css': `
+    //             :import{
+    //                 -st-from:'./child.st.css';
+    //                 -st-named:zag;
+    //             }
+    //             :vars{
+    //                 zig:white;
+    //             }
+    //             .gaga{
+    //                 color:value(zag);
+    //                 background:value(zig);
+    //             }
+    //         `,
+    //         'child.st.css': `
+    //             :vars{
+    //                 zag:red;
+    //             }
 
-            `
-        }
-        testJsEntry('main.js', files, (bundle, css) => {
-            const cssAst = postcss.parse(css);
-            const cssModule = bundle.main.default;
+    //         `
+    //     }
+    //     testJsEntry('main.js', files, (bundle, css) => {
+    //         const cssAst = postcss.parse(css);
+    //         const cssModule = bundle.main.default;
 
-            testRule(cssModule, cssAst, '.gaga', 'background', 'white');
-            testRule(cssModule, cssAst, '.gaga', 'color', 'red');
-            done();
-        }, testConfig);
-    });
+    //         testRule(cssModule, cssAst, '.gaga', 'background', 'white');
+    //         testRule(cssModule, cssAst, '.gaga', 'color', 'red');
+    //         done();
+    //     }, testConfig);
+    // });
 
     it('should move imported assets to output path and replace css with the asset new location', function () {
         const { run, fs } = webpackTest({
