@@ -1,17 +1,16 @@
 import { expect } from 'chai';
 import { attachHook } from "../src/require-hook";
-import {StylableIntegrationDefaults} from '../src/options';
 
 
 describe('require-hook', function () {
 
     it('load stylable css with require', function () {
 
-        attachHook({ extension: '.css' ,...StylableIntegrationDefaults});
+        attachHook({ extension: '.css'});
 
         const res = require('./fixtures/test-main.sb.css');
 
-        expect(res.default.class).to.equal(res.default.$stylesheet.namespace + '💠class')
+        expect(res.default.class).to.equal(res.default.$stylesheet.namespace + '--class')
 
     });
 
@@ -24,13 +23,13 @@ describe('require-hook', function () {
                     resCss = code;
                 }
                 return code;
-            }
-            ,...StylableIntegrationDefaults
+            },
+            nsDelimiter: '----'
         });
 
         const res = require('./fixtures/import-relative-local.sb.css');
 
-        expect(res.default.class).to.equal(res.default.$stylesheet.namespace+'💠class')
+        expect(res.default.class).to.equal(res.default.$stylesheet.namespace+'----class')
         expect(resCss).to.match(new RegExp(`[data-${res.default.$stylesheet.namespace}-mystate]`));
     });
 
@@ -45,8 +44,7 @@ describe('require-hook', function () {
                     expect(code).to.match(/color\s*:\s*#333/)
                 }
                 return code;
-            },
-            ...StylableIntegrationDefaults
+            }
         });
 
         require('./fixtures/vars.sb.css');
@@ -64,7 +62,6 @@ describe('require-hook', function () {
                 }
                 return code;
             }
-            ,...StylableIntegrationDefaults
         });
 
         require('./fixtures/imported-vars.sb.css');

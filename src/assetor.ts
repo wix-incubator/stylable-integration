@@ -26,3 +26,17 @@ export function ensureAssets(projectAssetsMap:{[key:string]:string}, fs:fsLike){
         }
     })
 }
+
+
+//TODO: remove usage in favor of css-loader
+const relativeImportAsset = /url\s*\(\s*["']?([^:]*?)["']?\s*\)/gm;
+export function getUsedAssets(source: string): string[] {
+    const splitSource = source.split(relativeImportAsset);
+    const res: string[] = [];
+    splitSource.forEach((chunk, idx) => {
+        if (idx % 2) {
+            res.push(chunk);
+        }
+    })
+    return res;
+}

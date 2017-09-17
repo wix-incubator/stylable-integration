@@ -1,77 +1,34 @@
-import { StylableMeta } from 'stylable';
 const deindent = require('deindent');
-import { StylableIntegrationDefaults, StylableIntegrationOptions } from './options';
+import { StylableMeta } from 'stylable';
 
 const runtimePath = 'stylable/runtime';
 
-export function createCSSModuleString(locals: any, meta: StylableMeta, options: StylableIntegrationOptions = StylableIntegrationDefaults): string {
-    
-    locals = JSON.stringify(locals);
+export function createCSSModuleString(locals: { [key: string]: string } & object, meta: StylableMeta, options: { injectFileCss: boolean }): string {
+
+    const localsExports = JSON.stringify(locals);
     const root = JSON.stringify(meta.root);
     const namespace = JSON.stringify(meta.namespace);
 
-    // ${imports.join('\n')}
-    let code: string = '';
-    if (options.injectFileCss) {
-        const css = JSON.stringify(meta.outputAst!.toString());
+    const imports: string[] = meta.imports.map((i) => justImport(i.fromRelative));
 
-        code = deindent`
+    let code: string = '';
+    const css = options.injectFileCss ? JSON.stringify(meta.outputAst!.toString()) : 'null';
+
+    code = deindent`
         Object.defineProperty(exports, "__esModule", { value: true });
+        ${imports.join('\n')}
         module.exports.default = require("${runtimePath}").create(
             ${root},
             ${namespace},
-            ${locals},
+            ${localsExports},
             ${css},
             module.id
         );
-        `;
-
-    } else {
-        code = deindent`
-        Object.defineProperty(exports, "__esModule", { value: true });
-        module.exports.default = module.exports.locals = require("${runtimePath}").create(
-            ${root},
-            ${namespace},
-            ${locals},
-            null,
-            module.id
-        );
-        `;
-    }
+    `;
 
     return code;
 }
 
-
-
-const relativeImportAsset = /url\s*\(\s*["']?([^:]*?)["']?\s*\)/gm;
-
-
-export function getUsedAssets(source: string): string[] {
-    const splitSource = source.split(relativeImportAsset);
-    const res: string[] = [];
-    splitSource.forEach((chunk, idx) => {
-        if (idx % 2) {
-            res.push(chunk);
-        }
-    })
-    return res;
-}
-
-export async function replaceAssetsAsync(source: string, resolveAssetAsync: (relativeUrl: string) => Promise<string>): Promise<string> {
-    const splitSource = source.split(relativeImportAsset);
-    return Promise.all(splitSource.map((srcChunk, idx) => {
-        if (idx % 2) {
-            return resolveAssetAsync(srcChunk).then((resolved) => `url("${resolved}")`);
-        } else {
-            return srcChunk;
-        }
-    })).then((modifiedSplitSource) => {
-        return modifiedSplitSource.join('');
-    })
-
-}
-
-export function justImport(path: string) {
+function justImport(path: string) {
     return `require("${path}");`;
 }
