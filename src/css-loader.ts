@@ -11,16 +11,16 @@ export interface Results {
     resolved: string[]
 }
 
-export function cssLoader(this: webpack.loader.LoaderContext, source: string): Promise<Results> {
+export function cssAssetsLoader(ctx: webpack.loader.LoaderContext, source: string): Promise<Results> {
 
-    const css = safeParse(source, { from: this.resourcePath })
+    const css = safeParse(source, { from: ctx.resourcePath })
 
     const assets: string[] = [];
     const loading: Promise<string>[] = [];
 
     findUrls(css, (url: string) => {
         if (url.replace(/\s/g, '').length && !/^#/.test(url) && loaderUtils.isUrlRequest(url, '/')) {
-            loading[loading.length] = loadAsset(this, url);
+            loading[loading.length] = loadAsset(ctx, url);
             return assets[assets.length] = url;
         }
         return url;

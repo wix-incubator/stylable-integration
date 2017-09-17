@@ -4,7 +4,7 @@ import { StylableIntegrationDefaults, StylableIntegrationOptions } from './optio
 // import loaderUtils = require('loader-utils');
 import * as webpack from 'webpack';
 import { RawSource } from 'webpack-sources';
-import { cssLoader } from './css-loader';
+import { cssAssetsLoader } from './css-loader';
 const deindent = require('deindent');
 
 export interface StylableLoaderContext extends webpack.loader.LoaderContext {
@@ -19,8 +19,7 @@ export function loader(this: StylableLoaderContext, source: string) {
     if (!stylable) {
         throw new Error('Stylable Loader: Stylable plugin must be provided in the webpack configuration');
     }
-    return cssLoader.call(this, source).then((s: any) => {
-
+    return cssAssetsLoader(this, source).then((s) => {
         try {
             const { meta, exports } = stylable.transform(s.source, this.resourcePath);
             return createCSSModuleString(exports, meta, { injectFileCss: false });
@@ -114,14 +113,12 @@ export class Plugin {
         each((m: any) => { modules[modules.length] = m });
 
         modules.sort((a, b) => b.index2 - a.index2).forEach((_module: any) => {
-            const resource = _module.resource;
-            if (resource && resource.match(stCssMatcher)) {
+            const resource = this.getStylableResource(_module, stCssMatcher);
+            if (resource) {
 
-                let inThisChunkAndImportedFromJS = false;
-
-                _module.reasons.forEach((reason: any) => {
+                let inThisChunkAndImportedFromJS = _module.reasons.some((reason: any) => {
                     if (hasChunk(reason, chunk) && reason.module.resource && !reason.module.resource.match(stCssMatcher)) {
-                        inThisChunkAndImportedFromJS = true;
+                        return true
                     }
                 });
 
@@ -133,6 +130,10 @@ export class Plugin {
         });
 
         return usedSheetPaths//.reverse();
+    }
+    getStylableResource(_module: any, resourceMatcher: RegExp): string | null {
+        const resource = _module.resource;
+        return resource && resource.match(resourceMatcher) ? resource : null
     }
     injectBundle(id: string, css: string) {
         id = JSON.stringify(id);
@@ -176,3 +177,4 @@ function hasChunk(reason: any, chunk: any) {
     }
     return false;
 }
+

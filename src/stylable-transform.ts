@@ -29,21 +29,6 @@ export function createCSSModuleString(locals: { [key: string]: string } & object
     return code;
 }
 
-
-//TODO: remove usage in favor of css-loader
-export const relativeImportAsset = /url\s*\(\s*["']?([^:]*?)["']?\s*\)/gm;
-export function getUsedAssets(source: string): string[] {
-    const splitSource = source.split(relativeImportAsset);
-    const res: string[] = [];
-    splitSource.forEach((chunk, idx) => {
-        if (idx % 2) {
-            res.push(chunk);
-        }
-    })
-    return res;
-}
-
-
 function justImport(path: string) {
     return `require("${path}");`;
 }

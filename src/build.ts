@@ -1,8 +1,8 @@
-import { createCSSModuleString, getUsedAssets } from "./stylable-transform";
+import { createCSSModuleString } from "./stylable-transform";
 import { Stylable } from "stylable";
 import { dirname, join, resolve } from "path";
 import { fsLike } from "./types";
-import { ensureAssets, ensureDirectory } from "./assetor";
+import { ensureAssets, ensureDirectory, getUsedAssets } from "./assetor";
 
 export interface BuildOptions {
     extension: string;
