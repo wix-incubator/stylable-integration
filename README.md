@@ -46,6 +46,19 @@ const transformationOptions = { injectBundleCss: true };
                 test: /\.st\.css$/,
                 loader: "stylable-integration/webpack-loader",
                 options: transformationOptions
+            },
+            // in order to load css assets from bundle we need the url loader configured.
+            // example configuration
+            {
+                test: /\.(png|jpg|gif)$/,
+                use: [
+                    {
+                        loader: 'url-loader',
+                        options: {
+                            limit: 8192
+                        }
+                    }
+                ]
             }
         ]
     },
@@ -55,6 +68,7 @@ const transformationOptions = { injectBundleCss: true };
 }
 
 ```
+
 
 The transformation options is an object, with the following default values:
 ```ts
