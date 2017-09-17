@@ -4,14 +4,14 @@ import * as postcss from 'postcss';
 const Tokenizer = require('css-selector-tokenizer');
 const loaderUtils = require('loader-utils');
 
-export interface Results {
+export interface CssAssetsLoaderResults {
     source: string,
     css: postcss.Root,
     assets: string[],
     resolved: string[]
 }
 
-export function cssAssetsLoader(ctx: webpack.loader.LoaderContext, source: string): Promise<Results> {
+export function cssAssetsLoader(ctx: webpack.loader.LoaderContext, source: string): Promise<CssAssetsLoaderResults> {
 
     const css = safeParse(source, { from: ctx.resourcePath })
 

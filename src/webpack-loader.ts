@@ -11,24 +11,21 @@ export interface StylableLoaderContext extends webpack.loader.LoaderContext {
     stylable: Stylable
 }
 
-export function loader(this: StylableLoaderContext, source: string) {
-    this.addDependency('stylable');
+export async function loader(this: StylableLoaderContext, source: string) {
     if (this.cacheable) { this.cacheable() };
 
     const stylable = this.stylable;
     if (!stylable) {
         throw new Error('Stylable Loader: Stylable plugin must be provided in the webpack configuration');
     }
-    return cssAssetsLoader(this, source).then((s) => {
-        try {
-            const { meta, exports } = stylable.transform(s.source, this.resourcePath);
-            return createCSSModuleString(exports, meta, { injectFileCss: false });
-        } catch (err) {
-            console.error(err.message, err.stack);
-            return `throw new Error('Cannot load module: ${JSON.stringify(this.resourcePath)}')`
-        }
-    });
-
+    const result = await cssAssetsLoader(this, source);
+    try {
+        const { meta, exports } = stylable.transform(result.source, this.resourcePath);
+        return createCSSModuleString(exports, meta, { injectFileCss: false });
+    } catch (err) {
+        console.error(err.message, err.stack);
+        return `throw new Error('Cannot load module: ${JSON.stringify(this.resourcePath)}')`
+    }
 };
 
 export class Plugin {
