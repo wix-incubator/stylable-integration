@@ -13,8 +13,7 @@
     "webpack": "webpack",
     "pretest": "yarn build",
     "test": "mocha ./dist/test/**/*.spec.js",
-    "prepublish": "npm run build",
-    "start": "webpack-dev-server"
+    "prepublish": "npm run build"
   },
   "peerDependencies": {
     "stylable": ">=4.0.14"
