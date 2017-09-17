@@ -60,10 +60,14 @@ export class Plugin {
                 loaderContext.stylable = stylable;
             });
 
-            compilation.plugin('optimize-tree', (chunks: any[], _: any, done: Function) => {
+            compilation.plugin('after-optimize-chunk-ids', (chunks: any[]) => {
 
                 chunks.forEach((chunk: any) => {
+                    if (!chunk.name && !chunk.id) {
+                        return; //skip emit css bundle.
+                    }
                     const pathContext = { chunk, hash: compilation.hash };
+
                     const cssBundleFilename = compilation.getPath(this.options.filename, pathContext);
 
                     const files = this.getSortedStylableModulesList(chunk);
@@ -73,7 +77,6 @@ export class Plugin {
                     compilation.assets[cssBundleFilename].fromFiles = files;
                 });
 
-                done();
             });
 
             if (this.options.injectBundleCss) {
