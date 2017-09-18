@@ -63,7 +63,7 @@ export class Plugin {
             compilation.plugin('after-optimize-chunk-ids', (chunks: any[]) => {
 
                 chunks.forEach((chunk: any) => {
-                    if (!chunk.name && !chunk.id) {
+                    if (chunk.name === null && chunk.id === null) {
                         return; //skip emit css bundle.
                     }
                     const pathContext = { chunk, hash: compilation.hash };
