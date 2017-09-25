@@ -3,8 +3,11 @@ import { Stylable, Bundler } from 'stylable';
 import { StylableIntegrationDefaults, StylableIntegrationOptions } from './options';
 // import loaderUtils = require('loader-utils');
 import * as webpack from 'webpack';
-import { RawSource } from 'webpack-sources';
+
+
+import { RawSource, ConcatSource } from 'webpack-sources';
 import { cssAssetsLoader } from './css-loader';
+import { StylableBundleInjector } from './stylable-bundle-inject';
 const deindent = require('deindent');
 
 export interface StylableLoaderContext extends webpack.loader.LoaderContext {
@@ -75,21 +78,55 @@ export class Plugin {
 
                     compilation.assets[cssBundleFilename] = new RawSource(cssBundle);
                     compilation.assets[cssBundleFilename].fromFiles = files;
+
+                    if (this.options.injectBundleCss) {
+                        try {
+                            chunk.addModule(new StylableBundleInjector(cssBundleFilename, (compiler as any).parser, new RawSource(this.createInjectBundleCode(cssBundleFilename, cssBundle))));
+                        } catch (e) {}
+                    }
                 });
 
             });
 
             if (this.options.injectBundleCss) {
-                compilation.mainTemplate.plugin('startup', (source: string, chunk: any, _hash: string) => {
-                    const pathContext = { chunk, hash: compilation.hash };
-                    const bundleCssName = compilation.getPath(this.options.filename, pathContext);
-                    const code = this.injectBundle(bundleCssName, compilation.assets[bundleCssName].source());
-                    return code + source;
-                });
+                this.setupMainTemplatePlugin(compilation);
+                this.setupHotTemplatePlugin(compilation);
             }
 
         });
 
+    }
+
+    setupMainTemplatePlugin(compilation: any) {
+        compilation.mainTemplate.plugin('startup', (source: string, chunk: any, _hash: string) => {
+            const pathContext = { chunk, hash: compilation.hash };
+            const bundleCssName = compilation.getPath(this.options.filename, pathContext);
+            const code = this.createInjectBundleCode(bundleCssName, compilation.assets[bundleCssName].source());
+            return code + source;
+        });
+    }
+    setupHotTemplatePlugin(compilation: any) {
+        compilation.hotUpdateChunkTemplate.plugin("render", (modulesSource: string, modules: any[]/*, removedModules, hash, id*/) => {
+            const source = new ConcatSource();
+            const map: any = {};
+
+            modules.forEach((_module) => {
+                _module.chunks && _module.chunks.forEach((c: any) => map[c.id] = c);
+            });
+
+            for (const chunkId in map) {
+                const chunk = map[chunkId];
+                const pathContext = { chunk, hash: compilation.hash };
+                const bundleCssName = compilation.getPath(this.options.filename, pathContext);
+                if (compilation.assets[bundleCssName]) {
+                    source.add(this.createInjectBundleCode(bundleCssName, compilation.assets[bundleCssName].source()));
+                }
+            }
+
+            source.add(modulesSource);
+
+            return source;
+        });
     }
     bundleCSS(compilation: any, bundler: Bundler, bundleFiles: string[]) {
         let resultCssBundle = '';
@@ -135,7 +172,7 @@ export class Plugin {
         const resource = _module.resource;
         return resource && resource.match(resourceMatcher) ? resource : null
     }
-    injectBundle(id: string, css: string) {
+    createInjectBundleCode(id: string, css: string) {
         id = JSON.stringify(id);
         css = JSON.stringify(css);
         return deindent`

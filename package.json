@@ -13,7 +13,8 @@
     "webpack": "webpack",
     "pretest": "yarn build",
     "test": "mocha ./dist/test/**/*.spec.js",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "ppub": "npm version patch; npm publish; git push; git push --tags;"
   },
   "peerDependencies": {
     "stylable": ">=4.0.14"
