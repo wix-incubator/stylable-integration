@@ -67,7 +67,6 @@ describe('webpack plugin', function () {
 
     });
 
-
     it('plain plugin', function (done) {
 
         const fs = createFS({
@@ -104,8 +103,6 @@ describe('webpack plugin', function () {
         var watching = compiler.watch({}, (_err, stats) => tests.shift()!(stats));
 
     });
-
-
 
     it('with css-loader', function (done) {
 
@@ -162,5 +159,206 @@ describe('webpack plugin', function () {
 
     });
 
+    it('dynamic loading', function (done) {
+
+        const fs = createFS({
+            '/entry.js': `
+                module.exports = {
+                    style: require('./style.st.css'),
+                    loadDynamic(){
+                        return import('./dynamic.js');
+                    }
+                }
+                    `,
+            '/dynamic.js': `
+                module.exports = {
+                    'dynamic-style': require('./dynamic-style.st.css')                            
+                }
+                    `,
+            '/style.st.css': `
+                .root {
+                    color: red;
+                }
+            `,
+            '/dynamic-style.st.css': `
+                .root {
+                    color: red;
+                }
+                    `
+        });
+
+        const compiler = createWebpackCompiler({
+            entry: './entry.js'
+        }, fs, { injectBundleCss: true });
+
+
+        compiler.run((_err, stats: any) => {
+            expect(stats.compilation.assets['main.css'].fromFiles).to.eql([
+                path.resolve("/dynamic-style.st.css"), 
+                path.resolve("/style.st.css")
+            ]);
+            done()
+        });
+
+    });
+
+    it('dynamic loading (order from css)', function (done) {
+
+        const fs = createFS({
+            '/entry.js': `
+                module.exports = {
+                    style: require('./style.st.css'),
+                    loadDynamic(){
+                        return import('./dynamic.js');
+                    }
+                }
+                            `,
+            '/dynamic.js': `
+                module.exports = {
+                    'dynamic-style': require('./dynamic-style.st.css')                            
+                }
+                            `,
+            '/style.st.css': `
+                :import {
+                    -st-from: "./dynamic-style.st.css";
+                    -st-default: Dynamic;
+                }
+                .root {
+                    color: red;
+                }
+                            `,
+            '/dynamic-style.st.css': `
+                .root {
+                    color: red;
+                }
+                            `
+        });
+
+        const compiler = createWebpackCompiler({
+            entry: './entry.js'
+        }, fs, { injectBundleCss: true });
+
+
+        compiler.run((_err, stats: any) => {
+
+            expect(stats.compilation.assets['main.css'].fromFiles).to.eql([
+                path.resolve("/style.st.css"),
+                path.resolve("/dynamic-style.st.css")
+            ]);
+            done()
+        });
+
+    });
+
+    it('dynamic loading (order from css check duplicates)', function (done) {
+        
+        const fs = createFS({
+            '/entry.js': `
+                module.exports = {
+                    style: require('./style.st.css'),
+                    style: require('./dynamic-style.st.css'),
+                    loadDynamic(){
+                        return import('./dynamic.js');
+                    }
+                }
+                            `,
+            '/dynamic.js': `
+                module.exports = {
+                    'dynamic-style': require('./dynamic-style.st.css')                            
+                }
+                            `,
+            '/style.st.css': `
+                :import {
+                    -st-from: "./dynamic-style.st.css";
+                    -st-default: Dynamic;
+                }
+                .root {
+                    color: red;
+                }
+                            `,
+            '/dynamic-style.st.css': `
+                .root {
+                    color: red;
+                }
+                            `
+        });
+
+        const compiler = createWebpackCompiler({
+            entry: './entry.js'
+        }, fs, { injectBundleCss: true });
+
+
+        compiler.run((_err, stats: any) => {
+            expect(stats.compilation.assets['main.css'].fromFiles).to.eql([
+                path.resolve("/style.st.css"),
+                path.resolve("/dynamic-style.st.css")
+            ]);
+            done()
+        });
+
+    });
+
+    
+    it('common style between entry and dynamic', function (done) {
+        
+        const fs = createFS({
+            '/entry.js': `
+                module.exports = {
+                    style: require('./style.st.css'),
+                    shared: require('./shared-style.st.css'),
+                    loadDynamic(){
+                        return import('./dynamic.js');
+                    }
+                }
+                            `,
+            '/dynamic.js': `
+                module.exports = {
+                    'dynamic-style': require('./dynamic-style.st.css')                            
+                }
+                            `,
+            '/style.st.css': `
+                :import {
+                    -st-from: "./dynamic-style.st.css";
+                    -st-default: Dynamic;
+                }
+                :import {
+                    -st-from: "./shared-style.st.css";
+                    -st-default: Shared;
+                }
+                .root {
+                    color: red;
+                }
+                            `,
+            '/dynamic-style.st.css': `
+                :import {
+                    -st-from: "./shared-style.st.css";
+                    -st-default: Shared;
+                }
+                .root {
+                    color: red;
+                }
+            `,
+            '/shared-style.st.css': `
+                .root {
+                    color: red;
+                }
+        `
+        });
+
+        const compiler = createWebpackCompiler({
+            entry: './entry.js'
+        }, fs, { injectBundleCss: true });
+
+
+        compiler.run((_err, stats: any) => {
+            expect(stats.compilation.assets['main.css'].fromFiles).to.eql([
+                path.resolve("/style.st.css"),
+                path.resolve("/dynamic-style.st.css"),
+                path.resolve("/shared-style.st.css")
+            ]);
+            done()
+        });
+
+    });
 
 });

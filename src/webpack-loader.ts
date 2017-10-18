@@ -12,6 +12,7 @@ const deindent = require('deindent');
 
 export interface StylableLoaderContext extends webpack.loader.LoaderContext {
     stylable: Stylable
+    usingStylable: Function
 }
 
 export async function loader(this: StylableLoaderContext, source: string) {
@@ -21,6 +22,9 @@ export async function loader(this: StylableLoaderContext, source: string) {
     if (!stylable) {
         throw new Error('Stylable Loader: Stylable plugin must be provided in the webpack configuration');
     }
+
+    this.usingStylable();
+
     const result = await cssAssetsLoader(this, source);
     try {
         const { meta, exports } = stylable.transform(result.source, this.resourcePath);
@@ -56,17 +60,24 @@ export class Plugin {
         let bundler: Bundler;
 
         compiler.plugin('this-compilation', (compilation) => {
+            let containsStylableCSS = false;
+            let usingStylable = ()=> containsStylableCSS = true;
             stylable = stylable || this.createStylable(compiler);
             bundler = bundler || stylable.createBundler();
 
+            
+
             compilation.plugin('normal-module-loader', (loaderContext: StylableLoaderContext) => {
                 loaderContext.stylable = stylable;
+                loaderContext.usingStylable = usingStylable;
             });
-
+            
             compilation.plugin('after-optimize-chunk-ids', (chunks: any[]) => {
-
+                if(!containsStylableCSS){
+                    return; //skip emit css bundle.
+                }
                 chunks.forEach((chunk: any) => {
-                    if (chunk.name === null && chunk.id === null) {
+                    if (chunk.name === null && chunk.id === null || chunk.parents.length > 0) {
                         return; //skip emit css bundle.
                     }
                     const pathContext = { chunk, hash: compilation.hash };
@@ -79,6 +90,7 @@ export class Plugin {
                     compilation.assets[cssBundleFilename] = new RawSource(cssBundle);
                     compilation.assets[cssBundleFilename].fromFiles = files;
 
+                    // chunk.entryModule.fileDependencies.push(...files)
                     if (this.options.injectBundleCss) {
                         try {
                             chunk.addModule(new StylableBundleInjector(cssBundleFilename, (compiler as any).parser, new RawSource(this.createInjectBundleCode(cssBundleFilename, cssBundle))));
@@ -88,7 +100,7 @@ export class Plugin {
 
             });
 
-            if (this.options.injectBundleCss) {
+            if (this.options.injectBundleCss && containsStylableCSS) {
                 this.setupMainTemplatePlugin(compilation);
                 this.setupHotTemplatePlugin(compilation);
             }
@@ -96,7 +108,6 @@ export class Plugin {
         });
 
     }
-
     setupMainTemplatePlugin(compilation: any) {
         compilation.mainTemplate.plugin('startup', (source: string, chunk: any, _hash: string) => {
             const pathContext = { chunk, hash: compilation.hash };
@@ -141,8 +152,12 @@ export class Plugin {
         }
         return resultCssBundle;
     }
-    getSortedStylableModulesList(chunk: any) {
-        const usedSheetPaths: string[] = [];
+    getSortedStylableModulesList(chunk: any, usedSheetPaths: string[] = []) {
+        
+        chunk.chunks && chunk.chunks.forEach((c: any)=>{
+            this.getSortedStylableModulesList(c, usedSheetPaths);
+        });
+
         const modules: any[] = [];
         const stCssMatcher = /\.st\.css$/;
         const each = chunk.forEachModule ? chunk.forEachModule.bind(chunk) : chunk.modules.forEach.bind(chunk.modules);
