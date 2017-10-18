@@ -37,20 +37,15 @@ Both must be used in the webpack configuration with the same transformation opti
 
 ```js
 const StylablePlugin = require('stylable-integration/webpack-plugin');
-const transformationOptions = { injectBundleCss: true };
 ...
 {
     module: {
         rules: [
-            {
-                test: /\.st\.css$/,
-                loader: "stylable-integration/webpack-loader",
-                options: transformationOptions
-            },
+            StylablePlugin.rule(),
             // in order to load css assets from bundle we need the url loader configured.
             // example configuration
             {
-                test: /\.(png|jpg|gif)$/,
+                test: /\.(png|jpg|gif|svg)$/,
                 use: [
                     {
                         loader: 'url-loader',
@@ -63,7 +58,7 @@ const transformationOptions = { injectBundleCss: true };
         ]
     },
     plugins: [
-        new StylablePlugin(transformationOptions)
+        new StylablePlugin({ injectBundleCss: true /* dev mode */})
     ]
 }
 
@@ -135,6 +130,8 @@ When running code directly in Node.js, any `require(...)` calls are handled by N
 By default, Node supports the `require()` function for `.js` and `.json` files, but allows hooks to attach to additional file extensions.
 
 This package exposes a special entry point that registers `.css` file handling, transpiling it for Node.js on-the-fly.
+
+Note that no css will be actually applied this will only generate the js module.
 
 To register the hook, use the dedicated entry point:
 
