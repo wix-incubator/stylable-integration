@@ -36,6 +36,8 @@ export async function loader(this: StylableLoaderContext, source: string) {
 };
 
 export class Plugin {
+    private stylableLoaderWasUsed = false;
+
     private options: StylableIntegrationOptions;
     static loaders() {
         return [
@@ -60,8 +62,7 @@ export class Plugin {
         let bundler: Bundler;
 
         compiler.plugin('this-compilation', (compilation) => {
-            let containsStylableCSS = false;
-            let usingStylable = ()=> containsStylableCSS = true;
+            let usingStylable = ()=> this.stylableLoaderWasUsed = true;
             stylable = stylable || this.createStylable(compiler);
             bundler = bundler || stylable.createBundler();
 
@@ -73,7 +74,7 @@ export class Plugin {
             });
             
             compilation.plugin('after-optimize-chunk-ids', (chunks: any[]) => {
-                if(!containsStylableCSS){
+                if(!this.stylableLoaderWasUsed){
                     return; //skip emit css bundle.
                 }
                 chunks.forEach((chunk: any) => {
@@ -100,7 +101,7 @@ export class Plugin {
 
             });
 
-            if (this.options.injectBundleCss && containsStylableCSS) {
+            if (this.options.injectBundleCss) {
                 this.setupMainTemplatePlugin(compilation);
                 this.setupHotTemplatePlugin(compilation);
             }
@@ -110,6 +111,7 @@ export class Plugin {
     }
     setupMainTemplatePlugin(compilation: any) {
         compilation.mainTemplate.plugin('startup', (source: string, chunk: any, _hash: string) => {
+            if (!this.stylableLoaderWasUsed) { return source; }
             const pathContext = { chunk, hash: compilation.hash };
             const bundleCssName = compilation.getPath(this.options.filename, pathContext);
             const code = this.createInjectBundleCode(bundleCssName, compilation.assets[bundleCssName].source());
@@ -118,6 +120,7 @@ export class Plugin {
     }
     setupHotTemplatePlugin(compilation: any) {
         compilation.hotUpdateChunkTemplate.plugin("render", (modulesSource: string, modules: any[]/*, removedModules, hash, id*/) => {
+            if (!this.stylableLoaderWasUsed) { return modulesSource; }
             const source = new ConcatSource();
             const map: any = {};
 
