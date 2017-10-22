@@ -7,7 +7,7 @@ import * as webpack from 'webpack';
 
 import { RawSource, ConcatSource } from 'webpack-sources';
 import { cssAssetsLoader } from './css-loader';
-import { StylableBundleInjector } from './stylable-bundle-inject';
+// import { StylableBundleInjector } from './stylable-bundle-inject';
 const deindent = require('deindent');
 
 export interface StylableLoaderContext extends webpack.loader.LoaderContext {
@@ -73,7 +73,8 @@ export class Plugin {
                 loaderContext.usingStylable = usingStylable;
             });
             
-            compilation.plugin('after-optimize-chunk-ids', (chunks: any[]) => {
+
+            compilation.plugin("after-optimize-chunks", (chunks: any[]) => {
                 if(!this.stylableLoaderWasUsed){
                     return; //skip emit css bundle.
                 }
@@ -90,20 +91,33 @@ export class Plugin {
 
                     compilation.assets[cssBundleFilename] = new RawSource(cssBundle);
                     compilation.assets[cssBundleFilename].fromFiles = files;
+                    
+                });
 
-                    // chunk.entryModule.fileDependencies.push(...files)
-                    if (this.options.injectBundleCss) {
-                        try {
-                            chunk.addModule(new StylableBundleInjector(cssBundleFilename, (compiler as any).parser, new RawSource(this.createInjectBundleCode(cssBundleFilename, cssBundle))));
-                        } catch (e) {}
+            });
+
+            
+            compilation.plugin("additional-chunk-assets", (chunks: any[]) => {
+                if(!this.stylableLoaderWasUsed){
+                    return; //skip emit css bundle.
+                }
+                chunks.forEach((chunk: any) => {
+                    if (chunk.name === null && chunk.id === null || chunk.parents.length > 0) {
+                        return; //skip emit css bundle.
                     }
+                    const pathContext = { chunk, hash: compilation.hash };
+
+                    const cssBundleFilename = compilation.getPath(this.options.filename, pathContext);
+
+                    chunk.files.push(cssBundleFilename);
+
                 });
 
             });
 
             if (this.options.injectBundleCss) {
                 this.setupMainTemplatePlugin(compilation);
-                this.setupHotTemplatePlugin(compilation);
+                // this.setupHotTemplatePlugin(compilation);
             }
 
         });

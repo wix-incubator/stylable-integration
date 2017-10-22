@@ -361,4 +361,38 @@ describe('webpack plugin', function () {
 
     });
 
+
+   
+    it('exposes both css and js in stats (used by html plugin)', function (done) {
+        
+        const fs = createFS({
+            '/entry.js': `
+                module.exports = {
+                    style: require('./style.st.css'),
+                    
+                }
+            `,
+            '/style.st.css': ` script for appending to 
+                .root {
+                    color: red;
+                }
+            `,
+            
+        });
+
+        const compiler = createWebpackCompiler({
+            entry: './entry.js'
+        }, fs, {injectBundleCss: true});
+
+
+        compiler.run((_err, stats: any) => {
+            expect(stats.compilation.chunks[0].files).to.contain('main.css');
+            expect(stats.compilation.chunks[0].files).to.contain('main.js');
+            done()
+        });
+
+    });
+
+
+
 });
