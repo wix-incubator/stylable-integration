@@ -154,7 +154,16 @@ export class Plugin {
     bundleCSS(compilation: any, bundler: Bundler, bundleFiles: string[]) {
         let resultCssBundle = '';
         try {
-            resultCssBundle = bundler.generateCSS(bundleFiles);
+            resultCssBundle = bundler.generateCSS(bundleFiles, (meta)=>{
+                const transformReports = meta.transformDiagnostics ? meta.transformDiagnostics.reports : [];
+                meta.diagnostics.reports.concat(transformReports).forEach((report)=>{
+                    if(report.node){
+                        compilation.warnings.push(report.node.error(report.message, report.options));
+                    } else {
+                        compilation.warnings.push(new Error(report.message));
+                    }
+                });
+            });
         } catch (error) {
             if (error.path) {
                 compilation.errors.push(`${error} "${error.path}"`);
