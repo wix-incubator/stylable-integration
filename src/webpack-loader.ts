@@ -158,9 +158,9 @@ export class Plugin {
                 const transformReports = meta.transformDiagnostics ? meta.transformDiagnostics.reports : [];
                 meta.diagnostics.reports.concat(transformReports).forEach((report)=>{
                     if(report.node){
-                        compilation.warnings.push(report.node.error(report.message, report.options));
+                        compilation.warnings.push(report.node.error(report.message, report.options).toString().replace('CssSyntaxError', 'StylableError'));
                     } else {
-                        compilation.warnings.push(new Error(report.message));
+                        compilation.warnings.push(report.message);
                     }
                 });
             });
