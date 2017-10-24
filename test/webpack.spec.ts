@@ -382,7 +382,7 @@ describe('webpack plugin', function () {
 
         const compiler = createWebpackCompiler({
             entry: './entry.js'
-        }, fs, { injectBundleCss: true });
+        }, fs, { injectBundleCss: false });
 
 
         compiler.run((_err, stats: any) => {
@@ -394,7 +394,7 @@ describe('webpack plugin', function () {
     });
 
 
-    it.only('with css-loader', function (done) {
+    it('with css-loader', function (done) {
 
         const fs = createFS({
             '/entry.js': jsThatImports(['./file.svg', './style.st.css']),
