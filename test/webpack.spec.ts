@@ -393,25 +393,4 @@ describe('webpack plugin', function () {
 
     });
 
-
-    it('with css-loader', function (done) {
-
-        const fs = createFS({
-            '/entry.js': jsThatImports(['./file.svg', './style.st.css']),
-            '/file.svg': `<svg id="asset"></svg>`,
-            '/style.st.css': ``
-        });
-
-        const compiler = createWebpackCompiler({
-            entry: './entry.js',
-            
-        }, fs);
-
-        compiler.run((_err, _stats: any) => {
-           
-            done()
-        });
-    });
-
-
 });
