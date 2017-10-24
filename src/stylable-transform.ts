@@ -3,6 +3,8 @@ import { StylableMeta } from 'stylable';
 
 const runtimePath = 'stylable/runtime';
 
+let globalVersion = 0;
+
 export function createCSSModuleString(locals: { [key: string]: string } & object, meta: StylableMeta, options: { injectFileCss: boolean }): string {
 
     const localsExports = JSON.stringify(locals);
@@ -15,6 +17,7 @@ export function createCSSModuleString(locals: { [key: string]: string } & object
     const css = options.injectFileCss ? JSON.stringify(meta.outputAst!.toString()) : 'null';
 
     code = deindent`
+        //${globalVersion++}
         Object.defineProperty(exports, "__esModule", { value: true });
         ${imports.join('\n')}
         module.exports.default = require("${runtimePath}").create(

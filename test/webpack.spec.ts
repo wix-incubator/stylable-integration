@@ -67,7 +67,7 @@ describe('webpack plugin', function () {
 
     });
 
-    it('plain plugin', function (done) {
+    it('Experiment: plain plugin', function (done) {
 
         const fs = createFS({
             '/entry.js': jsThatImports(['./style.st.css']),
@@ -104,7 +104,7 @@ describe('webpack plugin', function () {
 
     });
 
-    it('with css-loader', function (done) {
+    it('Experiment: with css-loader', function (done) {
 
         const fs = createFS({
             '/entry.js': jsThatImports(['./theme/theme.st.css', './comp.st.css']),
@@ -194,7 +194,7 @@ describe('webpack plugin', function () {
 
         compiler.run((_err, stats: any) => {
             expect(stats.compilation.assets['main.css'].fromFiles).to.eql([
-                path.resolve("/dynamic-style.st.css"), 
+                path.resolve("/dynamic-style.st.css"),
                 path.resolve("/style.st.css")
             ]);
             done()
@@ -251,7 +251,7 @@ describe('webpack plugin', function () {
     });
 
     it('dynamic loading (order from css check duplicates)', function (done) {
-        
+
         const fs = createFS({
             '/entry.js': `
                 module.exports = {
@@ -298,9 +298,9 @@ describe('webpack plugin', function () {
 
     });
 
-    
+
     it('common style between entry and dynamic', function (done) {
-        
+
         const fs = createFS({
             '/entry.js': `
                 module.exports = {
@@ -362,9 +362,9 @@ describe('webpack plugin', function () {
     });
 
 
-   
+
     it('exposes both css and js in stats (used by html plugin)', function (done) {
-        
+
         const fs = createFS({
             '/entry.js': `
                 module.exports = {
@@ -377,12 +377,12 @@ describe('webpack plugin', function () {
                     color: red;
                 }
             `,
-            
+
         });
 
         const compiler = createWebpackCompiler({
             entry: './entry.js'
-        }, fs, {injectBundleCss: true});
+        }, fs, { injectBundleCss: true });
 
 
         compiler.run((_err, stats: any) => {
@@ -393,6 +393,25 @@ describe('webpack plugin', function () {
 
     });
 
+
+    it.only('with css-loader', function (done) {
+
+        const fs = createFS({
+            '/entry.js': jsThatImports(['./file.svg', './style.st.css']),
+            '/file.svg': `<svg id="asset"></svg>`,
+            '/style.st.css': ``
+        });
+
+        const compiler = createWebpackCompiler({
+            entry: './entry.js',
+            
+        }, fs);
+
+        compiler.run((_err, _stats: any) => {
+           
+            done()
+        });
+    });
 
 
 });

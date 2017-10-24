@@ -5,8 +5,10 @@ import { StylableIntegrationDefaults, StylableIntegrationOptions } from './optio
 import * as webpack from 'webpack';
 
 
-import { RawSource, ConcatSource } from 'webpack-sources';
+import { RawSource /*, ConcatSource*/ } from 'webpack-sources';
+// const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency');
 import { cssAssetsLoader } from './css-loader';
+// import { StylableBundleInjector } from './stylable-bundle-inject';
 // import { StylableBundleInjector } from './stylable-bundle-inject';
 const deindent = require('deindent');
 
@@ -62,21 +64,20 @@ export class Plugin {
         let bundler: Bundler;
 
         compiler.plugin('this-compilation', (compilation) => {
-            let usingStylable = ()=> this.stylableLoaderWasUsed = true;
+            let usingStylable = () => this.stylableLoaderWasUsed = true;
             stylable = stylable || this.createStylable(compiler);
             bundler = bundler || stylable.createBundler();
-
-            
 
             compilation.plugin('normal-module-loader', (loaderContext: StylableLoaderContext) => {
                 loaderContext.stylable = stylable;
                 loaderContext.usingStylable = usingStylable;
             });
-            
 
-            compilation.plugin("after-optimize-chunks", (chunks: any[]) => {
-                if(!this.stylableLoaderWasUsed){
-                    return; //skip emit css bundle.
+            compilation.plugin("optimize-tree", (chunks: any, _modules: any, callback: any) => {
+
+
+                if (!this.stylableLoaderWasUsed) {
+                    return callback(); //skip emit css bundle.
                 }
                 chunks.forEach((chunk: any) => {
                     if (chunk.name === null && chunk.id === null || chunk.parents.length > 0) {
@@ -91,16 +92,19 @@ export class Plugin {
 
                     compilation.assets[cssBundleFilename] = new RawSource(cssBundle);
                     compilation.assets[cssBundleFilename].fromFiles = files;
-                    
+
                 });
+
+
+                callback();
+
 
             });
 
-            
+   
             compilation.plugin("additional-chunk-assets", (chunks: any[]) => {
-                if(!this.stylableLoaderWasUsed){
-                    return; //skip emit css bundle.
-                }
+                if (!this.stylableLoaderWasUsed) { return; /*skip emit css bundle.*/ }
+
                 chunks.forEach((chunk: any) => {
                     if (chunk.name === null && chunk.id === null || chunk.parents.length > 0) {
                         return; //skip emit css bundle.
@@ -108,54 +112,54 @@ export class Plugin {
                     const pathContext = { chunk, hash: compilation.hash };
 
                     const cssBundleFilename = compilation.getPath(this.options.filename, pathContext);
-
+                    
                     chunk.files.push(cssBundleFilename);
 
                 });
 
             });
 
-            if (this.options.injectBundleCss) {
-                this.setupMainTemplatePlugin(compilation);
-                // this.setupHotTemplatePlugin(compilation);
-            }
+            // if (this.options.injectBundleCss) {
+            //     this.setupMainTemplatePlugin(compilation);
+            //     this.setupHotTemplatePlugin(compilation);
+            // }
 
         });
 
     }
-    setupMainTemplatePlugin(compilation: any) {
-        compilation.mainTemplate.plugin('startup', (source: string, chunk: any, _hash: string) => {
-            if (!this.stylableLoaderWasUsed) { return source; }
-            const pathContext = { chunk, hash: compilation.hash };
-            const bundleCssName = compilation.getPath(this.options.filename, pathContext);
-            const code = this.createInjectBundleCode(bundleCssName, compilation.assets[bundleCssName].source());
-            return code + source;
-        });
-    }
-    setupHotTemplatePlugin(compilation: any) {
-        compilation.hotUpdateChunkTemplate.plugin("render", (modulesSource: string, modules: any[]/*, removedModules, hash, id*/) => {
-            if (!this.stylableLoaderWasUsed) { return modulesSource; }
-            const source = new ConcatSource();
-            const map: any = {};
+    // setupMainTemplatePlugin(compilation: any) {
+    //     compilation.mainTemplate.plugin('startup', (source: string, chunk: any, _hash: string) => {
+    //         if (!this.stylableLoaderWasUsed) { return source; }
+    //         const pathContext = { chunk, hash: compilation.hash };
+    //         const bundleCssName = compilation.getPath(this.options.filename, pathContext);
+    //         const code = this.createInjectBundleCode(bundleCssName, compilation.assets[bundleCssName].source());
+    //         return code + source;
+    //     });
+    // }
+    // setupHotTemplatePlugin(compilation: any) {
+    //     compilation.hotUpdateChunkTemplate.plugin("render", (modulesSource: string, modules: any[]/*, removedModules, hash, id*/) => {
+    //         if (!this.stylableLoaderWasUsed) { return modulesSource; }
+    //         const source = new ConcatSource();
+    //         const map: any = {};
 
-            modules.forEach((_module) => {
-                _module.chunks && _module.chunks.forEach((c: any) => map[c.id] = c);
-            });
+    //         modules.forEach((_module) => {
+    //             _module.chunks && _module.chunks.forEach((c: any) => map[c.id] = c);
+    //         });
 
-            for (const chunkId in map) {
-                const chunk = map[chunkId];
-                const pathContext = { chunk, hash: compilation.hash };
-                const bundleCssName = compilation.getPath(this.options.filename, pathContext);
-                if (compilation.assets[bundleCssName]) {
-                    source.add(this.createInjectBundleCode(bundleCssName, compilation.assets[bundleCssName].source()));
-                }
-            }
+    //         for (const chunkId in map) {
+    //             const chunk = map[chunkId];
+    //             const pathContext = { chunk, hash: compilation.hash };
+    //             const bundleCssName = compilation.getPath(this.options.filename, pathContext);
+    //             if (compilation.assets[bundleCssName]) {
+    //                 source.add(this.createInjectBundleCode(bundleCssName, compilation.assets[bundleCssName].source()));
+    //             }
+    //         }
 
-            source.add(modulesSource);
+    //         source.add(modulesSource);
 
-            return source;
-        });
-    }
+    //         return source;
+    //     });
+    // }
     bundleCSS(compilation: any, bundler: Bundler, bundleFiles: string[]) {
         let resultCssBundle = '';
         try {
@@ -170,8 +174,8 @@ export class Plugin {
         return resultCssBundle;
     }
     getSortedStylableModulesList(chunk: any, usedSheetPaths: string[] = []) {
-        
-        chunk.chunks && chunk.chunks.forEach((c: any)=>{
+
+        chunk.chunks && chunk.chunks.forEach((c: any) => {
             this.getSortedStylableModulesList(c, usedSheetPaths);
         });
 
@@ -208,15 +212,17 @@ export class Plugin {
         id = JSON.stringify(id);
         css = JSON.stringify(css);
         return deindent`
-        if (typeof document !== 'undefined') {
-            var style = document.getElementById(${id});
-            if(!style){
-                style = document.createElement('style');
-                style.id = ${id};
-                document.head.appendChild(style);
+        (function(){
+            if (typeof document !== 'undefined') {
+                var style = document.getElementById(${id});
+                if(!style){
+                    style = document.createElement('style');
+                    style.id = ${id};
+                    document.head.appendChild(style);
+                }
+                style.textContent = ${css};
             }
-            style.textContent = ${css};
-        }
+        }())
         `
     }
 
