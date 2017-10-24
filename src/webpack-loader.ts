@@ -1,14 +1,11 @@
 import { createCSSModuleString } from './stylable-transform';
 import { Stylable, Bundler } from 'stylable';
 import { StylableIntegrationDefaults, StylableIntegrationOptions } from './options';
-// import loaderUtils = require('loader-utils');
 import * as webpack from 'webpack';
-
-
-import { RawSource /*, ConcatSource*/ } from 'webpack-sources';
-// const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency');
+import { RawSource , ConcatSource } from 'webpack-sources';
 import { cssAssetsLoader } from './css-loader';
-// import { StylableBundleInjector } from './stylable-bundle-inject';
+// import loaderUtils = require('loader-utils');
+// const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency');
 // import { StylableBundleInjector } from './stylable-bundle-inject';
 const deindent = require('deindent');
 
@@ -75,7 +72,6 @@ export class Plugin {
 
             compilation.plugin("optimize-tree", (chunks: any, _modules: any, callback: any) => {
 
-
                 if (!this.stylableLoaderWasUsed) {
                     return callback(); //skip emit css bundle.
                 }
@@ -95,15 +91,12 @@ export class Plugin {
 
                 });
 
-
                 callback();
 
-
             });
-
    
             compilation.plugin("additional-chunk-assets", (chunks: any[]) => {
-                if (!this.stylableLoaderWasUsed) { return; /*skip emit css bundle.*/ }
+                if (this.options.injectBundleCss || !this.stylableLoaderWasUsed) { return; /*skip emit css bundle.*/ }
 
                 chunks.forEach((chunk: any) => {
                     if (chunk.name === null && chunk.id === null || chunk.parents.length > 0) {
@@ -119,47 +112,45 @@ export class Plugin {
 
             });
 
-            // if (this.options.injectBundleCss) {
-            //     this.setupMainTemplatePlugin(compilation);
-            //     this.setupHotTemplatePlugin(compilation);
-            // }
+            if (this.options.injectBundleCss) {
+                this.setupMainTemplatePlugin(compilation);
+                this.setupHotTemplatePlugin(compilation);
+            }
 
         });
 
     }
-    // setupMainTemplatePlugin(compilation: any) {
-    //     compilation.mainTemplate.plugin('startup', (source: string, chunk: any, _hash: string) => {
-    //         if (!this.stylableLoaderWasUsed) { return source; }
-    //         const pathContext = { chunk, hash: compilation.hash };
-    //         const bundleCssName = compilation.getPath(this.options.filename, pathContext);
-    //         const code = this.createInjectBundleCode(bundleCssName, compilation.assets[bundleCssName].source());
-    //         return code + source;
-    //     });
-    // }
-    // setupHotTemplatePlugin(compilation: any) {
-    //     compilation.hotUpdateChunkTemplate.plugin("render", (modulesSource: string, modules: any[]/*, removedModules, hash, id*/) => {
-    //         if (!this.stylableLoaderWasUsed) { return modulesSource; }
-    //         const source = new ConcatSource();
-    //         const map: any = {};
+    setupMainTemplatePlugin(compilation: any) {
+        compilation.mainTemplate.plugin('startup', (source: string, chunk: any, _hash: string) => {
+            if (!this.stylableLoaderWasUsed) { return source; }
+            const pathContext = { chunk, hash: compilation.hash };
+            const bundleCssName = compilation.getPath(this.options.filename, pathContext);
+            const code = this.createInjectBundleCode(bundleCssName, compilation.assets[bundleCssName].source());
+            return code + source;
+        });
+    }
+    setupHotTemplatePlugin(compilation: any) {
+        compilation.hotUpdateChunkTemplate.plugin("render", (modulesSource: any, modules: any[]/*, removedModules, hash, id*/) => {
+            if (!this.stylableLoaderWasUsed) { return modulesSource; }
+            const source = new ConcatSource();
+            const map: any = {};
 
-    //         modules.forEach((_module) => {
-    //             _module.chunks && _module.chunks.forEach((c: any) => map[c.id] = c);
-    //         });
+            modules.forEach((_module) => {
+                _module.chunks && _module.chunks.forEach((c: any) => map[c.id] = c);
+            });
 
-    //         for (const chunkId in map) {
-    //             const chunk = map[chunkId];
-    //             const pathContext = { chunk, hash: compilation.hash };
-    //             const bundleCssName = compilation.getPath(this.options.filename, pathContext);
-    //             if (compilation.assets[bundleCssName]) {
-    //                 source.add(this.createInjectBundleCode(bundleCssName, compilation.assets[bundleCssName].source()));
-    //             }
-    //         }
+            for (const chunkId in map) {
+                const chunk = map[chunkId];
+                const pathContext = { chunk, hash: compilation.hash };
+                const bundleCssName = compilation.getPath(this.options.filename, pathContext);
+                if (compilation.assets[bundleCssName]) {
+                    source.add(this.createInjectBundleCode(bundleCssName, compilation.assets[bundleCssName].source(), modulesSource.source()));
+                }
+            }
 
-    //         source.add(modulesSource);
-
-    //         return source;
-    //     });
-    // }
+            return source;
+        });
+    }
     bundleCSS(compilation: any, bundler: Bundler, bundleFiles: string[]) {
         let resultCssBundle = '';
         try {
@@ -208,7 +199,7 @@ export class Plugin {
         const resource = _module.resource;
         return resource && resource.match(resourceMatcher) ? resource : null
     }
-    createInjectBundleCode(id: string, css: string) {
+    createInjectBundleCode(id: string, css: string, returnValue = '') {
         id = JSON.stringify(id);
         css = JSON.stringify(css);
         return deindent`
@@ -222,6 +213,7 @@ export class Plugin {
                 }
                 style.textContent = ${css};
             }
+            return ${returnValue};
         }())
         `
     }
