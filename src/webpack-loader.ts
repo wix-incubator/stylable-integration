@@ -1,13 +1,12 @@
 import { createCSSModuleString } from './stylable-transform';
 import { Stylable, Bundler } from 'stylable';
 import { StylableIntegrationDefaults, StylableIntegrationOptions } from './options';
-// import loaderUtils = require('loader-utils');
 import * as webpack from 'webpack';
-
-
-import { RawSource, ConcatSource } from 'webpack-sources';
+import { RawSource , ConcatSource } from 'webpack-sources';
 import { cssAssetsLoader } from './css-loader';
-import { StylableBundleInjector } from './stylable-bundle-inject';
+// import loaderUtils = require('loader-utils');
+// const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency');
+// import { StylableBundleInjector } from './stylable-bundle-inject';
 const deindent = require('deindent');
 
 export interface StylableLoaderContext extends webpack.loader.LoaderContext {
@@ -62,20 +61,19 @@ export class Plugin {
         let bundler: Bundler;
 
         compiler.plugin('this-compilation', (compilation) => {
-            let usingStylable = ()=> this.stylableLoaderWasUsed = true;
+            let usingStylable = () => this.stylableLoaderWasUsed = true;
             stylable = stylable || this.createStylable(compiler);
             bundler = bundler || stylable.createBundler();
-
-            
 
             compilation.plugin('normal-module-loader', (loaderContext: StylableLoaderContext) => {
                 loaderContext.stylable = stylable;
                 loaderContext.usingStylable = usingStylable;
             });
-            
-            compilation.plugin('after-optimize-chunk-ids', (chunks: any[]) => {
-                if(!this.stylableLoaderWasUsed){
-                    return; //skip emit css bundle.
+
+            compilation.plugin("optimize-tree", (chunks: any, _modules: any, callback: any) => {
+
+                if (!this.stylableLoaderWasUsed) {
+                    return callback(); //skip emit css bundle.
                 }
                 chunks.forEach((chunk: any) => {
                     if (chunk.name === null && chunk.id === null || chunk.parents.length > 0) {
@@ -91,12 +89,25 @@ export class Plugin {
                     compilation.assets[cssBundleFilename] = new RawSource(cssBundle);
                     compilation.assets[cssBundleFilename].fromFiles = files;
 
-                    // chunk.entryModule.fileDependencies.push(...files)
-                    if (this.options.injectBundleCss) {
-                        try {
-                            chunk.addModule(new StylableBundleInjector(cssBundleFilename, (compiler as any).parser, new RawSource(this.createInjectBundleCode(cssBundleFilename, cssBundle))));
-                        } catch (e) {}
+                });
+
+                callback();
+
+            });
+   
+            compilation.plugin("additional-chunk-assets", (chunks: any[]) => {
+                if (this.options.injectBundleCss || !this.stylableLoaderWasUsed) { return; /*skip emit css bundle.*/ }
+
+                chunks.forEach((chunk: any) => {
+                    if (chunk.name === null && chunk.id === null || chunk.parents.length > 0) {
+                        return; //skip emit css bundle.
                     }
+                    const pathContext = { chunk, hash: compilation.hash };
+
+                    const cssBundleFilename = compilation.getPath(this.options.filename, pathContext);
+                    
+                    chunk.files.push(cssBundleFilename);
+
                 });
 
             });
@@ -119,7 +130,7 @@ export class Plugin {
         });
     }
     setupHotTemplatePlugin(compilation: any) {
-        compilation.hotUpdateChunkTemplate.plugin("render", (modulesSource: string, modules: any[]/*, removedModules, hash, id*/) => {
+        compilation.hotUpdateChunkTemplate.plugin("render", (modulesSource: any, modules: any[]/*, removedModules, hash, id*/) => {
             if (!this.stylableLoaderWasUsed) { return modulesSource; }
             const source = new ConcatSource();
             const map: any = {};
@@ -133,11 +144,9 @@ export class Plugin {
                 const pathContext = { chunk, hash: compilation.hash };
                 const bundleCssName = compilation.getPath(this.options.filename, pathContext);
                 if (compilation.assets[bundleCssName]) {
-                    source.add(this.createInjectBundleCode(bundleCssName, compilation.assets[bundleCssName].source()));
+                    source.add(this.createInjectBundleCode(bundleCssName, compilation.assets[bundleCssName].source(), modulesSource.source()));
                 }
             }
-
-            source.add(modulesSource);
 
             return source;
         });
@@ -145,7 +154,16 @@ export class Plugin {
     bundleCSS(compilation: any, bundler: Bundler, bundleFiles: string[]) {
         let resultCssBundle = '';
         try {
-            resultCssBundle = bundler.generateCSS(bundleFiles);
+            resultCssBundle = bundler.generateCSS(bundleFiles, (meta)=>{
+                const transformReports = meta.transformDiagnostics ? meta.transformDiagnostics.reports : [];
+                meta.diagnostics.reports.concat(transformReports).forEach((report)=>{
+                    if(report.node){
+                        compilation.warnings.push(report.node.error(report.message, report.options).toString().replace('CssSyntaxError', 'StylableError'));
+                    } else {
+                        compilation.warnings.push(report.message);
+                    }
+                });
+            });
         } catch (error) {
             if (error.path) {
                 compilation.errors.push(`${error} "${error.path}"`);
@@ -156,8 +174,8 @@ export class Plugin {
         return resultCssBundle;
     }
     getSortedStylableModulesList(chunk: any, usedSheetPaths: string[] = []) {
-        
-        chunk.chunks && chunk.chunks.forEach((c: any)=>{
+
+        chunk.chunks && chunk.chunks.forEach((c: any) => {
             this.getSortedStylableModulesList(c, usedSheetPaths);
         });
 
@@ -190,19 +208,22 @@ export class Plugin {
         const resource = _module.resource;
         return resource && resource.match(resourceMatcher) ? resource : null
     }
-    createInjectBundleCode(id: string, css: string) {
+    createInjectBundleCode(id: string, css: string, returnValue = '') {
         id = JSON.stringify(id);
         css = JSON.stringify(css);
         return deindent`
-        if (typeof document !== 'undefined') {
-            var style = document.getElementById(${id});
-            if(!style){
-                style = document.createElement('style');
-                style.id = ${id};
-                document.head.appendChild(style);
+        (function(){
+            if (typeof document !== 'undefined') {
+                var style = document.getElementById(${id});
+                if(!style){
+                    style = document.createElement('style');
+                    style.id = ${id};
+                    document.head.appendChild(style);
+                }
+                style.textContent = ${css};
             }
-            style.textContent = ${css};
-        }
+            return ${returnValue};
+        }())
         `
     }
 

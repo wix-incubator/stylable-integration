@@ -67,7 +67,7 @@ describe('webpack plugin', function () {
 
     });
 
-    it('plain plugin', function (done) {
+    it('Experiment: plain plugin', function (done) {
 
         const fs = createFS({
             '/entry.js': jsThatImports(['./style.st.css']),
@@ -104,7 +104,7 @@ describe('webpack plugin', function () {
 
     });
 
-    it('with css-loader', function (done) {
+    it('Experiment: with css-loader', function (done) {
 
         const fs = createFS({
             '/entry.js': jsThatImports(['./theme/theme.st.css', './comp.st.css']),
@@ -194,7 +194,7 @@ describe('webpack plugin', function () {
 
         compiler.run((_err, stats: any) => {
             expect(stats.compilation.assets['main.css'].fromFiles).to.eql([
-                path.resolve("/dynamic-style.st.css"), 
+                path.resolve("/dynamic-style.st.css"),
                 path.resolve("/style.st.css")
             ]);
             done()
@@ -251,7 +251,7 @@ describe('webpack plugin', function () {
     });
 
     it('dynamic loading (order from css check duplicates)', function (done) {
-        
+
         const fs = createFS({
             '/entry.js': `
                 module.exports = {
@@ -298,9 +298,9 @@ describe('webpack plugin', function () {
 
     });
 
-    
+
     it('common style between entry and dynamic', function (done) {
-        
+
         const fs = createFS({
             '/entry.js': `
                 module.exports = {
@@ -356,6 +356,38 @@ describe('webpack plugin', function () {
                 path.resolve("/dynamic-style.st.css"),
                 path.resolve("/shared-style.st.css")
             ]);
+            done()
+        });
+
+    });
+
+
+
+    it('exposes both css and js in stats (used by html plugin)', function (done) {
+
+        const fs = createFS({
+            '/entry.js': `
+                module.exports = {
+                    style: require('./style.st.css'),
+                    
+                }
+            `,
+            '/style.st.css': ` script for appending to 
+                .root {
+                    color: red;
+                }
+            `,
+
+        });
+
+        const compiler = createWebpackCompiler({
+            entry: './entry.js'
+        }, fs, { injectBundleCss: false });
+
+
+        compiler.run((_err, stats: any) => {
+            expect(stats.compilation.chunks[0].files).to.contain('main.css');
+            expect(stats.compilation.chunks[0].files).to.contain('main.js');
             done()
         });
 
