@@ -27,7 +27,7 @@ describe('Diagnostics', function () {
         }, fs);
 
         compiler.run((_err, stats: any) => {
-            expect(stats.compilation.warnings[0].reason).to.equal('unknown var "color1"');
+            expect(stats.compilation.warnings[0]).to.match(/unknown var "color1"/);
             done()
         });
 
@@ -54,7 +54,7 @@ describe('Diagnostics', function () {
         }, fs);
 
         compiler.run((_err, stats: any) => {
-            expect(stats.compilation.warnings[0].reason).to.equal('cannot find export "color1" in "./vars.st.css"');
+            expect(stats.compilation.warnings[0]).to.match(/cannot find export "color1" in "\.\/vars\.st\.css"/);
             done()
         });
 
