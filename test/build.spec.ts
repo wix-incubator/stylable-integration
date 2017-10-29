@@ -113,20 +113,22 @@ describe("lib usage with loader", () => {
 
         return run().then(({ stats }) => {
             const rawSource = stats.compilation.assets['main.css'];
+            
             const bundleFiles = resolve([
                 "/main.st.css", 
                 "/node_modules/my-lib/comp.st.css", 
                 "/node_modules/my-lib/components/sub.st.css"
             ]);
+
             expect(rawSource.fromFiles).to.eql(bundleFiles);
 
             const cssJSModules = bundleFiles
             .map((resource)=>stats.compilation.modules.find((m:any)=>m.resource === resource))
             .map((normalModule)=>evalCssJSModule(normalModule.originalSource().source()).default)
 
-            expect(Object.keys(cssJSModules[0])).to.contain('myClass');
-            expect(Object.keys(cssJSModules[0])).to.contain('root');
-            expect(Object.keys(cssJSModules[0])).to.contain('$stylesheet');
+            expect('myClass' in cssJSModules[0]).to.eql(true);
+            expect('root' in cssJSModules[0]).to.eql(true);
+            expect('$stylesheet' in cssJSModules[0]).to.eql(true);
             
             expect(rawSource.source()).to.not.include('/asset.svg')
         });
