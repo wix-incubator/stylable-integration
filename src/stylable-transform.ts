@@ -1,13 +1,18 @@
 const deindent = require('deindent');
-import { StylableMeta } from 'stylable';
+import { StylableResults } from 'stylable';
 
 const runtimePath = 'stylable/runtime';
 
 let globalVersion = 0;
 
-export function createCSSModuleString(locals: { [key: string]: string } & object, meta: StylableMeta, options: { injectFileCss: boolean }): string {
+export interface CreateModuleInput extends StylableResults {
+    [key: string]: any;
+}
 
-    const localsExports = JSON.stringify(locals);
+
+export function createCSSModuleString(res: CreateModuleInput, options: { injectFileCss: boolean }): string {
+    const { exports, meta } = res;
+    const localsExports = JSON.stringify(exports);
     const root = JSON.stringify(meta.root);
     const namespace = JSON.stringify(meta.namespace);
 

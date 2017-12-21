@@ -2,32 +2,34 @@ import { createCSSModuleString } from './stylable-transform';
 import { Stylable, Bundler } from 'stylable';
 import { StylableIntegrationDefaults, StylableIntegrationOptions } from './options';
 import * as webpack from 'webpack';
-import { RawSource , ConcatSource } from 'webpack-sources';
+import { RawSource, ConcatSource } from 'webpack-sources';
 import { cssAssetsLoader } from './css-loader';
+
 // import loaderUtils = require('loader-utils');
 // const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency');
 // import { StylableBundleInjector } from './stylable-bundle-inject';
 const deindent = require('deindent');
 
 export interface StylableLoaderContext extends webpack.loader.LoaderContext {
-    stylable: Stylable
-    usingStylable: Function
+    stylable: Stylable;
+    usingStylable: Function;
+    createStylableRuntimeModule?: typeof createCSSModuleString;
 }
 
 export async function loader(this: StylableLoaderContext, source: string) {
     if (this.cacheable) { this.cacheable() };
-
     const stylable = this.stylable;
+    const createModule = this.createStylableRuntimeModule || createCSSModuleString;
     if (!stylable) {
         throw new Error('Stylable Loader: Stylable plugin must be provided in the webpack configuration');
     }
 
     this.usingStylable();
 
-    const result = await cssAssetsLoader(this, source);
+    const result = await cssAssetsLoader.call(this, source);
     try {
-        const { meta, exports } = stylable.transform(result.source, this.resourcePath);
-        return createCSSModuleString(exports, meta, { injectFileCss: false });
+        const res = stylable.transform(result.source, this.resourcePath);
+        return createModule(res, { injectFileCss: false });
     } catch (err) {
         console.error(err.message, err.stack);
         return `throw new Error('Cannot load module: ${JSON.stringify(this.resourcePath)}')`
@@ -53,7 +55,16 @@ export class Plugin {
         this.options = { ...StylableIntegrationDefaults, ...options };
     };
     createStylable(compiler: any) {
-        return new Stylable(compiler.context, compiler.inputFileSystem, this.options.requireModule || require, this.options.nsDelimiter);
+        const stylable = new Stylable(
+            compiler.context,
+            compiler.inputFileSystem,
+            this.options.requireModule || require,
+            this.options.nsDelimiter,
+            undefined,
+            undefined,
+            this.options.transformHooks
+        );
+        return stylable;
     }
     apply(compiler: webpack.Compiler) {
 
@@ -68,7 +79,10 @@ export class Plugin {
             compilation.plugin('normal-module-loader', (loaderContext: StylableLoaderContext) => {
                 loaderContext.stylable = stylable;
                 loaderContext.usingStylable = usingStylable;
+                loaderContext.createStylableRuntimeModule = this.options.createStylableRuntimeModule;
             });
+
+            if (this.options.skipBundle) { return; }
 
             compilation.plugin("optimize-tree", (chunks: any, _modules: any, callback: any) => {
 
@@ -94,7 +108,7 @@ export class Plugin {
                 callback();
 
             });
-   
+
             compilation.plugin("additional-chunk-assets", (chunks: any[]) => {
                 if (this.options.injectBundleCss || !this.stylableLoaderWasUsed) { return; /*skip emit css bundle.*/ }
 
@@ -105,7 +119,7 @@ export class Plugin {
                     const pathContext = { chunk, hash: compilation.hash };
 
                     const cssBundleFilename = compilation.getPath(this.options.filename, pathContext);
-                    
+
                     chunk.files.push(cssBundleFilename);
 
                 });
@@ -154,10 +168,10 @@ export class Plugin {
     bundleCSS(compilation: any, bundler: Bundler, bundleFiles: string[]) {
         let resultCssBundle = '';
         try {
-            resultCssBundle = bundler.generateCSS(bundleFiles, (meta)=>{
+            resultCssBundle = bundler.generateCSS(bundleFiles, (meta) => {
                 const transformReports = meta.transformDiagnostics ? meta.transformDiagnostics.reports : [];
-                meta.diagnostics.reports.concat(transformReports).forEach((report)=>{
-                    if(report.node){
+                meta.diagnostics.reports.concat(transformReports).forEach((report) => {
+                    if (report.node) {
                         compilation.warnings.push(report.node.error(report.message, report.options).toString().replace('CssSyntaxError', 'Stylable'));
                     } else {
                         compilation.warnings.push(report.message);
