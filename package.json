@@ -17,7 +17,7 @@
     "ppub": "npm version patch; npm publish; git push; git push --tags;"
   },
   "peerDependencies": {
-    "stylable": ">=4.0.23"
+    "stylable": ">=5.0.2"
   },
   "dependencies": {
     "deindent": "^0.1.0",
@@ -44,7 +44,7 @@
     "ncp": "^2.0.0",
     "node-eval": "^1.1.1",
     "postcss": "^6.0.13",
-    "stylable": "^4.0.23",
+    "stylable": "^5.0.2",
     "ts-loader": "^3.0.3",
     "ts-mocha": "^1.0.3",
     "typescript": "^2.5.3",

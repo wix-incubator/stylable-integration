@@ -426,7 +426,7 @@ describe('plugin', function () {
             const mainJS = getAssetSource(stats, 'main.js');
             const mainCSS = getAssetSource(stats, 'main.css');
             const mainModule = evalCssJSModule(mainJS).main.default;
-            
+
             matchRules(mainCSS, [
                 /\.theme.+root\s.theme.+baga/,
                 `.${mainModule.root.split(' ')[0]} .${mainModule.gaga}`
@@ -464,7 +464,7 @@ describe('plugin', function () {
             // const mainJS = getAssetSource(stats, 'main.js');
             const mainCSS = getAssetSource(stats, 'main.css');
             // const mainModule = evalCssJSModule(mainJS).main.default;
-            
+
 
             const cssAst = postcss.parse(mainCSS);
             const themeRulesetOriginal = <postcss.Rule>cssAst.nodes![0]!;
@@ -503,6 +503,55 @@ describe('plugin', function () {
                             }
                         }
                     };
+                `
+            },
+            stylableConfig: {
+                requireModule: function (_path: string) {
+                    return _eval(fs.readFileSync(_path).toString())
+                }
+            },
+            config: {
+                entry: './main.js'
+            }
+        });
+
+        return run().then(({ stats }) => {
+            const mainJS = getAssetSource(stats, 'main.js');
+            const mainCSS = getAssetSource(stats, 'main.css');
+            const mainModule = evalCssJSModule(mainJS).main.default;
+
+            matchRules(mainCSS, [
+                `.${mainModule.root} .${mainModule.gaga}`,
+                `.${mainModule.root} .${mainModule.gaga} .${mainModule.child}`
+            ])
+
+        });
+
+    });
+
+    xit('should generate css from TS mixin (dose not eval ts)', function () {
+        const { run, fs } = webpackTest({
+            files: {
+                '/main.js': jsThatImports(['./main.st.css']),
+                '/main.st.css': `
+                    :import{
+                        -st-from:'./jsmixin.ts';
+                        -st-named: mixStuff;
+                    }
+                    .gaga{
+                        color:red;
+                        -st-mixin: mixStuff;
+                    }
+                `,
+                '/jsmixin.ts': `
+                    module.exports.mixStuff =  function mixStuff(){
+                        return {
+                            "background":"green",
+                            ".child":{
+                                "color": "yellow"
+                            }
+                        }
+                    }
                 `
             },
             stylableConfig: {

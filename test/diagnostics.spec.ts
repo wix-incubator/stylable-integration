@@ -1,13 +1,5 @@
 import { expect } from 'chai';
-// import * as path from 'path';
-
-// import { createCSSModuleString } from '../src/stylable-transform';
-
-// import * as webpack from "webpack";
 import { createWebpackCompiler, createFS, jsThatImports } from "../test-kit/index";
-
-// const _eval = require('node-eval');
-
 
 describe('Diagnostics', function () {
 
@@ -54,7 +46,7 @@ describe('Diagnostics', function () {
         }, fs);
 
         compiler.run((_err, stats: any) => {
-            expect(stats.compilation.warnings[0]).to.match(/cannot find export "color1" in "\.\/vars\.st\.css"/);
+            expect(stats.compilation.warnings[0]).to.match(/cannot find export 'color1' in '\.\/vars\.st\.css'/);
             done()
         });
 

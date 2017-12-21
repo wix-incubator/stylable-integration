@@ -1,12 +1,7 @@
 import { expect } from 'chai';
 import * as path from 'path';
-
-// import { createCSSModuleString } from '../src/stylable-transform';
-
 import * as webpack from "webpack";
 import { createWebpackCompiler, createFS, jsThatImports } from "../test-kit/index";
-
-// const _eval = require('node-eval');
 
 
 describe('webpack plugin', function () {
