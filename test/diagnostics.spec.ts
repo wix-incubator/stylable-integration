@@ -46,7 +46,7 @@ describe('Diagnostics', function () {
         }, fs);
 
         compiler.run((_err, stats: any) => {
-            expect(stats.compilation.warnings[0]).to.match(/cannot find export "color1" in "\.\/vars\.st\.css"/);
+            expect(stats.compilation.warnings[0]).to.match(/cannot find export 'color1' in '\.\/vars\.st\.css'/);
             done()
         });
 
