@@ -62,7 +62,8 @@ export class Plugin {
             this.options.nsDelimiter,
             undefined,
             undefined,
-            this.options.transformHooks
+            this.options.transformHooks,
+            this.options.rootScope
         );
         return stylable;
     }
