@@ -9,6 +9,7 @@ import { cssAssetsLoader } from './css-loader';
 // const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency');
 // import { StylableBundleInjector } from './stylable-bundle-inject';
 const deindent = require('deindent');
+const findConfig = require('find-config');
 
 export interface StylableLoaderContext extends webpack.loader.LoaderContext {
     stylable: Stylable;
@@ -36,10 +37,10 @@ export async function loader(this: StylableLoaderContext, source: string) {
     }
 };
 
-export class Plugin {
+export class StylablePlugin {
     private stylableLoaderWasUsed = false;
 
-    private options: StylableIntegrationOptions;
+    public options: StylableIntegrationOptions;
     static loaders() {
         return [
             'stylable-integration/webpack-loader'
@@ -48,12 +49,24 @@ export class Plugin {
     static rule(test: RegExp = /\.st\.css$/) {
         return {
             test,
-            use: Plugin.loaders()
+            use: StylablePlugin.loaders()
         }
     }
     constructor(options: Partial<StylableIntegrationOptions>) {
-        this.options = { ...StylableIntegrationDefaults, ...options };
+        const local = this.loadLocalConfig();
+        let fullOptions = { ...StylableIntegrationDefaults, ...options };
+        if (local && local.options) {
+            fullOptions = local.options(fullOptions);
+        }
+        this.options = fullOptions;
     };
+    loadLocalConfig() {
+        let localConfigOverride: any;
+        try {
+            localConfigOverride = findConfig.require('stylable.config');
+        } catch (e) { /* no op */ }
+        return localConfigOverride
+    }
     createStylable(compiler: any) {
         const stylable = new Stylable(
             compiler.context,
@@ -243,6 +256,7 @@ export class Plugin {
     }
 
 }
+
 
 
 function hasChunk(reason: any, chunk: any) {

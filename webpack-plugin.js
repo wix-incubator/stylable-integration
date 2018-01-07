@@ -1,1 +1,1 @@
-module.exports = require('./dist/src/webpack-loader').Plugin;
+module.exports = require('./dist/src/webpack-loader').StylablePlugin;

@@ -2,7 +2,7 @@ import path = require('path');
 import { expect } from 'chai';
 import MemoryFileSystem = require('memory-fs');
 import * as postcss from 'postcss';
-import { Plugin } from '../src/webpack-loader';
+import { StylablePlugin } from '../src/webpack-loader';
 import { StylableIntegrationOptions } from '../src/options';
 import { memoryFS } from "./mem-fs";
 import webpack = require('webpack');
@@ -143,7 +143,7 @@ export function createWebpackCompiler(webpackConfig: webpack.Configuration, fs: 
             //         compiler.outputFileSystem = fs;
             //     }
             // },
-            new Plugin({ requireModule() { throw new Error('Implement require in test') }, ...stylableConfig })
+            new StylablePlugin({ requireModule() { throw new Error('Implement require in test') }, ...stylableConfig })
         ],
         module: {
             rules: [
