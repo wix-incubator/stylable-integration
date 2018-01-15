@@ -16,6 +16,10 @@ const argv = require('yargs')
     .describe('outDir', 'target directory relative to root')
     .default('outDir', '.')
 
+    .option('indexFile')
+    .describe('indexFile', 'filename of the generated index')
+    .default('indexFile', 'index.st.css')
+
     .option('ext')
     .describe('ext', 'extension of stylable css files')
     .default('ext', '.st.css')
@@ -35,13 +39,13 @@ const argv = require('yargs')
 
 const log = createLogger("[Stylable]", argv.log);
 const diagnostics = createLogger("[Stylable Diagnostics]\n", argv.diagnostics);
-const { outDir, srcDir, rootDir, ext } = argv;
+const { outDir, srcDir, rootDir, ext, indexFile } = argv;
 
 log('[Arguments]', argv);
 
 const stylable = new Stylable(rootDir, fs, require);
 
-build({ extension: ext, fs, stylable, outDir, srcDir, rootDir, log, diagnostics });
+build({ extension: ext, fs, stylable, outDir, srcDir, rootDir, log, diagnostics, indexFile });
 
 
 function createLogger(prefix: string, shouldLog: boolean) {
