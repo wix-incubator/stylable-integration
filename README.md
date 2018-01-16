@@ -91,6 +91,7 @@ Options:
   --rootDir      root directory of project                        [default: cwd]
   --srcDir       source directory relative to root                [default: "."]
   --outDir       target directory relative to root                [default: "."]
+  --indexFile    filename of the generated index       [default: "index.st.css"]
   --ext          extension of stylable css files            [default: ".st.css"]
   --log          verbose log                                    [default: false]
   --diagnostics  verbose diagnostics                            [default: false]
