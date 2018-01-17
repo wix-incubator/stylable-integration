@@ -57,7 +57,8 @@
     "src",
     "webpack-loader.js",
     "webpack-plugin.js",
-    "require.js"
+    "require.js",
+    "jest.js"
   ],
   "author": "Wix"
 }
