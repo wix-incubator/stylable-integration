@@ -1,5 +1,5 @@
 import * as fs from "fs";
-const module = require('module');
+// const module = require('module');
 
 import { createCSSModuleString } from "./stylable-transform";
 import { Stylable } from "stylable";
