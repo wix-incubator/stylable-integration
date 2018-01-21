@@ -1,5 +1,5 @@
 import * as fs from "fs";
-const stylableToModuleFactory = require('./stylable-to-module-factory');
+import {stylableToModuleFactory} from './stylable-to-module-factory';
 
 export interface Options {
     extension: string;
@@ -13,7 +13,7 @@ export function attachHook({ extension, afterCompile, nsDelimiter }: Partial<Opt
     
     require.extensions[extension] = function cssModulesHook(m: any, filename: string) {
         const source = fs.readFileSync(filename).toString();
-        const code = stylableToModule(source, filename, nsDelimiter);
+        const code = stylableToModule(source, filename);
         return m._compile(afterCompile ? afterCompile(code, filename) : code, filename);
     };
 };

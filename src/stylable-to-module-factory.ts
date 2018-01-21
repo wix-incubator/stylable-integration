@@ -4,7 +4,7 @@ import { createCSSModuleString } from "./stylable-transform";
 import { Stylable } from "stylable";
 
 
-module.exports = function(_fs = fs, _require = require, nsDelimiter?: any) {
+export function stylableToModuleFactory(_fs = fs, _require = require, nsDelimiter?: any) {
   const stylable = new Stylable('root', _fs, _require, nsDelimiter);
   const options = { injectFileCss: true };
 
