@@ -1,13 +1,11 @@
 import * as fs from "fs";
-import {jest} from './jest';
+const process = require('./jest')();
 
 export interface Options {
     extension: string;
     nsDelimiter: string;
     afterCompile?: (code: string, filename: string) => string;
 }
-
-const process = jest();
 
 export function attachHook({ extension, afterCompile, nsDelimiter }: Partial<Options>) {
     extension = extension || '.css';

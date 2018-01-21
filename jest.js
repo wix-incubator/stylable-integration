@@ -1,3 +1,1 @@
-const {jest} = require('./dist/src/jest');
-const process = jest();
-module.exports = {process};
+exports.process = require('./dist/src/jest')();

@@ -4,7 +4,7 @@ import { createCSSModuleString } from "./stylable-transform";
 import { Stylable } from "stylable";
 
 
-export function jest() {
+module.exports = function() {
   return function process(src: any, path: string, nsDelimiter?: any) {
     const stylable = new Stylable('root', fs, require, nsDelimiter);
     const options = { injectFileCss: true };
