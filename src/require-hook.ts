@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import {process} from './jest';
+import {jest} from './jest';
 
 export interface Options {
     extension: string;
@@ -7,9 +7,11 @@ export interface Options {
     afterCompile?: (code: string, filename: string) => string;
 }
 
+const process = jest();
+
 export function attachHook({ extension, afterCompile, nsDelimiter }: Partial<Options>) {
     extension = extension || '.css';
-
+    
     require.extensions[extension] = function cssModulesHook(m: any, filename: string) {
         const source = fs.readFileSync(filename).toString();
         const code = process(source, filename, nsDelimiter);

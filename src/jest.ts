@@ -4,13 +4,15 @@ import { createCSSModuleString } from "./stylable-transform";
 import { Stylable } from "stylable";
 
 
-export function process(src: any, path: string, nsDelimiter?: any) {
-  const stylable = new Stylable('root', fs, require, nsDelimiter);
-  const options = { injectFileCss: true };
+export function jest() {
+  return function process(src: any, path: string, nsDelimiter?: any) {
+    const stylable = new Stylable('root', fs, require, nsDelimiter);
+    const options = { injectFileCss: true };
 
-  let code = src;
-  const res = stylable.transform(src, path)
-  code = createCSSModuleString(res, options);
+    let code = src;
+    const res = stylable.transform(src, path)
+    code = createCSSModuleString(res, options);
 
-  return code;
+    return code;
+  }
 }
