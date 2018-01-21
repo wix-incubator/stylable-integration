@@ -1,13 +1,11 @@
 import * as fs from "fs";
-// const module = require('module');
 
 import { createCSSModuleString } from "./stylable-transform";
 import { Stylable } from "stylable";
 
 
-const stylable = new Stylable('root', fs, require);
-
-export function process(src: any, path: string) {
+export function process(src: any, path: string, nsDelimiter?: any) {
+  const stylable = new Stylable('root', fs, require, nsDelimiter);
   const options = { injectFileCss: true };
 
   let code = src;
@@ -15,5 +13,4 @@ export function process(src: any, path: string) {
   code = createCSSModuleString(res, options);
 
   return code;
-  // return module._compile(code, path);
 }

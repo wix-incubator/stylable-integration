@@ -1,7 +1,5 @@
 import * as fs from "fs";
-
-import { createCSSModuleString } from "./stylable-transform";
-import { Stylable } from "stylable";
+import {process} from './jest';
 
 export interface Options {
     extension: string;
@@ -11,14 +9,10 @@ export interface Options {
 
 export function attachHook({ extension, afterCompile, nsDelimiter }: Partial<Options>) {
     extension = extension || '.css';
-    const options = { injectFileCss: true };
-
-    const stylable = new Stylable('root', fs, require, nsDelimiter);
 
     require.extensions[extension] = function cssModulesHook(m: any, filename: string) {
         const source = fs.readFileSync(filename).toString();
-        const res = stylable.transform(source, filename)
-        const code = createCSSModuleString(res, options);
+        const code = process(source, filename, nsDelimiter);
         return m._compile(afterCompile ? afterCompile(code, filename) : code, filename);
     };
 };
