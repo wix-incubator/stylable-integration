@@ -55,9 +55,14 @@
   },
   "files": [
     "dist/src",
+    "dist/test-kit",
     "src",
     "webpack-loader.js",
+    "webpack-loader.d.ts",
     "webpack-plugin.js",
+    "webpack-plugin.d.ts",
+    "test-kit.js",
+    "test-kit.d.ts",
     "require.js",
     "jest.js"
   ],
