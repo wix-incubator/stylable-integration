@@ -1,6 +1,5 @@
 import { createCSSModuleString } from "./stylable-transform";
 import { TransformHooks, Bundler } from "stylable";
-import * as webpack from "webpack";
 
 
 

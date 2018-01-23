@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import * as path from 'path';
-import * as webpack from "webpack";
 import { createWebpackCompiler, createFS, jsThatImports } from "../test-kit/index";
 import { Bundler } from 'stylable';
 
@@ -31,14 +30,14 @@ describe('webpack plugin hooks', function () {
                         calls.push('postProcessor');
                         return res;
                     },
-                    replaceValueHook(...args: any[]) {
+                    replaceValueHook() {
                         calls.push('replaceValueHook');
                         return '';
                     }
                 }
             });
 
-        compiler.run((_err, stats: any) => {
+        compiler.run((_err, _stats: any) => {
             expect(calls).to.eql([
                 "replaceValueHook", // loader
                 "postProcessor", // loader
