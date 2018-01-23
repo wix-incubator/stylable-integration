@@ -113,7 +113,7 @@ export class StylablePlugin {
 
                     const files = this.getSortedStylableModulesList(chunk);
                     if (this.options.bundleHook) {
-                        this.options.bundleHook(compilation, chunk, bundler, files);
+                        this.options.bundleHook(compilation, chunk, bundler, stylable, files);
                     } else {
                         const cssBundle = this.bundleCSS(compilation, bundler, files);
     
