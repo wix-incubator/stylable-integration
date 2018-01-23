@@ -1,5 +1,6 @@
 import { createCSSModuleString } from "./stylable-transform";
-import { TransformHooks } from "stylable";
+import { TransformHooks, Bundler } from "stylable";
+import * as webpack from "webpack";
 
 
 
@@ -12,7 +13,7 @@ export interface StylableIntegrationOptions {
     skipBundle?: boolean;
     createStylableRuntimeModule?: typeof createCSSModuleString;
     transformHooks?: TransformHooks;
-    
+    bundleHook?: (compilation: any, chunk: any, bundler: Bundler, files: string[]) => void
 }
 
 export const StylableIntegrationDefaults: StylableIntegrationOptions = {
