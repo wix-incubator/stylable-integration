@@ -112,10 +112,14 @@ export class StylablePlugin {
                     const cssBundleFilename = compilation.getPath(this.options.filename, pathContext);
 
                     const files = this.getSortedStylableModulesList(chunk);
-                    const cssBundle = this.bundleCSS(compilation, bundler, files);
-
-                    compilation.assets[cssBundleFilename] = new RawSource(cssBundle);
-                    compilation.assets[cssBundleFilename].fromFiles = files;
+                    if (this.options.bundleHook) {
+                        this.options.bundleHook(compilation, chunk, bundler, files);
+                    } else {
+                        const cssBundle = this.bundleCSS(compilation, bundler, files);
+    
+                        compilation.assets[cssBundleFilename] = new RawSource(cssBundle);
+                        compilation.assets[cssBundleFilename].fromFiles = files;
+                    }
 
                 });
 
