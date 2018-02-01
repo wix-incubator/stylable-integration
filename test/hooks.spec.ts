@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import * as path from 'path';
 import { createWebpackCompiler, createFS, jsThatImports } from "../test-kit/index";
-import { Bundler } from 'stylable';
+import { Bundler, Stylable } from 'stylable';
 
 
 describe('webpack plugin hooks', function () {
@@ -63,14 +63,20 @@ describe('webpack plugin hooks', function () {
             `
         });
 
-        let call: { compilation: any, chunk: any, bundler: Bundler, files: string[] };
+        let call: { 
+            compilation: any, 
+            chunk: any, 
+            bundler: Bundler, 
+            stylable: Stylable, 
+            files: string[] 
+        };
 
         const compiler = createWebpackCompiler({
             entry: './entry.js'
         }, fs, {
-                bundleHook(compilation, chunk, bundler, files) {
+                bundleHook(compilation, chunk, bundler, stylable, files) {
                     call = {
-                        compilation, chunk, bundler, files
+                        compilation, chunk, bundler, stylable, files
                     }
                 }
             });
