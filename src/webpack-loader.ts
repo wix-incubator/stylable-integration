@@ -103,7 +103,7 @@ export class StylablePlugin {
                 if (!this.stylableLoaderWasUsed) {
                     return callback(); //skip emit css bundle.
                 }
-                chunks.forEach((chunk: any) => {
+                const tasks = chunks.map((chunk: any) => {
                     if (chunk.name === null && chunk.id === null || chunk.parents.length > 0) {
                         return; //skip emit css bundle.
                     }
@@ -113,17 +113,17 @@ export class StylablePlugin {
 
                     const files = this.getSortedStylableModulesList(chunk);
                     if (this.options.bundleHook) {
-                        this.options.bundleHook(compilation, chunk, bundler, stylable, files);
+                        return this.options.bundleHook(compilation, chunk, bundler, stylable, files);
                     } else {
                         const cssBundle = this.bundleCSS(compilation, bundler, files);
-    
+
                         compilation.assets[cssBundleFilename] = new RawSource(cssBundle);
                         compilation.assets[cssBundleFilename].fromFiles = files;
                     }
 
                 });
 
-                callback();
+                Promise.all(tasks).then(() => callback());
 
             });
 
