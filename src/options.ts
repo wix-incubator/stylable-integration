@@ -12,7 +12,14 @@ export interface StylableIntegrationOptions {
     skipBundle?: boolean;
     createStylableRuntimeModule?: typeof createCSSModuleString;
     transformHooks?: TransformHooks;
-    bundleHook?: (compilation: any, chunk: any, bundler: Bundler, stylable: Stylable, files: string[]) => void
+    bundleHook?: (
+        compilation: any, 
+        chunk: any, 
+        bundler: Bundler, 
+        stylable: Stylable, 
+        files: string[],
+        cssBundleFilename: string, 
+        options: StylableIntegrationOptions) => void
 }
 
 export const StylableIntegrationDefaults: StylableIntegrationOptions = {
