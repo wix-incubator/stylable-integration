@@ -15,7 +15,7 @@
     "test": "mocha ./dist/test/**/*.spec.js",
     "test:node": "yarn test",
     "prepublish": "yarn build",
-    "ppub": "npm version patch; npm publish; git push; git push --tags;"
+    "ppub": "npm version patch && npm publish && git push && git push --tags"
   },
   "peerDependencies": {
     "stylable": ">=5.0.2"
