@@ -113,7 +113,7 @@ export class StylablePlugin {
 
                     const files = this.getSortedStylableModulesList(chunk);
                     if (this.options.bundleHook) {
-                        return this.options.bundleHook(compilation, chunk, bundler, stylable, files);
+                        return this.options.bundleHook(compilation, chunk, bundler, stylable, files, cssBundleFilename, this.options);
                     } else {
                         const cssBundle = this.bundleCSS(compilation, bundler, files);
 
@@ -126,24 +126,24 @@ export class StylablePlugin {
                 Promise.all(tasks).then(() => callback());
 
             });
+            if (!this.options.bundleHook) {
+                compilation.plugin("additional-chunk-assets", (chunks: any[]) => {
+                    if (this.options.injectBundleCss || !this.stylableLoaderWasUsed) { return; /*skip emit css bundle.*/ }
 
-            compilation.plugin("additional-chunk-assets", (chunks: any[]) => {
-                if (this.options.injectBundleCss || !this.stylableLoaderWasUsed) { return; /*skip emit css bundle.*/ }
+                    chunks.forEach((chunk: any) => {
+                        if (chunk.name === null && chunk.id === null || chunk.parents.length > 0) {
+                            return; //skip emit css bundle.
+                        }
+                        const pathContext = { chunk, hash: compilation.hash };
 
-                chunks.forEach((chunk: any) => {
-                    if (chunk.name === null && chunk.id === null || chunk.parents.length > 0) {
-                        return; //skip emit css bundle.
-                    }
-                    const pathContext = { chunk, hash: compilation.hash };
+                        const cssBundleFilename = compilation.getPath(this.options.filename, pathContext);
 
-                    const cssBundleFilename = compilation.getPath(this.options.filename, pathContext);
+                        chunk.files.push(cssBundleFilename);
 
-                    chunk.files.push(cssBundleFilename);
+                    });
 
                 });
-
-            });
-
+            }
             if (this.options.injectBundleCss) {
                 this.setupMainTemplatePlugin(compilation);
                 this.setupHotTemplatePlugin(compilation);
