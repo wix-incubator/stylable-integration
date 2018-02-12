@@ -76,7 +76,8 @@ export class StylablePlugin {
             undefined,
             undefined,
             this.options.transformHooks,
-            this.options.rootScope
+            this.options.rootScope,
+            compiler.options.resolve
         );
         return stylable;
     }
