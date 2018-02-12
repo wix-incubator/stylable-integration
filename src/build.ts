@@ -73,7 +73,6 @@ export function build(buildOptions: BuildOptions) {
     if (indexFile && indexFileOutput.length) {
         const indexFileContent = indexFileOutput.map((_) => createImportForComponent(_.from, _.name)).join('\n');
         const indexFileTargetPath = join(fullOutDir, indexFile);
-        console.log('indexFileTargetPath', indexFileTargetPath)
         log && log('[Build]', 'creating index file: ' + indexFileTargetPath);
         tryRun(() => fs.writeFileSync(indexFileTargetPath, '\n' + indexFileContent + '\n'), 'Write Index File Error');
     }
