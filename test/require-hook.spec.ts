@@ -8,7 +8,7 @@ describe('require-hook', function () {
 
         attachHook({ extension: '.css'});
 
-        const res = require('./fixtures/test-main.sb.css');
+        const res = require('./fixtures/test-main.st.css');
 
         expect(res.default.class).to.equal(res.default.$stylesheet.namespace + '--class')
 
@@ -19,7 +19,7 @@ describe('require-hook', function () {
         attachHook({
             extension: '.css',
             afterCompile: (code, filename) => {
-                if (filename.match('import-relative-local.sb.css')) {
+                if (filename.match('import-relative-local.st.css')) {
                     resCss = code;
                 }
                 return code;
@@ -27,7 +27,7 @@ describe('require-hook', function () {
             nsDelimiter: '----'
         });
 
-        const res = require('./fixtures/import-relative-local.sb.css');
+        const res = require('./fixtures/import-relative-local.st.css');
 
         expect(res.default.class).to.equal(res.default.$stylesheet.namespace+'----class')
         expect(resCss).to.match(new RegExp(`[data-${res.default.$stylesheet.namespace}-mystate]`));
@@ -39,7 +39,7 @@ describe('require-hook', function () {
         attachHook({
             extension: '.css',
             afterCompile: (code, filename) => {
-                if (filename.match('vars.sb.css')) {
+                if (filename.match('vars.st.css')) {
                     called = true;
                     expect(code).to.match(/color\s*:\s*#333/)
                 }
@@ -47,7 +47,7 @@ describe('require-hook', function () {
             }
         });
 
-        require('./fixtures/vars.sb.css');
+        require('./fixtures/vars.st.css');
         expect(called).to.equal(true);
     });
 
@@ -56,7 +56,7 @@ describe('require-hook', function () {
         attachHook({
             extension: '.css',
             afterCompile: (code, filename) => {
-                if (filename.match('imported-vars.sb.css')) {
+                if (filename.match('imported-vars.st.css')) {
                     called = true;
                     expect(code).to.match(/color\s*:\s*#333/)
                 }
@@ -64,7 +64,7 @@ describe('require-hook', function () {
             }
         });
 
-        require('./fixtures/imported-vars.sb.css');
+        require('./fixtures/imported-vars.st.css');
         expect(called).to.equal(true);
     });
 

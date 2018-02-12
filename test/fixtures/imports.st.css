@@ -1,4 +1,4 @@
-:import("./test-main.sb.css"){
+:import("./test-main.st.css"){
     -st-default: name;
 }
 

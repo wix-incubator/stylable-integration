@@ -1,5 +1,5 @@
 :import {
-    -st-from: "./vars.sb.css";
+    -st-from: "./vars.st.css";
     -st-named: M2;
 }
 .root{

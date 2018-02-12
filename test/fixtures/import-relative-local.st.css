@@ -1,5 +1,5 @@
 :import{
-    -st-from: "./local.sb.css"; 
+    -st-from: "./local.st.css"; 
     -st-default: name;
 }
 
