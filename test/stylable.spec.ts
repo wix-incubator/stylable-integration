@@ -496,10 +496,7 @@ describe('plugin', function () {
                     module.exports = {
                         mixStuff:function(){
                             return {
-                                "background":"green",
-                                ".child":{
-                                    "color": "yellow"
-                                }
+                                "background":"green"                                
                             }
                         }
                     };
@@ -521,8 +518,7 @@ describe('plugin', function () {
             const mainModule = evalCssJSModule(mainJS).main.default;
 
             matchRules(mainCSS, [
-                `.${mainModule.root} .${mainModule.gaga}`,
-                `.${mainModule.root} .${mainModule.gaga} .${mainModule.child}`
+                `.${mainModule.root} .${mainModule.gaga}`             
             ])
 
         });
