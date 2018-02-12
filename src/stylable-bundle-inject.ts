@@ -2,7 +2,7 @@ import { RawSource } from 'webpack-sources';
 const NormalModule = require('webpack/lib/NormalModule');
 
 export class StylableBundleInjector {
-    body: string;
+    body!: string;
     constructor(request: string, body: string) {
         const parser = { parse(_: any, state: any) { return state; } };
         const c = new NormalModule(request, request, request, [], request, parser);
