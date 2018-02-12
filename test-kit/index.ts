@@ -192,14 +192,14 @@ export function webpackTest({ files, config, stylableConfig, allowErrors }: Webp
         async run(): Promise<WebpackTestResults> {
             return new Promise<WebpackTestResults>((resolve, reject) => {
 
-                compiler.run((error: Error, stats: webpack.Stats & { compilation: any }) => {
+                compiler.run((error: Error, stats: webpack.Stats) => {
                     if (error || (stats.hasErrors() && !allowErrors)) {
                         if (!error) {
-                            error = new Error(stats.compilation.errors.map((err: any) => err.message).join('\n'))
+                            error = new Error((stats as any).compilation.errors.map((err: any) => err.message).join('\n'))
                         }
                         reject(error);
                     } else {
-                        resolve({ stats, compiler, fs });
+                        resolve({ stats: stats as any, compiler, fs });
                     }
                 });
 
