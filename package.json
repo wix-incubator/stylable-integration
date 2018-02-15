@@ -8,6 +8,10 @@
   "bin": {
     "stc": "./dist/src/cli.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:wix/stylable-integration.git"
+  },
   "scripts": {
     "build": "tsc && ncp test/fixtures/ dist/test/fixtures",
     "webpack": "webpack",
