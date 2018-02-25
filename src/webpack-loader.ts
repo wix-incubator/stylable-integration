@@ -68,10 +68,14 @@ export class StylablePlugin {
         return localConfigOverride
     }
     createStylable(compiler: any) {
+        const loadJS = (id: string) => {
+            delete require.cache[id];
+            return require(id);
+        };
         const stylable = new Stylable(
             compiler.context,
             compiler.inputFileSystem,
-            this.options.requireModule || require,
+            this.options.requireModule || loadJS,
             this.options.nsDelimiter,
             undefined,
             undefined,
@@ -85,8 +89,9 @@ export class StylablePlugin {
 
         let stylable: Stylable;
         let bundler: Bundler;
-
+        
         compiler.plugin('this-compilation', (compilation) => {
+
             let usingStylable = () => this.stylableLoaderWasUsed = true;
             stylable = stylable || this.createStylable(compiler);
             bundler = bundler || stylable.createBundler();
