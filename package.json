@@ -1,6 +1,6 @@
 {
   "name": "stylable-integration",
-  "version": "6.1.0-rc.1",
+  "version": "6.1.0",
   "description": "Integration utils for stylable",
   "license": "BSD-3-Clause",
   "main": "./dist/src/index.js",
