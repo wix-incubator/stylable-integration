@@ -46,9 +46,9 @@ export class StylablePlugin {
             'stylable-integration/webpack-loader'
         ]
     }
-    static rule(test: RegExp = /\.st\.css$/) {
+    static rule() {
         return {
-            test,
+            test: /\.st\.css$/,
             use: StylablePlugin.loaders()
         }
     }
@@ -89,7 +89,7 @@ export class StylablePlugin {
 
         let stylable: Stylable;
         let bundler: Bundler;
-        
+
         compiler.plugin('this-compilation', (compilation) => {
 
             let usingStylable = () => this.stylableLoaderWasUsed = true;

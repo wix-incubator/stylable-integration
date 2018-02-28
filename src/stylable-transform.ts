@@ -16,7 +16,7 @@ export function createCSSModuleString(res: CreateModuleInput, options: { injectF
     const root = JSON.stringify(meta.root);
     const namespace = JSON.stringify(meta.namespace);
 
-    const imports: string[] = meta.imports.map((i) => justImport(i.fromRelative));
+    const imports: string[] = meta.imports.map((i) => i.fromRelative.match(/\.st\.css$/) ? justImport(i.fromRelative) : '');
 
     let code: string = '';
     const css = options.injectFileCss ? JSON.stringify(meta.outputAst!.toString()) : 'null';

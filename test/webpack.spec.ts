@@ -388,4 +388,46 @@ describe('webpack plugin', function () {
 
     });
 
+
+
+    it('not load js modules imported from st.css', function (done) {
+
+        const fs = createFS({
+            '/entry.js': `
+                module.exports = {
+                    style: require('./style.st.css'),
+                }
+            `,
+            '/style.st.css': `
+                :import {
+                    -st-from: "./mix.js";
+                    -st-default: Mix;
+                }
+                .root {
+                    -st-mixin: Mix;
+                }
+            `,
+            '/mix.js': `
+                module.exports = function(){ return {color: "red" }}
+            `,
+
+        });
+
+        const compiler = createWebpackCompiler({
+            entry: './entry.js'
+        }, fs, {
+            injectBundleCss: false, requireModule: function (_path: string) {
+                return eval(fs.readFileSync(_path).toString())
+            }
+        });
+
+
+        compiler.run((_err, stats: any) => {
+
+            expect(stats.compilation.chunks[0].mapModules((m: any)=>m.resource)).to.not.contain(path.resolve('/mix.js'))
+            done()
+        });
+
+    });
+
 });
