@@ -1,7 +1,7 @@
 const deindent = require('deindent');
 import { StylableResults } from 'stylable';
 
-const runtimePath = 'stylable/runtime';
+const runtimePath = require.resolve('stylable/runtime');
 
 let globalVersion = 0;
 
