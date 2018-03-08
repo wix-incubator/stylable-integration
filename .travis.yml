@@ -1,5 +1,8 @@
 sudo: false
 
+notifications:
+    slack: wixc3:xUUjwQ3EV68OhBqh6LRdngEr
+    
 language: node_js
 
 node_js:
