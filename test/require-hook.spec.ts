@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { attachHook } from "../src/require-hook";
-
+const idObj = require('identity-obj-proxy');
 
 describe('require-hook', function () {
 
@@ -68,4 +68,22 @@ describe('require-hook', function () {
         expect(called).to.equal(true);
     });
 
+    describe('preserve pre-defined css require hooks', function() {
+      beforeEach(function (){
+        require.extensions['.css'] = function(module) {
+          module.exports = idObj;
+        }
+        attachHook({});
+      });
+      
+      it('should call previous handler for css file', function() {
+        const cssFile = require('./fixtures/simple.css');
+        expect(cssFile.someClass).to.equal('someClass');
+      });
+
+      it('should not use previous handler for st.css file', function() {
+        const cssFile = require('./fixtures/test-main.st.css');
+        expect(cssFile.someClass).not.to.equal('someClass');
+      });
+    });
 });
