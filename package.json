@@ -68,6 +68,8 @@
     "test-kit.js",
     "test-kit.d.ts",
     "require.js",
+    "require-hook.js",
+    "require-hook.d.ts",
     "jest.js"
   ],
   "author": "Wix"

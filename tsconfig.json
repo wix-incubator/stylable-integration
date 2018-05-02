@@ -55,6 +55,7 @@
     "node_modules",
     "dist",
     "test-kit.d.ts",
+    "require-hook.d.ts",
     "webpack-loader.d.ts",
     "webpack-plugin.d.ts",
   ]
