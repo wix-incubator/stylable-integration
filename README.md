@@ -134,7 +134,25 @@ This package exposes a special entry point that registers `.css` file handling, 
 
 Note that no css will be actually applied this will only generate the js module.
 
-To register the hook, use the dedicated entry point:
+### Applying the require hook:
+
+To apply the hook, use the dedicated entry point:
+
+```ts
+import {attachHook} from 'stylable-integration/require-hook';
+attachHook({});
+```
+
+Or, if using CommonJS:
+
+```js
+const {attachHook} = require('stylable-integration/require-hook');
+attachHook({});
+```
+
+### Registering:
+
+If you prefer applying it right on import , you might want to use `stylable-integration/require` instead:
 
 ```ts
 import 'stylable-integration/require';
@@ -146,6 +164,7 @@ Or, if using CommonJS:
 require('stylable-integration/require');
 ```
 
+### Testing frameworks:
 The require hook can also be used to register the handling in tools like Mocha:
 
 ```bash
