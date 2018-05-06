@@ -11,9 +11,14 @@ export function attachHook({ extension, afterCompile, nsDelimiter }: Partial<Opt
     extension = extension || '.css';
     const stylableToModule = stylableToModuleFactory(fs, require, nsDelimiter);
     
+    const prevHook = require.extensions[extension];
     require.extensions[extension] = function cssModulesHook(m: any, filename: string) {
-        const source = fs.readFileSync(filename).toString();
-        const code = stylableToModule(source, filename);
-        return m._compile(afterCompile ? afterCompile(code, filename) : code, filename);
+        if(filename.endsWith('.st.css') || !prevHook) {
+          const source = fs.readFileSync(filename).toString();
+          const code = stylableToModule(source, filename);
+          return m._compile(afterCompile ? afterCompile(code, filename) : code, filename);
+        } else {
+          return prevHook(m, filename);
+        }
     };
 };
