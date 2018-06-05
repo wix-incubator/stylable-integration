@@ -35,9 +35,9 @@ describe('build index', function () {
 
         expect(res.trim()).to.equal([
             ':import {-st-from: "./compA.st.css";-st-default:CompA;}',
-            'CompA{}',
+            '.root CompA{}',
             ':import {-st-from: "./a/b/compB.st.css";-st-default:CompB;}',
-            'CompB{}'
+            '.root CompB{}'
         ].join('\n'));
 
     });
