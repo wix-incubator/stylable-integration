@@ -119,7 +119,7 @@ function tryRun<T>(fn: () => T, errorMessage: string): T {
 function createImportForComponent(from: string, defaultName: string) {
     return [
         `:import {-st-from: ${JSON.stringify(from)};-st-default:${defaultName};}`,
-        `${defaultName}{}`
+        `.root ${defaultName}{}`
     ].join('\n');
 }
 
